@@ -114,6 +114,8 @@ struct Skeleton {
     float gravity;
     float damage;
     float angle;
+    float current_Attack_Interval;
+    float max_Attack_Interval;
 };
 
 void my_Memory_Copy(void* dest, const void* src, size_t count) {
@@ -233,7 +235,7 @@ Arrow create_Arrow(Sprite sprite, float speed, float damage, float gravity) {
     return result;
 }   
 
-Skeleton create_Skeleton(Sprite sprite, float speed, float damage, float max_HP, float gravity) {
+Skeleton create_Skeleton(Sprite sprite, float speed, float damage, float max_HP, float gravity, float max_Attack_Interval) {
     Skeleton result = {};
     result.sprite = sprite;
     result.speed = speed;
@@ -242,6 +244,8 @@ Skeleton create_Skeleton(Sprite sprite, float speed, float damage, float max_HP,
     result.max_HP = max_HP;
     result.current_HP = max_HP;
     result.gravity = gravity;
+    result.max_Attack_Interval = max_Attack_Interval;
+    result.current_Attack_Interval = 0;
     return result;
 }
 
@@ -372,7 +376,6 @@ void draw_Circle(SDL_Renderer* renderer, float center_X, float center_Y, float r
 }
 
 void outline_Rect(SDL_Renderer* renderer, SDL_Rect* rect, int outline_Thickness) {
-
     SDL_Rect top_Rect = {};
     top_Rect.x = rect->x;
     top_Rect.y = rect->y;
@@ -405,6 +408,12 @@ void outline_Rect(SDL_Renderer* renderer, SDL_Rect* rect, int outline_Thickness)
     SDL_RenderDrawRect(renderer, rect);
 }
 
+float linear_Interpolation(float left_Point, float right_Point, float percent) {
+    // Lerp of T = A * (1 - T) + B * T
+    // A is the left side, B is the right side, T is the percentage of the interpolation
+    return ((left_Point) * (1 - percent) + (right_Point)*percent);
+}
+
 void draw_Castle_HP_Bar(SDL_Renderer* renderer, Castle* castle, int width, int height, int y_Offset, int thickness) {
     float remaining_HP_Percent = (castle->current_HP / castle->max_HP);
     if (remaining_HP_Percent < 0) {
@@ -413,7 +422,7 @@ void draw_Castle_HP_Bar(SDL_Renderer* renderer, Castle* castle, int width, int h
 
     // Lerp of T = A * (1 - T) + B * T
     // A is the left side, B is the right side, T is the health %
-    float lerp = (0) * (1 - remaining_HP_Percent) + (width) * remaining_HP_Percent;
+    float lerp = linear_Interpolation(0, (float)width, remaining_HP_Percent);
 
     SDL_Rect rect_Green = {};
     rect_Green.w = (int)lerp;
@@ -447,7 +456,7 @@ void draw_Skeleton_HP_Bar(SDL_Renderer* renderer, Skeleton* skeleton, int width,
 
     // Lerp of T = A * (1 - T) + B * T
     // A is the left side, B is the right side, T is the health %
-    float lerp = (0) * (1 - remaining_HP_Percent) + (width)*remaining_HP_Percent;
+    float lerp = linear_Interpolation(0, (float)width, remaining_HP_Percent);
 
     SDL_Rect rect_Green = {};
     rect_Green.w = (int)lerp;
@@ -711,11 +720,15 @@ int main(int argc, char** argv) {
 
     // Create sprites
     Sprite arrow_Sprite = create_Sprite(renderer, "images/arrow.png");
-    Sprite castle_Sprite = create_Sprite(renderer, "images/player_Castle.png");
+    // Sprite castle_Sprite = create_Sprite(renderer, "images/player_Castle.png");
+    Sprite castle_Sprite = create_Sprite(renderer, "images/castle_2.png");
     Sprite zergling_Sprite = create_Sprite(renderer, "images/zergling.jpg");
     Sprite skeleton_Sprite = create_Sprite(renderer, "images/unit_Skeleton.png");
+    Sprite archer_Sprite = create_Sprite(renderer, "images/unit_Archer.png");
 
     Sprite background = create_Sprite(renderer, "images/background.jpg");
+    // Sprite background = create_Sprite(renderer, "images/background_2.png");
+    // Sprite background = create_Sprite(renderer, "images/background_3.png");
     Sprite terrain = create_Sprite(renderer, "images/collision_Terrain_1.png");
     int terrain_Width = 0;
     int terrain_Height = 0;
@@ -725,7 +738,7 @@ int main(int argc, char** argv) {
     Vector player_Position = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 };
     Player player = create_Player(zergling_Sprite, player_Position, 300);
 
-    float player_Fire_Rate = .1f;
+    float player_Fire_Rate = .01f;
 
     Vector player_Castle_Position = { RESOLUTION_WIDTH * 0.05, 0};
     Castle player_Castle = create_Castle(castle_Sprite, player_Castle_Position, 100, player_Fire_Rate);
@@ -758,7 +771,8 @@ int main(int argc, char** argv) {
     float skeleton_Gravity = 50;
     float enemy_Unit_Spawn_Rate = 2;
     float skeleton_HP = 100;
-    Skeleton unit_Skeleton = create_Skeleton(skeleton_Sprite, skeleton_Speed, skeleton_Damage, skeleton_HP, skeleton_Gravity);
+    float max_Attack_Interval = 1;
+    Skeleton unit_Skeleton = create_Skeleton(skeleton_Sprite, skeleton_Speed, skeleton_Damage, skeleton_HP, skeleton_Gravity, max_Attack_Interval);
     std::vector<Skeleton> enemy_Skeletons;
 
     // Buttons
@@ -972,7 +986,7 @@ int main(int argc, char** argv) {
             if (check_Height_Map_Collision((int)player_Arrows[i].collision_Offset.x, (int)player_Arrows[i].collision_Offset.y, terrain_Height_Map)) {
                 player_Arrows[i].stop_Arrow = true;
             }
-            // Collision with skeletons
+            // Collision with skeletons and arrows
             for (int j = 0; j < enemy_Skeletons.size(); j++) {
                 float distance_Between_Skeleton = calculate_Distance(
                     player_Arrows[i].collision_Offset.x,
@@ -981,7 +995,7 @@ int main(int argc, char** argv) {
                     enemy_Skeletons[j].position.y);
                 float radius_Sum_Skeleton = player_Arrows[i].collision_Radius + enemy_Skeletons[j].sprite.radius;
                 if (distance_Between_Skeleton <= radius_Sum_Skeleton) {
-                    if (player_Arrows[i].velocity.x != 0 && player_Arrows[i].velocity.y != 0) {
+                    if (!player_Arrows[i].stop_Arrow) {
                         enemy_Skeletons[j].current_HP -= player_Arrows[i].damage;
                         player_Arrows[i].destroyed = true;
                     }
@@ -993,6 +1007,26 @@ int main(int argc, char** argv) {
         for (int i = 0; i < enemy_Skeletons.size(); i++) {
             if (check_Height_Map_Collision((int)enemy_Skeletons[i].position.x, (int)enemy_Skeletons[i].position.y, terrain_Height_Map)) {
                 enemy_Skeletons[i].position.y = (RESOLUTION_HEIGHT - (float)terrain_Height_Map[(int)enemy_Skeletons[i].position.x]);
+            }
+        }
+
+        // Collision skeleton with player castle
+        for (int i = 0; i < enemy_Skeletons.size(); i++) {
+            float distance_Between = calculate_Distance(
+                enemy_Skeletons[i].position.x,
+                enemy_Skeletons[i].position.y,
+                player_Castle.position.x,
+                player_Castle.position.y);
+            float radius_Sum = enemy_Skeletons[i].sprite.radius + enemy_Castle.sprite.radius;
+            if (distance_Between <= radius_Sum) {
+                enemy_Skeletons[i].velocity = { 0,0 };
+                if (enemy_Skeletons[i].current_Attack_Interval < 0) {
+                    enemy_Skeletons[i].current_Attack_Interval = enemy_Skeletons[i].max_Attack_Interval;
+                    player_Castle.current_HP -= enemy_Skeletons[i].damage;
+                }
+                else {
+                    enemy_Skeletons[i].current_Attack_Interval -= delta_Time;
+                }
             }
         }
 
