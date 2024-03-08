@@ -74,14 +74,15 @@ enum class Button_State {
 };
 
 enum class Select_Color {
-    RED,
-    GREEN,
-    BLUE
+    BLACK = 0,
+    RED = 1,
+    GREEN = 2,
+    BLUE = 3
 };
 
-enum class Body_Type {
-    DYNAMIC,
-    STATIC
+enum class Current_Game_State {
+    MENU = 0,
+    GAMELOOP = 1
 };
 
 struct Font {
@@ -114,9 +115,11 @@ struct Collider {
 };
 
 struct Rigid_Body {
-    Body_Type body_Type;
+    // Body_Type body_Type;
+    bool change_Image_Angle;
     Vector position_WS;
     Vector velocity;
+    float angle;
     std::vector<Collider> colliders;
 };
 
@@ -126,10 +129,10 @@ struct Castle {
     Rigid_Body rigid_Body;
     Health_Bar health_Bar;
 
-    float fire_Recharge;
-    float current_Fire_Delay;
-    float spawn_Recharge;
-    float current_Spawn_Delay;
+    float fire_Cooldown;
+    float current_Fire_Cooldown;
+    float spawn_Cooldown;
+    float current_Spawn_Cooldown;
 };
 
 struct Arrow {
@@ -140,7 +143,6 @@ struct Arrow {
     float damage;
     float speed;
     float life_Time;
-    float angle;
 
     bool stop_Arrow;
     bool destroyed;
@@ -153,9 +155,8 @@ struct Skeleton {
 
     float speed;
     float damage;
-    float attack_Rate;
-    float current_Cooldown;
-    float angle;
+    float attack_Cooldown;
+    float current_Attack_Cooldown;
    
     bool destroyed;
     bool stop_Skeleton;
@@ -283,7 +284,7 @@ void draw_Arrow(Arrow* arrow, bool flip) {
         arrow->sprite.width,
         arrow->sprite.height
     };
-    SDL_RenderCopyEx(renderer, arrow->sprite.texture, NULL, &temp, arrow->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+    SDL_RenderCopyEx(renderer, arrow->sprite.texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 void draw_Skeleton(Skeleton* skeleton, bool flip) {
@@ -294,9 +295,43 @@ void draw_Skeleton(Skeleton* skeleton, bool flip) {
         skeleton->sprite.width,
         skeleton->sprite.height
     };
-    SDL_RenderCopyEx(renderer, skeleton->sprite.texture, NULL, &temp, skeleton->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+    SDL_RenderCopyEx(renderer, skeleton->sprite.texture, NULL, &temp, skeleton->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
+// Get the world position of a collider
+Vector get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
+	Vector result = rigid_Body->position_WS;
+	if (rigid_Body->change_Image_Angle) {
+        rigid_Body->angle = (float)(atan2(rigid_Body->velocity.y, rigid_Body->velocity.x) * (180 / M_PI));
+
+		float angle_In_Radians = rigid_Body->angle * (float)(M_PI / 180.0);
+
+		float length = (float)sqrt((collider->position_LS.x * collider->position_LS.x) + (collider->position_LS.y * collider->position_LS.y));
+
+		float offset_X = (float)cos(angle_In_Radians) * length;
+		float offset_Y = (float)sin(angle_In_Radians) * length;
+
+		result.x += offset_X;
+		result.y += offset_Y;
+	}
+	else {
+		result.x += collider->position_LS.x;
+		result.y += collider->position_LS.y;
+	}
+
+	return result;
+}
+
+void update_Arrow_Position(Arrow* arrow, float delta_Time) {
+	if (!arrow->stop_Arrow) {
+		arrow->rigid_Body.velocity.y += GRAVITY * delta_Time;
+
+		arrow->rigid_Body.position_WS.x += arrow->rigid_Body.velocity.x * delta_Time;
+		arrow->rigid_Body.position_WS.y += arrow->rigid_Body.velocity.y * delta_Time;
+	}
+}
+
+/*
 void update_Arrow_Position(Arrow* arrow, float delta_Time) {
 	if (!arrow->stop_Arrow) {
 		arrow->rigid_Body.velocity.y += GRAVITY * delta_Time;
@@ -321,6 +356,7 @@ void update_Arrow_Position(Arrow* arrow, float delta_Time) {
 
 	}
 }
+*/
 
 void update_Skeleton_Position(Skeleton* skeleton, float delta_Time) {
     if (!skeleton->stop_Skeleton) {
@@ -395,7 +431,7 @@ void draw_Circle(float center_X, float center_Y, float radius, Select_Color colo
 
 void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Select_Color color) {
 	for (const auto& collider : rigid_Body->colliders) {
-		Vector world_Position = rigid_Body->position_WS + collider.position_LS;
+		Vector world_Position = get_WS_Position(rigid_Body, &collider);
 		draw_Circle(world_Position.x, world_Position.y, collider.radius, color);
 	}
 }
@@ -579,7 +615,38 @@ void draw_String(Font* font, const char* string, int position_X, int position_Y,
     }
 }
 
-void draw_Timer(Font* font, Vector position, int timer_Size) {
+void draw_String_On_Canvas(Font* font, const char* string, int position_X, int position_Y, int size, bool center, Select_Color color, int outline_Padding) {
+	size_t length_Pixels = strlen(string);
+	length_Pixels *= font->char_Width;
+    length_Pixels *= size;
+    size_t height_Pixels = font->char_Height;
+    height_Pixels *= size;
+
+    SDL_Rect canvas_Area = {};
+	// Centers the button
+	canvas_Area.x = (int)((position_X - (length_Pixels / 2)) - (outline_Padding / 2));
+	canvas_Area.y = (int)((position_Y - (height_Pixels / 2)) - (outline_Padding / 2));
+	canvas_Area.w = (int)length_Pixels + outline_Padding;
+    canvas_Area.h = (int)height_Pixels + outline_Padding;
+
+	// Set background as black
+    if (color == Select_Color::BLACK) {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    } else if (color == Select_Color::RED) {
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	} else if (color == Select_Color::GREEN) {
+		SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	} else if (color == Select_Color::BLUE) {
+		SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+	} else {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &canvas_Area);
+    
+    draw_String(font, string, position_X, position_Y, size, center);
+}
+
+void draw_Timer(Font* font, Vector position, int timer_Size, Select_Color color, int outline_Padding) {
     SDL_Rect temp = {};
     Uint64 time_Elapsed = SDL_GetTicks64() / 1000;
 
@@ -594,7 +661,7 @@ void draw_Timer(Font* font, Vector position, int timer_Size) {
 
     std::string str = std::to_string(time_Elapsed);
     const char* ptr = str.c_str();
-    draw_String(font, ptr, (int)(position.x - (font->char_Width / 2)), (int)(position.y - (font->char_Height / 2)), timer_Size, true);
+    draw_String_On_Canvas(font, ptr, (int)(position.x - (font->char_Width / 2)), (int)(position.y - (font->char_Height / 2)), timer_Size, true, color, outline_Padding);
 }
 
 bool mouse_Down_This_Frame = false;
@@ -602,6 +669,52 @@ std::string current_frame_Hot_Name;
 std::string next_Frame_Hot_Name;
 bool draw_Rect = false;
 
+bool button(Font* font, const char* string, int position_X, int position_Y, int w, int h, int string_Size) {
+	SDL_Rect button_Area = {};
+	// Centers the button
+	button_Area.x = (position_X - (w / 2));
+	button_Area.y = (position_Y - (h / 2));
+	button_Area.w = w;
+	button_Area.h = h;
+
+	// Set background as black
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(renderer, &button_Area);
+
+	draw_String(font, string, position_X, position_Y, string_Size, true);
+	SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+
+	int x, y;
+	Uint32 mouse = SDL_GetMouseState(&x, &y);
+	bool button_Pressed = false;
+
+	bool was_Hot = (current_frame_Hot_Name == string);
+
+	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
+		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		if (mouse_Down_This_Frame) {
+			next_Frame_Hot_Name = string;
+		}
+		else if (was_Hot && !(mouse & SDL_BUTTON_LMASK)) {
+			button_Pressed = true;
+		}
+		else
+		{
+			SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+		}
+	}
+	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
+		next_Frame_Hot_Name = string;
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	}
+
+	outline_Rect(&button_Area, 10);
+
+	return button_Pressed;
+}
+
+/*
 bool button(Font* font, const char* string, int position_X, int position_Y, int w, int h) {
     SDL_Rect button_Area = {};
     // Centers the button
@@ -651,6 +764,7 @@ bool button(Font* font, const char* string, int position_X, int position_Y, int 
 
     return button_Pressed;
 }
+*/
 
 std::vector<int> create_Height_Map(const char* filename) {
     int channels = 0;
@@ -685,7 +799,7 @@ std::vector<int> create_Height_Map(const char* filename) {
 
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map) {
 	for (const auto& collider : rigid_Body->colliders) {
-		Vector world_Position = rigid_Body->position_WS + collider.position_LS;
+		Vector world_Position = get_WS_Position(rigid_Body, &collider);
 
 		int collider_X = (int)world_Position.x;
 		int collider_Y = (int)world_Position.y + (int)collider.radius;
@@ -704,15 +818,15 @@ bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height
 }
 
 // Need to have world position by the time I get here
-bool check_RB_Collision(const Rigid_Body* rigid_Body_1, const Rigid_Body* rigid_Body_2) {
+bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2) {
 	// Apply rotation at this point
     // LOCAL POSITION DOES NOT CHANGE
     // SET THE LOCAL POSITION ONE TIME BUT THAT'S IT. Unless I want to animate the collider.
     for (const auto& collider_1 : rigid_Body_1->colliders) {
-		Vector world_Pos_1 = rigid_Body_1->position_WS + collider_1.position_LS;
+        Vector world_Pos_1 = get_WS_Position(rigid_Body_1, &collider_1);
 
 		for (const auto& collider_2 : rigid_Body_2->colliders) {
-			Vector world_Pos_2 = rigid_Body_2->position_WS + collider_2.position_LS;
+            Vector world_Pos_2 = get_WS_Position(rigid_Body_2, &collider_2);
 
 			float distance_Between = calculate_Distance(
                 world_Pos_1.x, world_Pos_1.y,
@@ -757,7 +871,7 @@ int main(int argc, char** argv) {
     Sprite archer_Sprite = create_Sprite("images/unit_Archer.png");
 
     Sprite background = create_Sprite("images/background.jpg");
-    // Sprite background = create_Sprite(renderer, "images/background_2.png");
+    Sprite background_Menu = create_Sprite("images/background_2.png");
     // Sprite background = create_Sprite(renderer, "images/background_3.png");
     Sprite terrain = create_Sprite("images/collision_Terrain_1.png");
     
@@ -775,43 +889,46 @@ int main(int argc, char** argv) {
     };
 
     Rigid_Body player_Castle_RB = {
-        .body_Type = Body_Type::STATIC,
+        .change_Image_Angle = false,
         .position_WS = { (RESOLUTION_WIDTH * 0.05) , (float)game_Data.terrain_Height_Map[(int)(RESOLUTION_WIDTH * 0.05)] },
         .velocity = { 0.0f, 0.0f },
+        .angle = 0.0f,
         .colliders = {}
     };
     game_Data.player_Castle = {
 		.sprite = castle_Sprite,
 		.rigid_Body = player_Castle_RB,
 		.health_Bar = castle_Health_Bar,
-		.fire_Recharge = 0.01f,
-		.current_Fire_Delay = game_Data.player_Castle.fire_Recharge,
-		.spawn_Recharge = 0.0f,
-		.current_Spawn_Delay = game_Data.player_Castle.spawn_Recharge
+		.fire_Cooldown = 0.01f,
+		.current_Fire_Cooldown = 0.0f,
+		.spawn_Cooldown = 0.0f,
+		.current_Spawn_Cooldown = 0.0f
     };
     add_Collider(&game_Data.player_Castle.rigid_Body.colliders, { 0.0f, 0.0f }, game_Data.player_Castle.sprite.radius);
 
     Rigid_Body enemy_Castle_RB = {
-		.body_Type = Body_Type::STATIC,
+        .change_Image_Angle = false,
 		.position_WS = { (RESOLUTION_WIDTH * 0.95) , (float)game_Data.terrain_Height_Map[(int)(RESOLUTION_WIDTH * 0.95)] },
 		.velocity = { 0.0f, 0.0f },
+        .angle = 0.0f,
 		.colliders = {}
 	};
-	game_Data.enemy_Castle= {
+	game_Data.enemy_Castle = {
 	    .sprite = castle_Sprite,
 	    .rigid_Body = enemy_Castle_RB,
 	    .health_Bar = castle_Health_Bar,
-	    .fire_Recharge = 0.0f,
-	    .current_Fire_Delay = game_Data.player_Castle.fire_Recharge,
-	    .spawn_Recharge = 30.0f,
-	    .current_Spawn_Delay = game_Data.player_Castle.spawn_Recharge
+	    .fire_Cooldown = 0.0f,
+	    .current_Fire_Cooldown = 0.0f,
+	    .spawn_Cooldown = 1.0f,
+	    .current_Spawn_Cooldown = game_Data.player_Castle.spawn_Cooldown
 	};
 	add_Collider(&game_Data.enemy_Castle.rigid_Body.colliders, { 0.0f, 0.0f }, game_Data.enemy_Castle.sprite.radius);
 
 	Rigid_Body arrow_RB = {
-		.body_Type = Body_Type::DYNAMIC,
+        .change_Image_Angle = true,
 		.position_WS = { 0.0f, 0.0f },
 		.velocity = { 0.0f, 0.0f },
+        .angle = 0.0f,
 		.colliders = {}
 	};
     Arrow player_Arrow = {
@@ -820,17 +937,16 @@ int main(int argc, char** argv) {
         .damage = 5,
 		.speed = 750,
 		.life_Time = 10,
-		.angle = 0.0f,
         .stop_Arrow = false,
 	    .destroyed = false
     };
     // Arrow local position wouldn't be 0,0
-    add_Collider(&player_Arrow.rigid_Body.colliders, { 0.0f, 0.0f }, (player_Arrow.sprite.radius * 0.25f));
+    add_Collider(&player_Arrow.rigid_Body.colliders, { (player_Arrow.sprite.radius * 0.75f), 0.0f }, (player_Arrow.sprite.radius * 0.25f));
 
 	Health_Bar unit_Health_Bar = {
 	    .max_HP = 100,
 	    .current_HP = castle_Health_Bar.max_HP,
-	    .width = 65,
+	    .width = 50,
 	    .height = 15,
 	    .y_Offset = 60,
 	    .thickness = 2
@@ -838,9 +954,10 @@ int main(int argc, char** argv) {
 
 	Health_Bar skeleton_Health_Bar = unit_Health_Bar;
 	Rigid_Body skeleton_RB = {
-		.body_Type = Body_Type::DYNAMIC,
+        .change_Image_Angle = false,
 		.position_WS = { 0.0f , 0.0f },
 		.velocity = { 0.0f, 0.0f },
+        .angle = 0.0f,
 		.colliders = {}
 	};
     Skeleton unit_Skeleton = {
@@ -849,15 +966,16 @@ int main(int argc, char** argv) {
 		.health_Bar = skeleton_Health_Bar,
 
 		.speed = 200,
-		.damage = 20,
-		.attack_Rate = 1,
-		.current_Cooldown = 0.0f,
-		.angle = 0.0f,
+		.damage = 5,
+		.attack_Cooldown = 1,
+		.current_Attack_Cooldown = 0.0f,
 
 		.destroyed = false,
 		.stop_Skeleton = false
     };
-    add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, 0.0f }, (unit_Skeleton.sprite.radius));
+    add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, -(unit_Skeleton.sprite.radius / 2.0f) }, (unit_Skeleton.sprite.radius / 2));
+    add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, 0.0f }, (unit_Skeleton.sprite.radius / 2));
+    add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, (unit_Skeleton.sprite.radius / 2.0f) }, (unit_Skeleton.sprite.radius / 2));
 
     // Buttons
     SDL_Rect test = {};
@@ -880,6 +998,7 @@ int main(int argc, char** argv) {
     bool spawn_Skeleton_Pressed = false;
 
     bool running = true;
+    Current_Game_State current_Game_State = Current_Game_State::GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
         SDL_Event event = {};
@@ -926,256 +1045,275 @@ int main(int argc, char** argv) {
             }
         }
 
-        last_Ticks = ticks;
-        ticks = (float)SDL_GetTicks64();
-        delta_Time = ticks - last_Ticks;
-        delta_Time /= 1000;
+		current_frame_Hot_Name = next_Frame_Hot_Name;
+		next_Frame_Hot_Name = "";
+		SDL_GetMouseState(&mouse_X, &mouse_Y);
 
-        current_frame_Hot_Name = next_Frame_Hot_Name;
-        next_Frame_Hot_Name = "";
-        SDL_GetMouseState(&mouse_X, &mouse_Y);
-
-        // Spawn Arrows and update lifetime
-        if (key_Space_Pressed) {
-            if (game_Data.player_Castle.current_Fire_Delay < 0) {
-				Vector target_Mouse = {};
-				int x, y = 0;
-				SDL_GetMouseState(&x, &y);
-                target_Mouse = { (float)x,(float)y };
-                spawn_Arrow(&player_Arrow, &game_Data.player_Castle.rigid_Body.position_WS, &target_Mouse);
-                game_Data.player_Arrows.push_back(player_Arrow);
-                game_Data.player_Castle.current_Fire_Delay = game_Data.player_Castle.fire_Recharge;
-            }
-            else {
-                game_Data.player_Castle.current_Fire_Delay -= delta_Time;
-            }
-        }
-        else {
-            game_Data.player_Castle.current_Fire_Delay -= delta_Time;
-        }
-
-		// Spawn Player Skeletons
-		if (spawn_Skeleton_Pressed) {
-            spawn_Skeleton(
-                &unit_Skeleton, 
-                { (float)game_Data.player_Castle.rigid_Body.position_WS.x,
-                ((float)game_Data.terrain_Height_Map[(int)game_Data.player_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite.radius) },
-                &game_Data.enemy_Castle);
-            game_Data.player_Skeletons.push_back(unit_Skeleton);
-			spawn_Skeleton_Pressed = false;
-		}
-
-        // Spawn enemy skeletons
-        if (game_Data.enemy_Castle.current_Spawn_Delay < 0) {
-            spawn_Skeleton(
-                &unit_Skeleton, 
-                { (float)game_Data.enemy_Castle.rigid_Body.position_WS.x,
-                ((float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite.radius) },
-                &game_Data.player_Castle);
-            game_Data.enemy_Skeletons.push_back(unit_Skeleton);
-            game_Data.enemy_Castle.current_Spawn_Delay = game_Data.enemy_Castle.spawn_Recharge;
-        }
-        else {
-            game_Data.enemy_Castle.current_Spawn_Delay -= delta_Time;
-        }
-       
-        // Update arrow positions
-        for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
-            if (game_Data.player_Arrows[i].destroyed == false) {
-                update_Arrow_Position(&game_Data.player_Arrows[i], delta_Time);
+        if (current_Game_State == Current_Game_State::MENU) {
+			// No game logic
+            SDL_RenderClear(renderer);
+			SDL_RenderCopy(renderer, background_Menu.texture, NULL, NULL);
+        
+            draw_String_On_Canvas(
+                &font_1, 
+                "Castle Defense", 
+                RESOLUTION_WIDTH / 2, 
+                RESOLUTION_HEIGHT / 4, 
+                8, 
+                true, 
+                Select_Color::BLACK,
+                20);
+            
+			if (button(&font_1, "Play", RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 50, 300, 100, 4)) {
+                current_Game_State = Current_Game_State::GAMELOOP;
 			}
-        }
+			if (button(&font_1, "Options", RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 150, 300, 100, 4)) {
 
-		// Update player skeleton positions
-		for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-			if (game_Data.player_Skeletons[i].destroyed == false) {
-				update_Skeleton_Position(&game_Data.player_Skeletons[i], delta_Time);
 			}
-		}
+			if (button(&font_1, "Quit", RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 250, 300, 100, 4)) {
+				running = false;
+			}
 
-        // Update enemy skeleton positions
-        for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-            if (game_Data.enemy_Skeletons[i].destroyed == false) {
-                update_Skeleton_Position(&game_Data.enemy_Skeletons[i], delta_Time);
-            }
+            SDL_RenderPresent(renderer);
+        
         }
+        else if (current_Game_State == Current_Game_State::GAMELOOP) {
+            last_Ticks = ticks;
+            ticks = (float)SDL_GetTicks64();
+            delta_Time = ticks - last_Ticks;
+            delta_Time /= 1000;
 
-        // Collision detection for arrows
-        for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
-            if (check_RB_Collision(&game_Data.player_Arrows[i].rigid_Body, &game_Data.enemy_Castle.rigid_Body)) {
-                game_Data.enemy_Castle.health_Bar.current_HP -= game_Data.player_Arrows[i].damage;
-                game_Data.player_Arrows[i].destroyed = true;
-            }
-            // Collision with map
-            if (check_Height_Map_Collision(
-				&game_Data.player_Arrows[i].rigid_Body,
-                game_Data.terrain_Height_Map))
-            {
-                game_Data.player_Arrows[i].stop_Arrow = true;
-            }
-            // Collision with skeletons and arrows
-            for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-                if (check_RB_Collision(&game_Data.player_Arrows[i].rigid_Body, &game_Data.enemy_Skeletons[j].rigid_Body)) {
-                    if (!game_Data.player_Arrows[i].stop_Arrow) {
-                        game_Data.enemy_Skeletons[j].health_Bar.current_HP -= game_Data.player_Arrows[i].damage;
-                        game_Data.player_Arrows[i].destroyed = true;
-                    }
-                }
-            }
-        }
-
-        // Collision enemy skeleton with map
-        for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-            if (check_Height_Map_Collision(&game_Data.enemy_Skeletons[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                game_Data.enemy_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.enemy_Skeletons[i].sprite.radius);
-            }
-        }
-
-        // (check_Height_Map_Collision((int)game_Data.player_Skeletons[i].rigid_Body.position_WS.x, ((int)game_Data.player_Skeletons[i].rigid_Body.position_WS.y + (int)game_Data.player_Skeletons[i].sprite.radius), game_Data.terrain_Height_Map)
-        // Collision player skeletons with map
-        for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-            if (check_Height_Map_Collision(&game_Data.player_Skeletons[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                game_Data.player_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.player_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.player_Skeletons[i].sprite.radius);
-            }
-        }
-
-		// Collision with skeletons
-        // NOTE: Set stop_Skeleton false for all the skeletons
-        // or else it overrides 'true' in the nested loop
-		for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-			game_Data.player_Skeletons[i].stop_Skeleton = false;
-		}
-		for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-			game_Data.enemy_Skeletons[j].stop_Skeleton = false;
-		}
-
-        // Collision player skeleton with enemy castle
-        for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-            if (check_RB_Collision(&game_Data.player_Skeletons[i].rigid_Body, &game_Data.enemy_Castle.rigid_Body)) {
-                game_Data.player_Skeletons[i].stop_Skeleton = true;
-                if (game_Data.player_Skeletons[i].current_Cooldown < 0) {
-                    game_Data.player_Skeletons[i].current_Cooldown = game_Data.player_Skeletons[i].attack_Rate;
-                    game_Data.enemy_Castle.health_Bar.current_HP -= game_Data.player_Skeletons[i].damage;
+            // Spawn Arrows and update lifetime
+            if (key_Space_Pressed) {
+                if (game_Data.player_Castle.current_Fire_Cooldown < 0) {
+                    Vector target_Mouse = {};
+                    int x, y = 0;
+                    SDL_GetMouseState(&x, &y);
+                    target_Mouse = { (float)x,(float)y };
+                    spawn_Arrow(&player_Arrow, &game_Data.player_Castle.rigid_Body.position_WS, &target_Mouse);
+                    game_Data.player_Arrows.push_back(player_Arrow);
+                    game_Data.player_Castle.current_Fire_Cooldown = game_Data.player_Castle.fire_Cooldown;
                 }
                 else {
-                    game_Data.player_Skeletons[i].current_Cooldown -= delta_Time;
+                    game_Data.player_Castle.current_Fire_Cooldown -= delta_Time;
                 }
             }
-        }
-		// Collision enemy skeleton with player castle
-		for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-			if (check_RB_Collision(&game_Data.enemy_Skeletons[i].rigid_Body, &game_Data.player_Castle.rigid_Body)) {
-				game_Data.enemy_Skeletons[i].stop_Skeleton = true;
-				if (game_Data.enemy_Skeletons[i].current_Cooldown < 0) {
-					game_Data.enemy_Skeletons[i].current_Cooldown = game_Data.enemy_Skeletons[i].attack_Rate;
-					game_Data.player_Castle.health_Bar.current_HP -= game_Data.enemy_Skeletons[i].damage;
-				}
-				else {
-					game_Data.enemy_Skeletons[i].current_Cooldown -= delta_Time;
-				}
-			}
-		}
+            else {
+                game_Data.player_Castle.current_Fire_Cooldown -= delta_Time;
+            }
 
-        // Skeletons colliding with eachother
-        for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+            // Spawn Player Skeletons
+            if (spawn_Skeleton_Pressed) {
+                spawn_Skeleton(
+                    &unit_Skeleton,
+                    { (float)game_Data.player_Castle.rigid_Body.position_WS.x,
+                    ((float)game_Data.terrain_Height_Map[(int)game_Data.player_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite.radius) },
+                    &game_Data.enemy_Castle);
+                game_Data.player_Skeletons.push_back(unit_Skeleton);
+                spawn_Skeleton_Pressed = false;
+            }
+
+            // Spawn enemy skeletons
+            if (game_Data.enemy_Castle.current_Spawn_Cooldown < 0) {
+                spawn_Skeleton(
+                    &unit_Skeleton,
+                    { (float)game_Data.enemy_Castle.rigid_Body.position_WS.x,
+                    ((float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite.radius) },
+                    &game_Data.player_Castle);
+                game_Data.enemy_Skeletons.push_back(unit_Skeleton);
+                game_Data.enemy_Castle.current_Spawn_Cooldown = game_Data.enemy_Castle.spawn_Cooldown;
+            }
+            else {
+                game_Data.enemy_Castle.current_Spawn_Cooldown -= delta_Time;
+            }
+
+            // Update arrow positions
+            for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
+                if (game_Data.player_Arrows[i].destroyed == false) {
+                    update_Arrow_Position(&game_Data.player_Arrows[i], delta_Time);
+                }
+            }
+
+            // Update player skeleton positions
+            for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+                if (game_Data.player_Skeletons[i].destroyed == false) {
+                    update_Skeleton_Position(&game_Data.player_Skeletons[i], delta_Time);
+                }
+            }
+
+            // Update enemy skeleton positions
+            for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
+                if (game_Data.enemy_Skeletons[i].destroyed == false) {
+                    update_Skeleton_Position(&game_Data.enemy_Skeletons[i], delta_Time);
+                }
+            }
+
+            // Collision detection for arrows
+            for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
+                if (check_RB_Collision(&game_Data.player_Arrows[i].rigid_Body, &game_Data.enemy_Castle.rigid_Body)) {
+                    game_Data.enemy_Castle.health_Bar.current_HP -= game_Data.player_Arrows[i].damage;
+                    game_Data.player_Arrows[i].destroyed = true;
+                }
+                // Collision with map
+                if (check_Height_Map_Collision(
+                    &game_Data.player_Arrows[i].rigid_Body,
+                    game_Data.terrain_Height_Map))
+                {
+                    game_Data.player_Arrows[i].stop_Arrow = true;
+                }
+                // Collision with skeletons and arrows
+                for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
+                    if (check_RB_Collision(&game_Data.player_Arrows[i].rigid_Body, &game_Data.enemy_Skeletons[j].rigid_Body)) {
+                        if (!game_Data.player_Arrows[i].stop_Arrow) {
+                            game_Data.enemy_Skeletons[j].health_Bar.current_HP -= game_Data.player_Arrows[i].damage;
+                            game_Data.player_Arrows[i].destroyed = true;
+                        }
+                    }
+                }
+            }
+
+            // Collision enemy skeleton with map
+            for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
+                if (check_Height_Map_Collision(&game_Data.enemy_Skeletons[i].rigid_Body, game_Data.terrain_Height_Map)) {
+                    game_Data.enemy_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.enemy_Skeletons[i].sprite.radius);
+                }
+            }
+
+            // Collision player skeletons with map
+            for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+                if (check_Height_Map_Collision(&game_Data.player_Skeletons[i].rigid_Body, game_Data.terrain_Height_Map)) {
+                    game_Data.player_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.player_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.player_Skeletons[i].sprite.radius);
+                }
+            }
+
+            // Collision with skeletons
+            // NOTE: Set stop_Skeleton false for all the skeletons
+            // or else it overrides 'true' in the nested loop
+            for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+                game_Data.player_Skeletons[i].stop_Skeleton = false;
+            }
             for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-                if (check_RB_Collision(&game_Data.player_Skeletons[i].rigid_Body, &game_Data.enemy_Skeletons[j].rigid_Body)) {
+                game_Data.enemy_Skeletons[j].stop_Skeleton = false;
+            }
+
+            // Collision player skeleton with enemy castle
+            for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+                if (check_RB_Collision(&game_Data.player_Skeletons[i].rigid_Body, &game_Data.enemy_Castle.rigid_Body)) {
                     game_Data.player_Skeletons[i].stop_Skeleton = true;
-                    game_Data.enemy_Skeletons[j].stop_Skeleton = true;
-                    if (game_Data.player_Skeletons[i].current_Cooldown <= 0) {
-                        game_Data.player_Skeletons[i].current_Cooldown = game_Data.player_Skeletons[i].attack_Rate;
-                        game_Data.enemy_Skeletons[j].health_Bar.current_HP -= game_Data.player_Skeletons[i].damage;
+                    if (game_Data.player_Skeletons[i].current_Attack_Cooldown < 0) {
+                        game_Data.player_Skeletons[i].current_Attack_Cooldown = game_Data.player_Skeletons[i].attack_Cooldown;
+                        game_Data.enemy_Castle.health_Bar.current_HP -= game_Data.player_Skeletons[i].damage;
                     }
                     else {
-                        game_Data.player_Skeletons[i].current_Cooldown -= delta_Time;
+                        game_Data.player_Skeletons[i].current_Attack_Cooldown -= delta_Time;
                     }
-                    if (game_Data.enemy_Skeletons[j].current_Cooldown <= 0) {
-                        game_Data.enemy_Skeletons[j].current_Cooldown = game_Data.enemy_Skeletons[j].attack_Rate;
-                        game_Data.player_Skeletons[i].health_Bar.current_HP -= game_Data.enemy_Skeletons[j].damage;
-                    }
-                    else {
-                        game_Data.enemy_Skeletons[j].current_Cooldown -= delta_Time;
-                    }
-                    // Enemy skeletons with player castle
-					if (check_RB_Collision(&game_Data.enemy_Skeletons[j].rigid_Body, &game_Data.player_Castle.rigid_Body)) {
-						game_Data.enemy_Skeletons[i].stop_Skeleton = true;
-						if (game_Data.enemy_Skeletons[i].current_Cooldown < 0) {
-							game_Data.enemy_Skeletons[i].current_Cooldown = game_Data.enemy_Skeletons[i].attack_Rate;
-							game_Data.player_Castle.health_Bar.current_HP -= game_Data.enemy_Skeletons[i].damage;
-						}
-						else {
-							game_Data.enemy_Skeletons[i].current_Cooldown -= delta_Time;
-						}
-					}
                 }
             }
+
+            // Collision enemy skeleton with player castle
+            for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
+                if (check_RB_Collision(&game_Data.enemy_Skeletons[i].rigid_Body, &game_Data.player_Castle.rigid_Body)) {
+                    game_Data.enemy_Skeletons[i].stop_Skeleton = true;
+                    if (game_Data.enemy_Skeletons[i].current_Attack_Cooldown < 0) {
+                        game_Data.enemy_Skeletons[i].current_Attack_Cooldown = game_Data.enemy_Skeletons[i].attack_Cooldown;
+                        game_Data.player_Castle.health_Bar.current_HP -= game_Data.enemy_Skeletons[i].damage;
+                    }
+                    else {
+                        game_Data.enemy_Skeletons[i].current_Attack_Cooldown -= delta_Time;
+                    }
+                }
+            }
+
+            // Skeletons colliding with each other
+            for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+                for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
+                    if (check_RB_Collision(&game_Data.player_Skeletons[i].rigid_Body, &game_Data.enemy_Skeletons[j].rigid_Body)) {
+                        game_Data.player_Skeletons[i].stop_Skeleton = true;
+                        game_Data.enemy_Skeletons[j].stop_Skeleton = true;
+                        if (game_Data.player_Skeletons[i].current_Attack_Cooldown <= 0) {
+                            game_Data.player_Skeletons[i].current_Attack_Cooldown = game_Data.player_Skeletons[i].attack_Cooldown;
+                            game_Data.enemy_Skeletons[j].health_Bar.current_HP -= game_Data.player_Skeletons[i].damage;
+                        }
+                        else {
+                            game_Data.player_Skeletons[i].current_Attack_Cooldown -= delta_Time;
+                        }
+                        if (game_Data.enemy_Skeletons[j].current_Attack_Cooldown <= 0) {
+                            game_Data.enemy_Skeletons[j].current_Attack_Cooldown = game_Data.enemy_Skeletons[j].attack_Cooldown;
+                            game_Data.player_Skeletons[i].health_Bar.current_HP -= game_Data.enemy_Skeletons[j].damage;
+                        }
+                        else {
+                            game_Data.enemy_Skeletons[j].current_Attack_Cooldown -= delta_Time;
+                        }
+                    }
+                }
+            }
+
+            SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+
+            // ***Renderering happens here***
+            draw_Layer(background);
+            draw_Layer(terrain);
+            draw_Castle(&game_Data.player_Castle, false);
+            draw_Castle(&game_Data.enemy_Castle, true);
+
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+
+            draw_Circle(game_Data.enemy_Castle.rigid_Body.position_WS.x, (float)(game_Data.enemy_Castle.rigid_Body.position_WS.y), game_Data.enemy_Castle.sprite.radius, Select_Color::GREEN);
+            draw_Circle(game_Data.player_Castle.rigid_Body.position_WS.x, (float)((int)game_Data.player_Castle.rigid_Body.position_WS.y), game_Data.player_Castle.sprite.radius, Select_Color::GREEN);
+
+            // Draw player arrows
+            for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
+                draw_RigidBody_Colliders(&game_Data.player_Arrows[i].rigid_Body, Select_Color::GREEN);
+                if (game_Data.player_Arrows[i].life_Time > 0) {
+                    draw_Arrow(&game_Data.player_Arrows[i], false);
+                    game_Data.player_Arrows[i].life_Time -= delta_Time;
+                }
+            }
+
+            // Draw enemy skeletons
+            for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
+                draw_RigidBody_Colliders(&game_Data.enemy_Skeletons[i].rigid_Body, Select_Color::GREEN);
+                draw_Skeleton(&game_Data.enemy_Skeletons[i], false);
+                draw_HP_Bar(&game_Data.enemy_Skeletons[i].rigid_Body.position_WS, &game_Data.enemy_Skeletons[i].health_Bar);
+            }
+
+            // Draw player skeletons
+            for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+                draw_RigidBody_Colliders(&game_Data.player_Skeletons[i].rigid_Body, Select_Color::GREEN);
+                draw_Skeleton(&game_Data.player_Skeletons[i], false);
+                draw_HP_Bar(&game_Data.player_Skeletons[i].rigid_Body.position_WS, &game_Data.player_Skeletons[i].health_Bar);
+            }
+
+            draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
+            draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
+
+            draw_Timer(&font_1, { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 30 }, 6, Select_Color::BLACK, 4);
+
+            if (button(&font_1, "Spawn Skeleton", (RESOLUTION_WIDTH / 8), ((RESOLUTION_HEIGHT / 16) * 15), 450, 100, 4)) {
+                spawn_Skeleton_Pressed = true;
+            }
+
+            // Erase destroyed arrows
+            std::erase_if(game_Data.player_Arrows, [](Arrow& arrow) {
+                // Return if we want the value to be destroyed
+                return arrow.destroyed || arrow.life_Time <= 0;
+                });
+
+            // Erase destroy units
+            std::erase_if(game_Data.enemy_Skeletons, [](Skeleton& skeletons) {
+                // Return if we want the value to be destroyed
+                return skeletons.destroyed || skeletons.health_Bar.current_HP <= 0;
+                });
+
+            // Erase destroy units
+            std::erase_if(game_Data.player_Skeletons, [](Skeleton& skeletons) {
+                // Return if we want the value to be destroyed
+                return skeletons.destroyed || skeletons.health_Bar.current_HP <= 0;
+                });
+
+            SDL_RenderPresent(renderer);
         }
-
-        SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
-
-        // ***Renderering happens here***
-        draw_Layer(background);
-        draw_Layer(terrain);
-        draw_Castle(&game_Data.player_Castle, false);
-        draw_Castle(&game_Data.enemy_Castle, true);
-
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
-
-        draw_Circle(game_Data.enemy_Castle.rigid_Body.position_WS.x, (float)(game_Data.enemy_Castle.rigid_Body.position_WS.y), game_Data.enemy_Castle.sprite.radius, Select_Color::GREEN);
-		draw_Circle(game_Data.player_Castle.rigid_Body.position_WS.x, (float)((int)game_Data.player_Castle.rigid_Body.position_WS.y), game_Data.player_Castle.sprite.radius, Select_Color::GREEN);
-
-        // Draw player arrows
-        for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
-            draw_RigidBody_Colliders(&game_Data.player_Arrows[i].rigid_Body, Select_Color::GREEN);
-            if (game_Data.player_Arrows[i].life_Time > 0) {
-                draw_Arrow(&game_Data.player_Arrows[i], false);
-                game_Data.player_Arrows[i].life_Time -= delta_Time;
-            } 
-        }
-
-        // Draw enemy skeletons
-        for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-            draw_RigidBody_Colliders(&game_Data.enemy_Skeletons[i].rigid_Body, Select_Color::GREEN);
-            draw_Skeleton(&game_Data.enemy_Skeletons[i], false);
-            draw_HP_Bar(&game_Data.enemy_Skeletons[i].rigid_Body.position_WS, &game_Data.enemy_Skeletons[i].health_Bar);
-        }
-
-        // Draw player skeletons
-        for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-            draw_RigidBody_Colliders(&game_Data.player_Skeletons[i].rigid_Body, Select_Color::GREEN);
-            draw_Skeleton(&game_Data.player_Skeletons[i], false);
-            draw_HP_Bar(&game_Data.player_Skeletons[i].rigid_Body.position_WS, &game_Data.player_Skeletons[i].health_Bar);
-        }
-
-        draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
-		draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
-
-        draw_Timer(&font_1, { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 30 }, 6);
-
-        if (button(&font_1, "Spawn Skeleton", (RESOLUTION_WIDTH / 8), ((RESOLUTION_HEIGHT / 16) * 15), 450, 100)) {
-            spawn_Skeleton_Pressed = true;
-        }
-
-        // Erase destroyed arrows
-        std::erase_if(game_Data.player_Arrows, [](Arrow& arrow) {
-            // Return if we want the value to be destroyed
-            return arrow.destroyed || arrow.life_Time <= 0;
-            });
-
-        // Erase destroy units
-        std::erase_if(game_Data.enemy_Skeletons, [](Skeleton& skeletons) {
-            // Return if we want the value to be destroyed
-            return skeletons.destroyed || skeletons.health_Bar.current_HP <= 0;
-            });
-
-        // Erase destroy units
-        std::erase_if(game_Data.player_Skeletons, [](Skeleton& skeletons) {
-            // Return if we want the value to be destroyed
-            return skeletons.destroyed || skeletons.health_Bar.current_HP <= 0;
-            });
-
-        SDL_RenderPresent(renderer);
     }
 
     return 0;
