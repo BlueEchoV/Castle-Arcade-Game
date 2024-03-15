@@ -186,8 +186,8 @@ Archer_Data archer_Data_Array[] = {
 struct Animation_Data {
     Sprite_Sheet sprite_Sheet;
     int num_Of_Frames;
-    int slowest_Animation_Speed;
-    int fastest_Animation_Speed;
+    int slowest_Speed;
+    int fastest_Speed;
 };
 
 enum Animation_Type {
@@ -219,13 +219,17 @@ enum Level {
 	LEVEL_1,
 	LEVEL_2,
 	LEVEL_3,
+	LEVEL_4,
+	LEVEL_5,
 	TOTAL_LEVELS
 };
 
 Skeleton_Data skeleton_Data_Array[TOTAL_LEVELS] = {
 	{.speed = 100, .damage = 20, .hp = 100},
 	{.speed = 200, .damage = 25, .hp = 125},
-	{.speed = 300, .damage = 30, .hp = 150}
+	{.speed = 300, .damage = 30, .hp = 150},
+	{.speed = 400, .damage = 35, .hp = 175},
+	{.speed = 500, .damage = 40, .hp = 200}
 };
 
 struct Skeleton {
@@ -245,6 +249,42 @@ struct Skeleton {
     bool stop_Skeleton;
 };
 
+struct Archer_Data {
+	float speed;
+	float damage;
+	float hp;
+};
+
+// Unit_Animation_Data skeleton_Animations[static_cast<size_t>(Animation_Type::COUNT)];
+Unit_Animation_Data archer_Animations[TOTAL_ANIMATIONS] = {
+	{ Animation_Type::WALKING, {}},
+	{ Animation_Type::ATTACKING, {}},
+	{ Animation_Type::DYING, {}}
+};
+
+Archer_Data archer_Data_Array[TOTAL_LEVELS] = {
+	{.speed = 100, .damage = 10, .hp = 100},
+	{.speed = 150, .damage = 15, .hp = 125},
+	{.speed = 200, .damage = 20, .hp = 150},
+	{.speed = 250, .damage = 25, .hp = 175},
+	{.speed = 300, .damage = 30, .hp = 200}
+};
+
+struct Archer {
+	Archer_Data* archer_Data;
+	Unit_Animation_Data* animations;
+
+	Rigid_Body rigid_Body;
+	Health_Bar health_Bar;
+
+	float attack_Cooldown;
+	float current_Attack_Cooldown;
+    float attack_Range;
+
+	bool destroyed;
+	bool stop_Archer;
+};
+
 struct Game_Data {
     // Difficulty level added here
     Castle                  player_Castle;
@@ -253,6 +293,7 @@ struct Game_Data {
     std::vector<Arrow>      player_Arrows;
 	std::vector<Skeleton>   enemy_Skeletons;
 	std::vector<Skeleton>   player_Skeletons;
+    std::vector<Archer>     player_Archers;
 };
 
 void my_Memory_Copy(void* dest, const void* src, size_t count) {
@@ -269,12 +310,18 @@ float calculate_Distance(float x1, float y1, float x2, float y2) {
 
 float return_Sprite_Radius(Sprite sprite) {
 	float max_Distance = 0;
-	for (int y = 0; y < sprite.source_Rect.h; y++) {
-		for (int x = 0; x < sprite.source_Rect.w; x++) {
+	for (int y = sprite.source_Rect.y; y < (sprite.source_Rect.h + sprite.source_Rect.y); y++) {
+		for (int x = sprite.source_Rect.x; x < (sprite.source_Rect.w + sprite.source_Rect.x); x++) {
 			int index = 0;
 			index = (4 * ((y * sprite.image->width) + x)) + 3;
 			if (sprite.image->pixel_Data[index] != 0) {
-				float distance = calculate_Distance((float)x, (float)y, sprite.center.x, sprite.center.y);
+				float distance = 
+                    calculate_Distance(
+                        (float)x, 
+                        (float)y, 
+                        (float)(sprite.source_Rect.x + sprite.source_Rect.w / 2), 
+                        (float)(sprite.source_Rect.y + sprite.source_Rect.h / 2)
+                    );
 				if (distance > max_Distance) {
 					max_Distance = distance;
 				}
@@ -291,7 +338,7 @@ Image create_Image(const char* file_name) {
     unsigned char* data = stbi_load(file_name, &width, &height, &channels, 4);
 
     if (data == NULL) {
-        SDL_Log("ERROR: stbi_load returned NULL: %s", SDL_GetError());
+        SDL_Log("ERROR: stbi_load returned NULL");
         return result;
     }
 
@@ -333,11 +380,7 @@ Sprite create_Sprite(Image* image, SDL_Rect* source_Rect) {
 
     result.image = image;
     // This is the width and height of the individual sprite
-    result.source_Rect.w = source_Rect->w;
-    result.source_Rect.h = source_Rect->h;
-    // Origin top left corner
-	result.source_Rect.x = source_Rect->x;
-	result.source_Rect.y = source_Rect->y;
+    result.source_Rect = *source_Rect;
 	result.center = { (float)result.source_Rect.w / 2, (float)result.source_Rect.h / 2 };
 	result.radius = return_Sprite_Radius(result);
 
@@ -400,6 +443,9 @@ void draw_Arrow(Arrow* arrow, bool flip) {
     SDL_RenderCopyEx(renderer, arrow->sprite_Sheet.sprites[0].image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
+// Flickering when speed changes
+// Same animation frame
+// Code is trash
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* unit_Animation_Data, float animation_Speed, bool flip) {
     if (animation_Speed <= 0) {
         SDL_Log("ERROR: draw_Unit_Animated() - Animation speed <= 0");
@@ -411,16 +457,18 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* unit_Animat
     Uint32 ticks = SDL_GetTicks();
     Uint32 new_Animation_Speed = 0;
     // This logic could also apply to the attack animation and whatnot if the skeletons attack faster
-    if ((int)animation_Speed < unit_Animation_Data->animation_Data.slowest_Animation_Speed 
-        && (int)animation_Speed > unit_Animation_Data->animation_Data.fastest_Animation_Speed) {
-        new_Animation_Speed = unit_Animation_Data->animation_Data.slowest_Animation_Speed - (int)animation_Speed;
-    }
-    else if ((int)animation_Speed < unit_Animation_Data->animation_Data.slowest_Animation_Speed) {
+    Unit_Animation_Data ani_Data;
+    if ((int)animation_Speed < unit_Animation_Data->animation_Data.slowest_Speed
+        && (int)animation_Speed > unit_Animation_Data->animation_Data.fastest_Speed) {
         // Invert the speed by subtraction
-        new_Animation_Speed = unit_Animation_Data->animation_Data.slowest_Animation_Speed;
+        //                                                                      500             450
+        new_Animation_Speed = unit_Animation_Data->animation_Data.slowest_Speed - (int)animation_Speed;
     }
-    else if ((int)animation_Speed > unit_Animation_Data->animation_Data.fastest_Animation_Speed) {
-        new_Animation_Speed = unit_Animation_Data->animation_Data.fastest_Animation_Speed;
+    else if ((int)animation_Speed < unit_Animation_Data->animation_Data.slowest_Speed) {
+        new_Animation_Speed = unit_Animation_Data->animation_Data.slowest_Speed;
+    }
+    else if ((int)animation_Speed > unit_Animation_Data->animation_Data.fastest_Speed) {
+        new_Animation_Speed = unit_Animation_Data->animation_Data.fastest_Speed;
     }
     else {
         SDL_Log("ERROR: draw_Unit_Animated() last else condition statement hit");
@@ -484,56 +532,33 @@ void update_Arrow_Position(Arrow* arrow, float delta_Time) {
 	}
 }
 
-/*
-void update_Arrow_Position(Arrow* arrow, float delta_Time) {
-	if (!arrow->stop_Arrow) {
-		arrow->rigid_Body.velocity.y += GRAVITY * delta_Time;
-
-		arrow->rigid_Body.position_WS.x += arrow->rigid_Body.velocity.x * delta_Time;
-		arrow->rigid_Body.position_WS.y += arrow->rigid_Body.velocity.y * delta_Time;
-
-		arrow->angle = (float)(atan2(arrow->rigid_Body.velocity.y, arrow->rigid_Body.velocity.x) * (180 / M_PI));
-
-        float angle_In_Radians = arrow->angle * (float)(M_PI / 180.0);
-
-        float length_Offset = arrow->sprite.radius - arrow->rigid_Body.colliders[0].radius;
-
-		float tip_Offset_X = (float)cos(angle_In_Radians) * length_Offset;
-		float tip_Offset_Y = (float)sin(angle_In_Radians) * length_Offset;
-
-        // First collider is the tip
-        if (!arrow->rigid_Body.colliders.empty()) {
-			arrow->rigid_Body.colliders[0].position_LS.x = tip_Offset_X;
-			arrow->rigid_Body.colliders[0].position_LS.y = tip_Offset_Y;
-        }
-
-	}
-}
-*/
-
-void update_Skeleton_Position(Skeleton* skeleton, float delta_Time) {
-    if (!skeleton->stop_Skeleton) {
-        skeleton->rigid_Body.position_WS.y += GRAVITY * delta_Time;
-        skeleton->rigid_Body.position_WS.x += (skeleton->rigid_Body.velocity.x * delta_Time);
-        skeleton->rigid_Body.position_WS.y += (skeleton->rigid_Body.velocity.y * delta_Time);
+void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time) {
+    if (!stop_Unit) {
+		rigid_Body->position_WS.y += GRAVITY * delta_Time;
+		rigid_Body->position_WS.x += (rigid_Body->velocity.x * delta_Time);
+		rigid_Body->position_WS.y += (rigid_Body->velocity.y * delta_Time);
     }
 }
 
-void spawn_Arrow(Arrow* arrow, Vector* spawn_Position, Vector* target_Position) {
-    arrow->rigid_Body.position_WS.x = spawn_Position->x;
-    arrow->rigid_Body.position_WS.y = spawn_Position->y;
+void spawn_Arrow(std::vector<Arrow>* player_Arrows, Arrow& arrow, Vector* spawn_Position, Vector* target_Position, float damage) {
+    arrow.damage = damage;
+    
+    arrow.rigid_Body.position_WS.x = spawn_Position->x;
+    arrow.rigid_Body.position_WS.y = spawn_Position->y;
 
     Vector direction_Vector = {};
-    direction_Vector.x = target_Position->x - arrow->rigid_Body.position_WS.x;
-    direction_Vector.y = target_Position->y - arrow->rigid_Body.position_WS.y;
+    direction_Vector.x = target_Position->x - arrow.rigid_Body.position_WS.x;
+    direction_Vector.y = target_Position->y - arrow.rigid_Body.position_WS.y;
     
     float length = (float)sqrt((direction_Vector.x * direction_Vector.x) + (direction_Vector.y * direction_Vector.y));
 
     direction_Vector.x /= length;
     direction_Vector.y /= length;
 
-    arrow->rigid_Body.velocity.x = direction_Vector.x * arrow->speed;
-    arrow->rigid_Body.velocity.y = direction_Vector.y * arrow->speed;
+    arrow.rigid_Body.velocity.x = direction_Vector.x * arrow.speed;
+    arrow.rigid_Body.velocity.y = direction_Vector.y * arrow.speed;
+
+    player_Arrows->push_back(arrow);
 }
 
 void spawn_Skeleton(Skeleton* unit_Skeleton, Vector spawn_Location, Castle* target_Castle, Level level) {
@@ -557,6 +582,29 @@ void spawn_Skeleton(Skeleton* unit_Skeleton, Vector spawn_Location, Castle* targ
     // Set the new velocity
     unit_Skeleton->rigid_Body.velocity.x = direction_Vector.x * unit_Skeleton->skeleton_Data->speed;
     unit_Skeleton->rigid_Body.velocity.y = direction_Vector.y * unit_Skeleton->skeleton_Data->speed;
+}
+
+void spawn_Archer(Archer* unit_Archer, Vector spawn_Location, Castle* target_Castle, Level level) {
+	unit_Archer->archer_Data = &archer_Data_Array[level];
+	unit_Archer->health_Bar.max_HP = archer_Data_Array[level].hp;
+	unit_Archer->health_Bar.current_HP = unit_Archer->health_Bar.max_HP;
+	unit_Archer->rigid_Body.position_WS.x = spawn_Location.x;
+	unit_Archer->rigid_Body.position_WS.y = spawn_Location.y;
+
+	Vector direction_Vector = {};
+	direction_Vector.x = target_Castle->rigid_Body.position_WS.x - unit_Archer->rigid_Body.position_WS.x;
+	direction_Vector.y = target_Castle->rigid_Body.position_WS.y - unit_Archer->rigid_Body.position_WS.y;
+
+	// Magnitude of the Vector
+	float length = (float)sqrt((direction_Vector.x * direction_Vector.x) + (direction_Vector.y * direction_Vector.y));
+
+	// Normalize
+	direction_Vector.x /= length;
+	direction_Vector.y /= length;
+
+	// Set the new velocity
+	unit_Archer->rigid_Body.velocity.x = direction_Vector.x * unit_Archer->archer_Data->speed;
+	unit_Archer->rigid_Body.velocity.y = direction_Vector.y * unit_Archer->archer_Data->speed;
 }
 
 void draw_Circle(float center_X, float center_Y, float radius, Select_Color color) {
@@ -861,58 +909,6 @@ bool button(Font* font, const char* string, int position_X, int position_Y, int 
 	return button_Pressed;
 }
 
-/*
-bool button(Font* font, const char* string, int position_X, int position_Y, int w, int h) {
-    SDL_Rect button_Area = {};
-    // Centers the button
-    button_Area.x = (position_X - (w / 2));
-    button_Area.y = (position_Y - (h / 2));
-    button_Area.w = w;
-    button_Area.h = h;
-
-    // Set background as black
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &button_Area);
-
-    // Calculate the size for the string based off the width of the button
-    size_t length_Pixels = strlen(string);
-    length_Pixels *= font->char_Width;
-    int size = (w / (int)length_Pixels);
-
-    draw_String(font, string, position_X, position_Y, size, true);
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
-    
-    int x, y;
-    Uint32 mouse = SDL_GetMouseState(&x, &y);
-    bool button_Pressed = false;
-
-    bool was_Hot = (current_frame_Hot_Name == string);
-
-    if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
-        && y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-        if (mouse_Down_This_Frame) {
-            next_Frame_Hot_Name = string;
-        }
-        else if (was_Hot && !(mouse & SDL_BUTTON_LMASK)) {
-            button_Pressed = true;
-        }
-        else
-        {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
-        }
-    }
-    if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
-        next_Frame_Hot_Name = string;
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-    }
-
-    outline_Rect(&button_Area, 10);
-
-    return button_Pressed;
-}
-*/
-
 std::vector<int> create_Height_Map(const char* filename) {
     int channels = 0;
     int terrain_Width = 0;
@@ -920,7 +916,7 @@ std::vector<int> create_Height_Map(const char* filename) {
     unsigned char* data = stbi_load(filename, &terrain_Width, &terrain_Height, &channels, 4);
     
     if (data == NULL) {
-        SDL_Log("ERROR: stbi_load returned NULL: %s", SDL_GetError());
+        SDL_Log("ERROR: stbi_load returned NULL");
         return std::vector<int>();
     }
 
@@ -1017,7 +1013,7 @@ int main(int argc, char** argv) {
     Image castle_Image = create_Image("images/player_Castle.png");
     Image arrow_Image = create_Image("images/arrow.png");
     Image skeleton_Image = create_Image("images/unit_Skeleton_Sprite_Sheet.png");
-    // Image archer_Image = create_Image("images/unit_Archer.png");
+    Image archer_Image = create_Image("images/unit_Archer.png");
 
     // Sprite sheets
     Sprite_Sheet gameloop_BKG_SS = create_Sprite_Sheet(&gameloop_BKG_Image, 1, 1);
@@ -1031,10 +1027,16 @@ int main(int argc, char** argv) {
     skeleton_Animations[WALKING].animation_Data.num_Of_Frames = 
         (skeleton_Animations[WALKING].animation_Data.sprite_Sheet.rows 
         * skeleton_Animations[WALKING].animation_Data.sprite_Sheet.columns);
-    skeleton_Animations[WALKING].animation_Data.slowest_Animation_Speed = 500;
-    skeleton_Animations[WALKING].animation_Data.fastest_Animation_Speed = 50;
+    skeleton_Animations[WALKING].animation_Data.slowest_Speed = 500;
+    skeleton_Animations[WALKING].animation_Data.fastest_Speed = 50;
 
-    // Sprite_Sheet skeleton_Sprite_Sheet_Walking = create_Sprite_Sheet(&skeleton_Image, 4, 1);
+    Sprite_Sheet archer_Walking_Sprite_Sheet = create_Sprite_Sheet(&archer_Image, 1, 1);
+	archer_Animations[WALKING].animation_Data.sprite_Sheet = archer_Walking_Sprite_Sheet;
+    archer_Animations[WALKING].animation_Data.num_Of_Frames =
+		(archer_Animations[WALKING].animation_Data.sprite_Sheet.rows
+			* archer_Animations[WALKING].animation_Data.sprite_Sheet.columns);
+    archer_Animations[WALKING].animation_Data.slowest_Speed = 500;
+    archer_Animations[WALKING].animation_Data.fastest_Speed = 50;
 
     Game_Data game_Data = {};
 
@@ -1137,6 +1139,31 @@ int main(int argc, char** argv) {
     add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, 0.0f }, (skeleton_Sprite_Radius->radius / 2));
     add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, (skeleton_Sprite_Radius->radius / 2) }, (skeleton_Sprite_Radius->radius / 2));
 
+	Health_Bar archer_Health_Bar = unit_Health_Bar;
+	Rigid_Body archer_RB = {
+		.rigid_Body_Faces_Velocity = false,
+		.position_WS = { 0.0f , 0.0f },
+		.velocity = { 0.0f, 0.0f },
+		.angle = 0.0f,
+		.colliders = {}
+	};
+    Archer unit_Archer = {
+        .animations = archer_Animations,
+        .rigid_Body = archer_RB,
+        .health_Bar = archer_Health_Bar,
+
+        .attack_Cooldown = 1.5,
+        .current_Attack_Cooldown = 0.0f,
+        .attack_Range = 1000,
+
+		.destroyed = false,
+		.stop_Archer = false
+	};
+	Sprite* archer_Sprite_Radius = &unit_Archer.animations->animation_Data.sprite_Sheet.sprites[0];
+	add_Collider(&unit_Archer.rigid_Body.colliders, { 0.0f, -(archer_Sprite_Radius->radius / 2) }, (archer_Sprite_Radius->radius / 2));
+	add_Collider(&unit_Archer.rigid_Body.colliders, { 0.0f, 0.0f }, (archer_Sprite_Radius->radius / 2));
+	add_Collider(&unit_Archer.rigid_Body.colliders, { 0.0f, (archer_Sprite_Radius->radius / 2) }, (archer_Sprite_Radius->radius / 2));
+
     // Buttons
     SDL_Rect test = {};
     test.x = RESOLUTION_WIDTH / 2;
@@ -1156,6 +1183,10 @@ int main(int argc, char** argv) {
     bool key_Space_Pressed = false;
 
     bool spawn_Skeleton_Pressed = false;
+    bool spawn_Archer_Pressed = false;
+
+    bool temp_W_Pressed = false;
+    bool temp_S_Pressed = false;
 
     bool running = true;
     Current_Game_State current_Game_State = Current_Game_State::GAMELOOP;
@@ -1171,6 +1202,14 @@ int main(int argc, char** argv) {
                     key_Space_Pressed = true;
                     break;
                 }
+                case SDLK_w: {
+                    temp_W_Pressed = true;
+                    break;
+                }
+                case SDLK_s: {
+                    temp_S_Pressed = true;
+                    break;
+                }
                 default: {
                     break;
                 }
@@ -1181,6 +1220,14 @@ int main(int argc, char** argv) {
                 switch (event.key.keysym.sym) {
                 case SDLK_SPACE: {
                     key_Space_Pressed = false;
+                    break;
+                }
+                case SDLK_w: {
+                    temp_W_Pressed = false;
+                    break;
+                }
+                case SDLK_s: {
+                    temp_S_Pressed = false;
                     break;
                 }
                 default: {
@@ -1250,8 +1297,13 @@ int main(int argc, char** argv) {
                     int x, y = 0;
                     SDL_GetMouseState(&x, &y);
                     target_Mouse = { (float)x,(float)y };
-                    spawn_Arrow(&player_Arrow, &game_Data.player_Castle.rigid_Body.position_WS, &target_Mouse);
-                    game_Data.player_Arrows.push_back(player_Arrow);
+                    spawn_Arrow(
+                        &game_Data.player_Arrows,
+                        player_Arrow,
+                        &game_Data.player_Castle.rigid_Body.position_WS,
+                        &target_Mouse,
+                        10
+                    );
                     game_Data.player_Castle.current_Fire_Cooldown = game_Data.player_Castle.fire_Cooldown;
                 }
                 else {
@@ -1266,13 +1318,28 @@ int main(int argc, char** argv) {
             if (spawn_Skeleton_Pressed) {
                 spawn_Skeleton(
                     &unit_Skeleton,
-                    { (float)game_Data.player_Castle.rigid_Body.position_WS.x,
-                    ((float)game_Data.terrain_Height_Map[(int)game_Data.player_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius) },
+                    {
+                        (float)game_Data.player_Castle.rigid_Body.position_WS.x,
+                        ((float)game_Data.terrain_Height_Map[(int)game_Data.player_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius)
+                    },
                     &game_Data.enemy_Castle,
                     LEVEL_3
-                    );
+                );
                 game_Data.player_Skeletons.push_back(unit_Skeleton);
                 spawn_Skeleton_Pressed = false;
+            }
+            if (spawn_Archer_Pressed) {
+                spawn_Archer(
+                    &unit_Archer,
+                    {
+                        (float)game_Data.player_Castle.rigid_Body.position_WS.x,
+                        ((float)game_Data.terrain_Height_Map[(int)game_Data.player_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius)
+                    },
+                    &game_Data.enemy_Castle,
+                    LEVEL_2
+                );
+                game_Data.player_Archers.push_back(unit_Archer);
+                spawn_Archer_Pressed = false;
             }
 
             // Spawn enemy skeletons
@@ -1283,7 +1350,7 @@ int main(int argc, char** argv) {
                     ((float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius) },
                     &game_Data.player_Castle,
                     LEVEL_1
-                    );
+                );
                 game_Data.enemy_Skeletons.push_back(unit_Skeleton);
                 game_Data.enemy_Castle.current_Spawn_Cooldown = game_Data.enemy_Castle.spawn_Cooldown;
             }
@@ -1301,14 +1368,32 @@ int main(int argc, char** argv) {
             // Update player skeleton positions
             for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
                 if (game_Data.player_Skeletons[i].destroyed == false) {
-                    update_Skeleton_Position(&game_Data.player_Skeletons[i], delta_Time);
+                    update_Unit_Position(
+                        &game_Data.player_Skeletons[i].rigid_Body,
+                        game_Data.player_Skeletons[i].stop_Skeleton,
+                        delta_Time
+                    );
                 }
             }
 
             // Update enemy skeleton positions
             for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
                 if (game_Data.enemy_Skeletons[i].destroyed == false) {
-                    update_Skeleton_Position(&game_Data.enemy_Skeletons[i], delta_Time);
+                    update_Unit_Position(&game_Data.enemy_Skeletons[i].rigid_Body,
+                        game_Data.enemy_Skeletons[i].stop_Skeleton,
+                        delta_Time
+                    );
+                }
+            }
+
+            // Update player archer positions
+            for (int i = 0; i < game_Data.player_Archers.size(); i++) {
+                if (game_Data.player_Archers[i].destroyed == false) {
+                    update_Unit_Position(
+                        &game_Data.player_Archers[i].rigid_Body,
+                        game_Data.player_Archers[i].stop_Archer,
+                        delta_Time
+                    );
                 }
             }
 
@@ -1350,14 +1435,27 @@ int main(int argc, char** argv) {
                 }
             }
 
+            // Collision player archers with map
+            for (int i = 0; i < game_Data.player_Archers.size(); i++) {
+                if (check_Height_Map_Collision(&game_Data.player_Archers[i].rigid_Body, game_Data.terrain_Height_Map)) {
+                    game_Data.player_Archers[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.player_Archers[i].rigid_Body.position_WS.x]) - game_Data.player_Archers[i].animations->animation_Data.sprite_Sheet.sprites[0].radius);
+                }
+            }
+
             // Collision with skeletons
             // NOTE: Set stop_Skeleton false for all the skeletons
             // or else it overrides 'true' in the nested loop
             for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
                 game_Data.player_Skeletons[i].stop_Skeleton = false;
+                game_Data.player_Skeletons[i].current_Attack_Cooldown -= delta_Time;
             }
-            for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-                game_Data.enemy_Skeletons[j].stop_Skeleton = false;
+            for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
+                game_Data.enemy_Skeletons[i].stop_Skeleton = false;
+                game_Data.enemy_Skeletons[i].current_Attack_Cooldown -= delta_Time;
+            }
+            for (int i = 0; i < game_Data.player_Archers.size(); i++) {
+                game_Data.player_Archers[i].stop_Archer = false;
+                game_Data.player_Archers[i].current_Attack_Cooldown -= delta_Time;
             }
 
             // Collision player skeleton with enemy castle
@@ -1367,9 +1465,6 @@ int main(int argc, char** argv) {
                     if (game_Data.player_Skeletons[i].current_Attack_Cooldown < 0) {
                         game_Data.player_Skeletons[i].current_Attack_Cooldown = game_Data.player_Skeletons[i].attack_Cooldown;
                         game_Data.enemy_Castle.health_Bar.current_HP -= game_Data.player_Skeletons[i].skeleton_Data->damage;
-                    }
-                    else {
-                        game_Data.player_Skeletons[i].current_Attack_Cooldown -= delta_Time;
                     }
                 }
             }
@@ -1381,9 +1476,6 @@ int main(int argc, char** argv) {
                     if (game_Data.enemy_Skeletons[i].current_Attack_Cooldown < 0) {
                         game_Data.enemy_Skeletons[i].current_Attack_Cooldown = game_Data.enemy_Skeletons[i].attack_Cooldown;
                         game_Data.player_Castle.health_Bar.current_HP -= game_Data.enemy_Skeletons[i].skeleton_Data->damage;
-                    }
-                    else {
-                        game_Data.enemy_Skeletons[i].current_Attack_Cooldown -= delta_Time;
                     }
                 }
             }
@@ -1398,15 +1490,46 @@ int main(int argc, char** argv) {
                             game_Data.player_Skeletons[i].current_Attack_Cooldown = game_Data.player_Skeletons[i].attack_Cooldown;
                             game_Data.enemy_Skeletons[j].health_Bar.current_HP -= game_Data.player_Skeletons[i].skeleton_Data->damage;
                         }
-                        else {
-                            game_Data.player_Skeletons[i].current_Attack_Cooldown -= delta_Time;
-                        }
                         if (game_Data.enemy_Skeletons[j].current_Attack_Cooldown <= 0) {
                             game_Data.enemy_Skeletons[j].current_Attack_Cooldown = game_Data.enemy_Skeletons[j].attack_Cooldown;
                             game_Data.player_Skeletons[i].health_Bar.current_HP -= game_Data.enemy_Skeletons[j].skeleton_Data->damage;
                         }
-                        else {
-                            game_Data.enemy_Skeletons[j].current_Attack_Cooldown -= delta_Time;
+                    }
+                }
+            }
+
+            // Player archers and enemy skeletons colliding with each other
+            for (int i = 0; i < game_Data.player_Archers.size(); i++) {
+                Archer* archer = &game_Data.player_Archers[i];
+                for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
+                    Skeleton* skeleton = &game_Data.enemy_Skeletons[j];
+                    float distance_Between = calculate_Distance(
+                        archer->rigid_Body.position_WS.x,
+                        archer->rigid_Body.position_WS.y,
+                        skeleton->rigid_Body.position_WS.x,
+                        skeleton->rigid_Body.position_WS.y
+                    );
+                    float range_Sum = archer->attack_Range;
+                    if (distance_Between <= range_Sum) {
+                        archer->stop_Archer = true;
+                        if (game_Data.player_Archers[i].current_Attack_Cooldown <= 0) {
+                            game_Data.player_Archers[i].current_Attack_Cooldown = game_Data.player_Archers[i].attack_Cooldown;
+                            Vector aim_Head = game_Data.enemy_Skeletons[j].rigid_Body.position_WS;
+                            aim_Head.x += game_Data.enemy_Skeletons[0].animations->animation_Data.sprite_Sheet.sprites[0].radius;
+                            spawn_Arrow(
+                                &game_Data.player_Arrows,
+                                player_Arrow,
+                                &game_Data.player_Archers[i].rigid_Body.position_WS,
+                                &aim_Head,
+                                game_Data.player_Archers[i].archer_Data->damage
+                            );
+                        }
+                    }
+                    if (check_RB_Collision(&game_Data.player_Archers[i].rigid_Body, &game_Data.enemy_Skeletons[j].rigid_Body)) {
+                        game_Data.enemy_Skeletons[j].stop_Skeleton = true;
+                        if (game_Data.enemy_Skeletons[j].current_Attack_Cooldown <= 0) {
+                            game_Data.enemy_Skeletons[j].current_Attack_Cooldown = game_Data.enemy_Skeletons[j].attack_Cooldown;
+                            game_Data.player_Archers[i].health_Bar.current_HP -= game_Data.enemy_Skeletons[j].skeleton_Data->damage;
                         }
                     }
                 }
@@ -1439,24 +1562,44 @@ int main(int argc, char** argv) {
             for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
                 draw_RigidBody_Colliders(&game_Data.enemy_Skeletons[i].rigid_Body, Select_Color::GREEN);
                 draw_Unit_Animated(
-                    &game_Data.enemy_Skeletons[i].rigid_Body, 
-                    game_Data.enemy_Skeletons[i].animations, 
+                    &game_Data.enemy_Skeletons[i].rigid_Body,
+                    game_Data.enemy_Skeletons[i].animations,
                     game_Data.enemy_Skeletons[i].skeleton_Data->speed,
                     false
-                    );
+                );
                 draw_HP_Bar(&game_Data.enemy_Skeletons[i].rigid_Body.position_WS, &game_Data.enemy_Skeletons[i].health_Bar);
             }
 
             // Draw player skeletons
             for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
+                for (int j = 0; j < game_Data.player_Skeletons[i].animations->animation_Data.sprite_Sheet.sprites.size(); j++) {
+                    draw_Circle(
+                        game_Data.player_Skeletons[i].rigid_Body.position_WS.x,
+                        game_Data.player_Skeletons[i].rigid_Body.position_WS.y,
+                        game_Data.player_Skeletons[i].animations->animation_Data.sprite_Sheet.sprites[j].radius,
+                        Select_Color::RED
+                    );
+                }
                 draw_RigidBody_Colliders(&game_Data.player_Skeletons[i].rigid_Body, Select_Color::GREEN);
                 draw_Unit_Animated(
-                    &game_Data.player_Skeletons[i].rigid_Body, 
-                    game_Data.player_Skeletons[i].animations, 
+                    &game_Data.player_Skeletons[i].rigid_Body,
+                    game_Data.player_Skeletons[i].animations,
                     game_Data.player_Skeletons[i].skeleton_Data->speed,
                     true
-                    );
+                );
                 draw_HP_Bar(&game_Data.player_Skeletons[i].rigid_Body.position_WS, &game_Data.player_Skeletons[i].health_Bar);
+            }
+
+            // Draw player archers
+            for (int i = 0; i < game_Data.player_Archers.size(); i++) {
+                draw_RigidBody_Colliders(&game_Data.player_Archers[i].rigid_Body, Select_Color::GREEN);
+                draw_Unit_Animated(
+                    &game_Data.player_Archers[i].rigid_Body,
+                    game_Data.player_Archers[i].animations,
+                    game_Data.player_Archers[i].archer_Data->speed,
+                    false
+                );
+                draw_HP_Bar(&game_Data.player_Archers[i].rigid_Body.position_WS, &game_Data.player_Archers[i].health_Bar);
             }
 
             draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
@@ -1464,9 +1607,33 @@ int main(int argc, char** argv) {
 
             draw_Timer(&font_1, { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 30 }, 6, Select_Color::BLACK, 4);
 
-            if (button(&font_1, "Spawn Skeleton", (RESOLUTION_WIDTH / 8), ((RESOLUTION_HEIGHT / 16) * 15), 450, 100, 4)) {
-                spawn_Skeleton_Pressed = true;
+            // Debugging visualization code
+            Rigid_Body temp_RB = {};
+            temp_RB.position_WS = { 800, 500 };
+            static float speed = 50;
+            if (temp_W_Pressed) {
+                speed += 1;
             }
+            if (temp_S_Pressed) {
+                speed -= 1;
+            }
+            draw_String(&font_1, std::to_string(speed).c_str(), 800, 700, 4, true);
+            draw_Unit_Animated(&temp_RB, &skeleton_Animations[0], speed, false);
+
+            int button_Pos_X = (RESOLUTION_WIDTH / 8);
+            int button_Pos_Y = ((RESOLUTION_HEIGHT / 16) * 15);
+            int button_Width = 450;
+            int button_Height = 100;
+            int string_Size = 4;
+            int x_Offset = button_Width;
+            if (button(&font_1, "Spawn Skeleton", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+                spawn_Skeleton_Pressed = true;
+            } 
+            button_Pos_X += x_Offset;
+			if (button(&font_1, "Spawn Archer", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+				spawn_Archer_Pressed = true;
+			}
+            button_Pos_X += x_Offset;
 
             // Erase destroyed arrows
             std::erase_if(game_Data.player_Arrows, [](Arrow& arrow) {
@@ -1485,6 +1652,12 @@ int main(int argc, char** argv) {
                 // Return if we want the value to be destroyed
                 return skeletons.destroyed || skeletons.health_Bar.current_HP <= 0;
                 });
+
+			// Erase destroy units
+			std::erase_if(game_Data.player_Archers, [](Archer& archer) {
+				// Return if we want the value to be destroyed
+				return archer.destroyed || archer.health_Bar.current_HP <= 0;
+				});
 
             SDL_RenderPresent(renderer);
         }
