@@ -12,6 +12,8 @@
 
 const float GRAVITY = 300;
 
+bool temp_Bool = false;
+
 SDL_Renderer* renderer = NULL;
 
 // Suppress compiler warnings
@@ -183,11 +185,19 @@ Archer_Data archer_Data_Array[] = {
 };
 */
 
+struct Range {
+    int max;
+    int min;
+};
+
 struct Animation_Data {
     Sprite_Sheet sprite_Sheet;
     int num_Of_Frames;
-    int slowest_Speed;
-    int fastest_Speed;
+    Range play_Range;
+
+    bool is_Playing;
+    float last_Frame_Update_Time;
+    int current_Frame;
 };
 
 enum Animation_Type {
@@ -198,8 +208,8 @@ enum Animation_Type {
 };
 
 struct Unit_Animation_Data {
-    Animation_Type animation_Type;
-    Animation_Data animation_Data;
+    Animation_Type type;
+    Animation_Data data;
 };
 
 // Unit_Animation_Data skeleton_Animations[static_cast<size_t>(Animation_Type::COUNT)];
@@ -306,6 +316,12 @@ void my_Memory_Copy(void* dest, const void* src, size_t count) {
 
 float calculate_Distance(float x1, float y1, float x2, float y2) {
 	return (float)sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+
+float linear_Interpolation(float left_Point, float right_Point, float percent) {
+	// Lerp of T = A * (1 - T) + B * T
+	// A is the left side, B is the right side, T is the percentage of the interpolation
+	return ((left_Point) * (1 - percent) + (right_Point)*percent);
 }
 
 float return_Sprite_Radius(Sprite sprite) {
@@ -443,59 +459,83 @@ void draw_Arrow(Arrow* arrow, bool flip) {
     SDL_RenderCopyEx(renderer, arrow->sprite_Sheet.sprites[0].image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
+void update_Animation(Animation_Data* data, float frame_Duration, float delta_Time) {
+    data->last_Frame_Update_Time += delta_Time;
+
+    if (data->last_Frame_Update_Time >= frame_Duration) {
+        data->current_Frame++;
+        if (data->current_Frame >= data->num_Of_Frames) {
+            // Loop back to the beginning of the frames
+            data->current_Frame = 0;
+        }
+    }
+}
+
 // Flickering when speed changes
 // Same animation frame
-// Code is trash
-void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* unit_Animation_Data, float animation_Speed, bool flip) {
-    if (animation_Speed <= 0) {
-        SDL_Log("ERROR: draw_Unit_Animated() - Animation speed <= 0");
-        return;
-    }
-    //                      1000 / 250 = 4  %  4 = 0
-    //                      1250 / 250 = 5  %  4 = 1
-    //                      1500 / 250 = 6  %  4 = 2
-    Uint32 ticks = SDL_GetTicks();
-    Uint32 new_Animation_Speed = 0;
-    // This logic could also apply to the attack animation and whatnot if the skeletons attack faster
-    Unit_Animation_Data ani_Data;
-    if ((int)animation_Speed < unit_Animation_Data->animation_Data.slowest_Speed
-        && (int)animation_Speed > unit_Animation_Data->animation_Data.fastest_Speed) {
-        // Invert the speed by subtraction
-        //                                                                      500             450
-        new_Animation_Speed = unit_Animation_Data->animation_Data.slowest_Speed - (int)animation_Speed;
-    }
-    else if ((int)animation_Speed < unit_Animation_Data->animation_Data.slowest_Speed) {
-        new_Animation_Speed = unit_Animation_Data->animation_Data.slowest_Speed;
-    }
-    else if ((int)animation_Speed > unit_Animation_Data->animation_Data.fastest_Speed) {
-        new_Animation_Speed = unit_Animation_Data->animation_Data.fastest_Speed;
-    }
-    else {
-        SDL_Log("ERROR: draw_Unit_Animated() last else condition statement hit");
-        return;
-    }
-	
-    Uint32 sprite_Frame = ((ticks / new_Animation_Speed) % (int)unit_Animation_Data->animation_Data.num_Of_Frames);
+// NEED MORE VARIABLE TO TRACK
+// Current frame time
+// Frame duration
+// Last frame update time
+// is playing
+void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* Unit_Animation_Data, float play_Speed, bool flip) {
+	if (play_Speed <= 0) {
+		// SDL_Log("ERROR: draw_Unit_Animated() - Animation speed <= 0");
+		return;
+	}
+	Uint64 ticks = SDL_GetTicks64();
+	// Convert to percent
+	float play_Speed_Percent = (play_Speed / 100.0f);
+	if (play_Speed_Percent > 1.0f) {
+		play_Speed_Percent = 1.0f;
+	}
+	if (play_Speed_Percent < 0.0f) {
+		play_Speed_Percent = 0.0f;
+	}
+	// Invert
+	play_Speed_Percent = 1.0f - play_Speed_Percent;
+	float new_Play_Speed = linear_Interpolation(
+		(float)Unit_Animation_Data->data.play_Range.min,
+		(float)Unit_Animation_Data->data.play_Range.max,
+		play_Speed_Percent
+	);
 
-	SDL_Rect current_Frame_Rect = unit_Animation_Data->animation_Data.sprite_Sheet.sprites[sprite_Frame].source_Rect;
+	// 1000 / 250 = 4  %  4 = 0
+	// 1250 / 250 = 5  %  4 = 1
+	// 1500 / 250 = 6  %  4 = 2
+    if (new_Play_Speed < 0) {
+        SDL_Log("ERROR: draw_Unit_Animated - new_Play_Speed less than 0: %f", new_Play_Speed);
+    }
+    int ticks_Divided_Speed = (int)((float)ticks / (float)(new_Play_Speed));
+	Uint32 sprite_Frame = (ticks_Divided_Speed % (int)Unit_Animation_Data->data.num_Of_Frames);
+	if (temp_Bool) {
+		SDL_Log("**************************************");
+		SDL_Log("ticks = %i", ticks);
+		SDL_Log("play_Speed = %f", play_Speed);
+		SDL_Log("(ticks / new_Play_Speed) = %i", ticks_Divided_Speed);
+		SDL_Log("new_Play_Speed = %f", new_Play_Speed);
+		SDL_Log("sprite_Frame = %i", sprite_Frame);
+	}
+
+	SDL_Rect current_Frame_Rect = Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].source_Rect;
 
 	SDL_Rect destination_Rect = {
-		(int)(rigid_Body->position_WS.x - unit_Animation_Data->animation_Data.sprite_Sheet.sprites[sprite_Frame].center.x),
-		(int)(rigid_Body->position_WS.y - unit_Animation_Data->animation_Data.sprite_Sheet.sprites[sprite_Frame].center.y),
+		(int)(rigid_Body->position_WS.x - Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.x),
+		(int)(rigid_Body->position_WS.y - Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.y),
 		current_Frame_Rect.w,
 		current_Frame_Rect.h
 	};
 
 	// Set the center of the rotation
 	SDL_Point center = {
-		(int)unit_Animation_Data->animation_Data.sprite_Sheet.sprites[sprite_Frame].center.x,
-		(int)unit_Animation_Data->animation_Data.sprite_Sheet.sprites[sprite_Frame].center.y
+		(int)Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.x,
+		(int)Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.y
 	};
 
 	// Render the current frame of the animation
 	SDL_RenderCopyEx(
 		renderer,
-		unit_Animation_Data->animation_Data.sprite_Sheet.sprites[sprite_Frame].image->texture,
+		Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].image->texture,
 		&current_Frame_Rect,
 		&destination_Rect,
 		rigid_Body->angle,
@@ -671,12 +711,6 @@ void outline_Rect(SDL_Rect* rect, int outline_Thickness) {
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer, rect);
-}
-
-float linear_Interpolation(float left_Point, float right_Point, float percent) {
-    // Lerp of T = A * (1 - T) + B * T
-    // A is the left side, B is the right side, T is the percentage of the interpolation
-    return ((left_Point) * (1 - percent) + (right_Point)*percent);
 }
 
 void draw_HP_Bar(Vector* position, Health_Bar* health_Bar) {
@@ -1023,20 +1057,22 @@ int main(int argc, char** argv) {
     Sprite_Sheet arrow_SS = create_Sprite_Sheet(&arrow_Image, 1, 1);
 
 	Sprite_Sheet skeleton_Walking_Sprite_Sheet = create_Sprite_Sheet(&skeleton_Image, 1, 4);
-    skeleton_Animations[WALKING].animation_Data.sprite_Sheet = skeleton_Walking_Sprite_Sheet;
-    skeleton_Animations[WALKING].animation_Data.num_Of_Frames = 
-        (skeleton_Animations[WALKING].animation_Data.sprite_Sheet.rows 
-        * skeleton_Animations[WALKING].animation_Data.sprite_Sheet.columns);
-    skeleton_Animations[WALKING].animation_Data.slowest_Speed = 500;
-    skeleton_Animations[WALKING].animation_Data.fastest_Speed = 50;
+    skeleton_Animations[WALKING].data.sprite_Sheet = skeleton_Walking_Sprite_Sheet;
+    skeleton_Animations[WALKING].data.num_Of_Frames = (skeleton_Animations[WALKING].data.sprite_Sheet.rows* skeleton_Animations[WALKING].data.sprite_Sheet.columns);
+	skeleton_Animations[WALKING].data.play_Range.max = 500;
+	skeleton_Animations[WALKING].data.play_Range.min = 5;
+    skeleton_Animations[WALKING].data.is_Playing = false;
+    skeleton_Animations[WALKING].data.current_Frame = 0;
+    skeleton_Animations[WALKING].data.last_Frame_Update_Time = 0.0f;
+
 
     Sprite_Sheet archer_Walking_Sprite_Sheet = create_Sprite_Sheet(&archer_Image, 1, 1);
-	archer_Animations[WALKING].animation_Data.sprite_Sheet = archer_Walking_Sprite_Sheet;
-    archer_Animations[WALKING].animation_Data.num_Of_Frames =
-		(archer_Animations[WALKING].animation_Data.sprite_Sheet.rows
-			* archer_Animations[WALKING].animation_Data.sprite_Sheet.columns);
-    archer_Animations[WALKING].animation_Data.slowest_Speed = 500;
-    archer_Animations[WALKING].animation_Data.fastest_Speed = 50;
+	archer_Animations[WALKING].data.sprite_Sheet = archer_Walking_Sprite_Sheet;
+    archer_Animations[WALKING].data.num_Of_Frames =
+		(archer_Animations[WALKING].data.sprite_Sheet.rows
+			* archer_Animations[WALKING].data.sprite_Sheet.columns);
+	archer_Animations[WALKING].data.play_Range.max = 500;
+	archer_Animations[WALKING].data.play_Range.min = 5;
 
     Game_Data game_Data = {};
 
@@ -1134,7 +1170,7 @@ int main(int argc, char** argv) {
 		.destroyed = false,
 		.stop_Skeleton = false
     };
-    Sprite* skeleton_Sprite_Radius = &unit_Skeleton.animations->animation_Data.sprite_Sheet.sprites[0];
+    Sprite* skeleton_Sprite_Radius = &unit_Skeleton.animations->data.sprite_Sheet.sprites[0];
     add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, -(skeleton_Sprite_Radius->radius / 2) }, (skeleton_Sprite_Radius->radius / 2));
     add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, 0.0f }, (skeleton_Sprite_Radius->radius / 2));
     add_Collider(&unit_Skeleton.rigid_Body.colliders, { 0.0f, (skeleton_Sprite_Radius->radius / 2) }, (skeleton_Sprite_Radius->radius / 2));
@@ -1159,7 +1195,7 @@ int main(int argc, char** argv) {
 		.destroyed = false,
 		.stop_Archer = false
 	};
-	Sprite* archer_Sprite_Radius = &unit_Archer.animations->animation_Data.sprite_Sheet.sprites[0];
+	Sprite* archer_Sprite_Radius = &unit_Archer.animations->data.sprite_Sheet.sprites[0];
 	add_Collider(&unit_Archer.rigid_Body.colliders, { 0.0f, -(archer_Sprite_Radius->radius / 2) }, (archer_Sprite_Radius->radius / 2));
 	add_Collider(&unit_Archer.rigid_Body.colliders, { 0.0f, 0.0f }, (archer_Sprite_Radius->radius / 2));
 	add_Collider(&unit_Archer.rigid_Body.colliders, { 0.0f, (archer_Sprite_Radius->radius / 2) }, (archer_Sprite_Radius->radius / 2));
@@ -1189,6 +1225,7 @@ int main(int argc, char** argv) {
     bool temp_S_Pressed = false;
 
     bool running = true;
+
     Current_Game_State current_Game_State = Current_Game_State::GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
@@ -1269,7 +1306,8 @@ int main(int argc, char** argv) {
                 8, 
                 true, 
                 Select_Color::BLACK,
-                20);
+                20
+            );
             
 			if (button(&font_1, "Play", RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 50, 300, 100, 4)) {
                 current_Game_State = Current_Game_State::GAMELOOP;
@@ -1424,21 +1462,21 @@ int main(int argc, char** argv) {
             // Collision enemy skeleton with map
             for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
                 if (check_Height_Map_Collision(&game_Data.enemy_Skeletons[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                    game_Data.enemy_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.enemy_Skeletons[i].animations->animation_Data.sprite_Sheet.sprites[0].radius);
+                    game_Data.enemy_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.enemy_Skeletons[i].animations->data.sprite_Sheet.sprites[0].radius);
                 }
             }
 
             // Collision player skeletons with map
             for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
                 if (check_Height_Map_Collision(&game_Data.player_Skeletons[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                    game_Data.player_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.player_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.player_Skeletons[i].animations->animation_Data.sprite_Sheet.sprites[0].radius);
+                    game_Data.player_Skeletons[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.player_Skeletons[i].rigid_Body.position_WS.x]) - game_Data.player_Skeletons[i].animations->data.sprite_Sheet.sprites[0].radius);
                 }
             }
 
             // Collision player archers with map
             for (int i = 0; i < game_Data.player_Archers.size(); i++) {
                 if (check_Height_Map_Collision(&game_Data.player_Archers[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                    game_Data.player_Archers[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.player_Archers[i].rigid_Body.position_WS.x]) - game_Data.player_Archers[i].animations->animation_Data.sprite_Sheet.sprites[0].radius);
+                    game_Data.player_Archers[i].rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - (float)game_Data.terrain_Height_Map[(int)game_Data.player_Archers[i].rigid_Body.position_WS.x]) - game_Data.player_Archers[i].animations->data.sprite_Sheet.sprites[0].radius);
                 }
             }
 
@@ -1515,7 +1553,7 @@ int main(int argc, char** argv) {
                         if (game_Data.player_Archers[i].current_Attack_Cooldown <= 0) {
                             game_Data.player_Archers[i].current_Attack_Cooldown = game_Data.player_Archers[i].attack_Cooldown;
                             Vector aim_Head = game_Data.enemy_Skeletons[j].rigid_Body.position_WS;
-                            aim_Head.x += game_Data.enemy_Skeletons[0].animations->animation_Data.sprite_Sheet.sprites[0].radius;
+                            aim_Head.x += game_Data.enemy_Skeletons[0].animations->data.sprite_Sheet.sprites[0].radius;
                             spawn_Arrow(
                                 &game_Data.player_Arrows,
                                 player_Arrow,
@@ -1534,6 +1572,10 @@ int main(int argc, char** argv) {
                     }
                 }
             }
+
+			for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
+				update_Animation(&game_Data.enemy_Skeletons[i].animations->data, 1, delta_Time);
+			}
 
             SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
@@ -1572,11 +1614,11 @@ int main(int argc, char** argv) {
 
             // Draw player skeletons
             for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                for (int j = 0; j < game_Data.player_Skeletons[i].animations->animation_Data.sprite_Sheet.sprites.size(); j++) {
+                for (int j = 0; j < game_Data.player_Skeletons[i].animations->data.sprite_Sheet.sprites.size(); j++) {
                     draw_Circle(
                         game_Data.player_Skeletons[i].rigid_Body.position_WS.x,
                         game_Data.player_Skeletons[i].rigid_Body.position_WS.y,
-                        game_Data.player_Skeletons[i].animations->animation_Data.sprite_Sheet.sprites[j].radius,
+                        game_Data.player_Skeletons[i].animations->data.sprite_Sheet.sprites[j].radius,
                         Select_Color::RED
                     );
                 }
@@ -1617,9 +1659,13 @@ int main(int argc, char** argv) {
             if (temp_S_Pressed) {
                 speed -= 1;
             }
+            temp_Bool = false;
+            if (temp_W_Pressed ||temp_S_Pressed) {
+                temp_Bool = true;
+            }
             draw_String(&font_1, std::to_string(speed).c_str(), 800, 700, 4, true);
             draw_Unit_Animated(&temp_RB, &skeleton_Animations[0], speed, false);
-
+            
             int button_Pos_X = (RESOLUTION_WIDTH / 8);
             int button_Pos_Y = ((RESOLUTION_HEIGHT / 16) * 15);
             int button_Width = 450;
