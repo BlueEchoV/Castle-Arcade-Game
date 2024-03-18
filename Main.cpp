@@ -188,9 +188,6 @@ Archer_Data archer_Data_Array[] = {
 struct Animation_Data {
     Sprite_Sheet sprite_Sheet;
     int num_Of_Frames;
-
-	float last_Frame_Update_Time;
-	int current_Frame;
 };
 
 enum Animation_Type {
@@ -210,6 +207,11 @@ Unit_Animation_Data skeleton_Animations[TOTAL_ANIMATIONS] = {
     { Animation_Type::WALKING, {}},
     { Animation_Type::ATTACKING, {}},
     { Animation_Type::DYING, {}}
+};
+
+struct Unit_Animation_Tracker {
+    float last_Frame_Update_Time;
+	int current_Frame;
 };
 
 struct Skeleton_Data {
@@ -449,34 +451,20 @@ void draw_Arrow(Arrow* arrow, bool flip) {
     SDL_RenderCopyEx(renderer, arrow->sprite_Sheet.sprites[0].image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
-// Convert the frames to frames per second
-void update_Animation(Animation_Data* data, float frames_Per_Second, float delta_Time) {
-    if (frames_Per_Second > 0) {
+// Go back to frames per second. Makes more sense right now.
+void update_Animation(Animation_Data* data, float unit_Speed, float delta_Time) {
+    if (unit_Speed > 0) {
+        // Frames are now tied to the units speed
+        float frames_Per_Second = unit_Speed / 100;
+        float conversion_Frames = 1 / frames_Per_Second;
         data->last_Frame_Update_Time += delta_Time;
 
         SDL_Log("*********************************************");
+        SDL_Log("frames_Per_Second = %f", frames_Per_Second);
         SDL_Log("delta_Time = %f", (delta_Time));
         SDL_Log("last_Frame_Update_Time = %f", data->last_Frame_Update_Time);
-        SDL_Log("frame_Speed = %f", frames_Per_Second);
 
-        // Speed: 0 - 100
-        float play_Speed_Percent = (frames_Per_Second / 100.0f);
-        if (play_Speed_Percent > 1.0f) {
-            play_Speed_Percent = 1.0f;
-        }
-        if (play_Speed_Percent < 0.0f) {
-            play_Speed_Percent = 0.0f;
-        }
-        // Invert
-        play_Speed_Percent = 1.0f - play_Speed_Percent;
-        float new_Play_Speed = linear_Interpolation(
-            (float)data->frames_Per_Sec.min,
-            (float)data->frames_Per_Sec.max,
-            play_Speed_Percent
-        );
-        new_Play_Speed /= 100;
-        SDL_Log("new_Play_Speed = %f", new_Play_Speed);
-        if (data->last_Frame_Update_Time >= new_Play_Speed) {
+        if (data->last_Frame_Update_Time >= conversion_Frames) {
             data->current_Frame++;
             data->last_Frame_Update_Time = 0;
             if (data->current_Frame >= data->num_Of_Frames) {
@@ -1115,8 +1103,6 @@ int main(int argc, char** argv) {
     archer_Animations[WALKING].data.num_Of_Frames =
 		(archer_Animations[WALKING].data.sprite_Sheet.rows
 			* archer_Animations[WALKING].data.sprite_Sheet.columns);
-	archer_Animations[WALKING].data.frames_Per_Sec.max = 100;
-	archer_Animations[WALKING].data.frames_Per_Sec.min = 0;
 
     Game_Data game_Data = {};
 
@@ -1617,10 +1603,11 @@ int main(int argc, char** argv) {
                 }
             }
 
+            /*
 			for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-				update_Animation(&game_Data.enemy_Skeletons[i].animations->data, 25, delta_Time);
+				update_Animation(&game_Data.enemy_Skeletons[i].animations->data, 1, delta_Time);
 			}
-
+            */
             SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
 
@@ -1693,19 +1680,19 @@ int main(int argc, char** argv) {
             // Debugging visualization code
             Rigid_Body temp_RB = {};
             temp_RB.position_WS = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 };
-			static float speed = 0.0f;
+			static float frames_Per_Seconds = 100.0f;
             if (temp_W_Pressed) {
-				speed += 1.0f;
+                frames_Per_Seconds += 1.0f;
             }
             if (temp_S_Pressed) {
-				speed -= 1.0f;
+                frames_Per_Seconds -= 1.0f;
             }
             temp_Bool = false;
             if (temp_W_Pressed ||temp_S_Pressed) {
                 temp_Bool = true;
             }
-            update_Animation(&skeleton_Animations[0].data, speed, delta_Time);
-            draw_String(&font_1, std::to_string(speed).c_str(), RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 75, 4, true);
+            update_Animation(&skeleton_Animations[0].data, frames_Per_Seconds, delta_Time);
+            draw_String(&font_1, std::to_string(frames_Per_Seconds).c_str(), RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 75, 4, true);
             draw_Unit_Animated(&temp_RB, &skeleton_Animations[0], false);
             
             int button_Pos_X = (RESOLUTION_WIDTH / 8);
