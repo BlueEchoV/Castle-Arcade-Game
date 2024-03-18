@@ -185,19 +185,12 @@ Archer_Data archer_Data_Array[] = {
 };
 */
 
-struct Range {
-    int max;
-    int min;
-};
-
 struct Animation_Data {
     Sprite_Sheet sprite_Sheet;
     int num_Of_Frames;
-    Range play_Range;
 
-    bool is_Playing;
-    float last_Frame_Update_Time;
-    int current_Frame;
+	float last_Frame_Update_Time;
+	int current_Frame;
 };
 
 enum Animation_Type {
@@ -243,9 +236,6 @@ Skeleton_Data skeleton_Data_Array[TOTAL_LEVELS] = {
 };
 
 struct Skeleton {
-    // Animations work the same way
-    // Animation data reference on skeleton data
-    // Per instance data on the entity
     Skeleton_Data* skeleton_Data;
     Unit_Animation_Data* animations;
 
@@ -459,14 +449,40 @@ void draw_Arrow(Arrow* arrow, bool flip) {
     SDL_RenderCopyEx(renderer, arrow->sprite_Sheet.sprites[0].image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
-void update_Animation(Animation_Data* data, float frame_Duration, float delta_Time) {
-    data->last_Frame_Update_Time += delta_Time;
+// Convert the frames to frames per second
+void update_Animation(Animation_Data* data, float frames_Per_Second, float delta_Time) {
+    if (frames_Per_Second > 0) {
+        data->last_Frame_Update_Time += delta_Time;
 
-    if (data->last_Frame_Update_Time >= frame_Duration) {
-        data->current_Frame++;
-        if (data->current_Frame >= data->num_Of_Frames) {
-            // Loop back to the beginning of the frames
-            data->current_Frame = 0;
+        SDL_Log("*********************************************");
+        SDL_Log("delta_Time = %f", (delta_Time));
+        SDL_Log("last_Frame_Update_Time = %f", data->last_Frame_Update_Time);
+        SDL_Log("frame_Speed = %f", frames_Per_Second);
+
+        // Speed: 0 - 100
+        float play_Speed_Percent = (frames_Per_Second / 100.0f);
+        if (play_Speed_Percent > 1.0f) {
+            play_Speed_Percent = 1.0f;
+        }
+        if (play_Speed_Percent < 0.0f) {
+            play_Speed_Percent = 0.0f;
+        }
+        // Invert
+        play_Speed_Percent = 1.0f - play_Speed_Percent;
+        float new_Play_Speed = linear_Interpolation(
+            (float)data->frames_Per_Sec.min,
+            (float)data->frames_Per_Sec.max,
+            play_Speed_Percent
+        );
+        new_Play_Speed /= 100;
+        SDL_Log("new_Play_Speed = %f", new_Play_Speed);
+        if (data->last_Frame_Update_Time >= new_Play_Speed) {
+            data->current_Frame++;
+            data->last_Frame_Update_Time = 0;
+            if (data->current_Frame >= data->num_Of_Frames) {
+                // Loop back to the beginning of the frames
+                data->current_Frame = 0;
+            }
         }
     }
 }
@@ -478,6 +494,36 @@ void update_Animation(Animation_Data* data, float frame_Duration, float delta_Ti
 // Frame duration
 // Last frame update time
 // is playing
+void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* Unit_Animation_Data, bool flip) {
+	Uint32 sprite_Frame = Unit_Animation_Data->data.current_Frame;
+
+	SDL_Rect current_Frame_Rect = Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].source_Rect;
+
+	SDL_Rect destination_Rect = {
+		(int)(rigid_Body->position_WS.x - Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.x),
+		(int)(rigid_Body->position_WS.y - Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.y),
+		current_Frame_Rect.w,
+		current_Frame_Rect.h
+	};
+
+	// Set the center of the rotation
+	SDL_Point center = {
+		(int)Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.x,
+		(int)Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.y
+	};
+
+	// Render the current frame of the animation
+	SDL_RenderCopyEx(
+		renderer,
+		Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].image->texture,
+		&current_Frame_Rect,
+		&destination_Rect,
+		rigid_Body->angle,
+		&center,
+		(flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE)
+	);
+}
+/*
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* Unit_Animation_Data, float play_Speed, bool flip) {
 	if (play_Speed <= 0) {
 		// SDL_Log("ERROR: draw_Unit_Animated() - Animation speed <= 0");
@@ -543,6 +589,7 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* Unit_Animat
 		(flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE)
 	);
 }
+*/
 
 Vector get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
 	Vector result = rigid_Body->position_WS;
@@ -1059,9 +1106,6 @@ int main(int argc, char** argv) {
 	Sprite_Sheet skeleton_Walking_Sprite_Sheet = create_Sprite_Sheet(&skeleton_Image, 1, 4);
     skeleton_Animations[WALKING].data.sprite_Sheet = skeleton_Walking_Sprite_Sheet;
     skeleton_Animations[WALKING].data.num_Of_Frames = (skeleton_Animations[WALKING].data.sprite_Sheet.rows* skeleton_Animations[WALKING].data.sprite_Sheet.columns);
-	skeleton_Animations[WALKING].data.play_Range.max = 500;
-	skeleton_Animations[WALKING].data.play_Range.min = 5;
-    skeleton_Animations[WALKING].data.is_Playing = false;
     skeleton_Animations[WALKING].data.current_Frame = 0;
     skeleton_Animations[WALKING].data.last_Frame_Update_Time = 0.0f;
 
@@ -1071,8 +1115,8 @@ int main(int argc, char** argv) {
     archer_Animations[WALKING].data.num_Of_Frames =
 		(archer_Animations[WALKING].data.sprite_Sheet.rows
 			* archer_Animations[WALKING].data.sprite_Sheet.columns);
-	archer_Animations[WALKING].data.play_Range.max = 500;
-	archer_Animations[WALKING].data.play_Range.min = 5;
+	archer_Animations[WALKING].data.frames_Per_Sec.max = 100;
+	archer_Animations[WALKING].data.frames_Per_Sec.min = 0;
 
     Game_Data game_Data = {};
 
@@ -1574,7 +1618,7 @@ int main(int argc, char** argv) {
             }
 
 			for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-				update_Animation(&game_Data.enemy_Skeletons[i].animations->data, 1, delta_Time);
+				update_Animation(&game_Data.enemy_Skeletons[i].animations->data, 25, delta_Time);
 			}
 
             SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
@@ -1606,7 +1650,6 @@ int main(int argc, char** argv) {
                 draw_Unit_Animated(
                     &game_Data.enemy_Skeletons[i].rigid_Body,
                     game_Data.enemy_Skeletons[i].animations,
-                    game_Data.enemy_Skeletons[i].skeleton_Data->speed,
                     false
                 );
                 draw_HP_Bar(&game_Data.enemy_Skeletons[i].rigid_Body.position_WS, &game_Data.enemy_Skeletons[i].health_Bar);
@@ -1626,7 +1669,6 @@ int main(int argc, char** argv) {
                 draw_Unit_Animated(
                     &game_Data.player_Skeletons[i].rigid_Body,
                     game_Data.player_Skeletons[i].animations,
-                    game_Data.player_Skeletons[i].skeleton_Data->speed,
                     true
                 );
                 draw_HP_Bar(&game_Data.player_Skeletons[i].rigid_Body.position_WS, &game_Data.player_Skeletons[i].health_Bar);
@@ -1638,7 +1680,6 @@ int main(int argc, char** argv) {
                 draw_Unit_Animated(
                     &game_Data.player_Archers[i].rigid_Body,
                     game_Data.player_Archers[i].animations,
-                    game_Data.player_Archers[i].archer_Data->speed,
                     false
                 );
                 draw_HP_Bar(&game_Data.player_Archers[i].rigid_Body.position_WS, &game_Data.player_Archers[i].health_Bar);
@@ -1651,20 +1692,21 @@ int main(int argc, char** argv) {
 
             // Debugging visualization code
             Rigid_Body temp_RB = {};
-            temp_RB.position_WS = { 800, 500 };
-            static float speed = 50;
+            temp_RB.position_WS = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 };
+			static float speed = 0.0f;
             if (temp_W_Pressed) {
-                speed += 1;
+				speed += 1.0f;
             }
             if (temp_S_Pressed) {
-                speed -= 1;
+				speed -= 1.0f;
             }
             temp_Bool = false;
             if (temp_W_Pressed ||temp_S_Pressed) {
                 temp_Bool = true;
             }
-            draw_String(&font_1, std::to_string(speed).c_str(), 800, 700, 4, true);
-            draw_Unit_Animated(&temp_RB, &skeleton_Animations[0], speed, false);
+            update_Animation(&skeleton_Animations[0].data, speed, delta_Time);
+            draw_String(&font_1, std::to_string(speed).c_str(), RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 75, 4, true);
+            draw_Unit_Animated(&temp_RB, &skeleton_Animations[0], false);
             
             int button_Pos_X = (RESOLUTION_WIDTH / 8);
             int button_Pos_Y = ((RESOLUTION_HEIGHT / 16) * 15);
