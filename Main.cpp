@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -17,8 +18,6 @@ bool temp_Bool = false;
 
 SDL_Renderer* renderer = NULL;
 
-
-
 struct Color {
     Uint8 r;
     Uint8 g;
@@ -27,7 +26,6 @@ struct Color {
 };
 
 struct Image {
-    // Contains the entire sprite sheet
 	int width;
 	int height;
     SDL_Texture* texture;
@@ -89,7 +87,6 @@ struct Collider {
 };
 
 struct Rigid_Body {
-    // Body_Type body_Type;
     bool rigid_Body_Faces_Velocity;
     Vector position_WS;
     Vector velocity;
@@ -105,7 +102,7 @@ struct Sprite_Sheet {
 };
 
 enum Sprite_Sheet_Selector {
-	SKELETON_WALKING,
+    SKELETON_WALKING,
     SKELETON_STOP,
     SKELETON_ATTACKING,
     SKELETON_DYING,
@@ -116,6 +113,13 @@ enum Sprite_Sheet_Selector {
 	ARCHER_DYING,
 
     ARROW_DEFAULT,
+
+	CASTLE_1,
+
+    BKG_GAMELOOP_1,
+    BKG_MENU_1,
+
+    TERRAIN_1,
 
 	TOTAL_SPRITE_SHEETS
 };
@@ -150,8 +154,26 @@ enum Level {
 	TOTAL_LEVELS
 };                                      
 
+struct Castle_Stats {
+    float hp;
+    float fire_Cooldown;
+	float current_Fire_Cooldown;
+	float spawn_Cooldown;
+	float current_Spawn_Cooldown;
+};
+
+const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
+	{.hp = 100.0f, .fire_Cooldown = 0.01f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
+	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
+	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
+	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
+	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f}
+};
+
 struct Castle {
-	Sprite_Sheet sprite_Sheet;
+    const Castle_Stats* castle_Stats_Array;
+
+    Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 
 	Rigid_Body rigid_Body;
 	Health_Bar health_Bar;
@@ -272,24 +294,6 @@ struct Game_Data {
 	std::vector<Skeleton>       player_Skeletons;
     std::vector<Archer>         player_Archers;
 };
-
-void my_Memory_Copy(void* dest, const void* src, size_t count) {
-	unsigned char* destination = (unsigned char*)dest;
-	unsigned char* source = (unsigned char*)src;
-	for (int i = 0; i < count; i++) {
-		destination[i] = source[i];
-	}
-}
-
-float calculate_Distance(float x1, float y1, float x2, float y2) {
-	return (float)sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-}
-
-float linear_Interpolation(float left_Point, float right_Point, float percent) {
-	// Lerp of T = A * (1 - T) + B * T
-	// A is the left side, B is the right side, T is the percentage of the interpolation
-	return ((left_Point) * (1 - percent) + (right_Point)*percent);
-}
 
 float return_Sprite_Radius(Sprite sprite) {
 	float max_Distance = 0;
@@ -430,16 +434,16 @@ void draw_Layer(SDL_Texture* texture) {
 
 void draw_Castle(Castle* castle, bool flip) {
     SDL_Rect temp = {};
-	SDL_Rect* src_Rect = &castle->sprite_Sheet.sprites[0].source_Rect;
+	SDL_Rect* src_Rect = const_cast<SDL_Rect*>(&castle->sprite_Sheet_Tracker.sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect);
     Vector sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
     sprite_Half_Size = sprite_Half_Size / 2;
     temp = { 
 		((int)castle->rigid_Body.position_WS.x - (int)sprite_Half_Size.x),
 		((int)castle->rigid_Body.position_WS.y - (int)sprite_Half_Size.y),
-        castle->sprite_Sheet.sprites[0].source_Rect.w,
-        castle->sprite_Sheet.sprites[0].source_Rect.h
+        castle->sprite_Sheet_Tracker.sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect.w,
+        castle->sprite_Sheet_Tracker.sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect.h
     };
-    SDL_RenderCopyEx(renderer, castle->sprite_Sheet.sprites[0].image->texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+    SDL_RenderCopyEx(renderer, castle->sprite_Sheet_Tracker.sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].image->texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 
@@ -630,16 +634,15 @@ void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Ti
     }
 }
 
-
-Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness) {
+Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness, float hp) {
 	Health_Bar result;
 
-	result.max_HP = 0;
-	result.current_HP = 0;
 	result.width = width;
 	result.height = height;
 	result.y_Offset = y_Offset;
 	result.thickness = thickness;
+	result.max_HP = hp;
+	result.current_HP = result.max_HP;
 
 	return result;
 }
@@ -656,6 +659,47 @@ Rigid_Body create_Rigid_Body(Vector position_WS, bool rigid_Body_Faces_Velocity)
 	return result;
 }
 
+void spawn_Player_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, Vector position_WS, Level level) {
+    Castle castle = {};
+
+    castle.castle_Stats_Array = castle_Stats_Array;
+
+	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(selector);
+
+    castle.rigid_Body = create_Rigid_Body(position_WS, false);
+	
+    castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle.castle_Stats_Array[level].hp);
+
+    castle.fire_Cooldown = castle.castle_Stats_Array[level].fire_Cooldown;
+	castle.current_Fire_Cooldown = castle.castle_Stats_Array[level].current_Fire_Cooldown;
+	castle.spawn_Cooldown = castle.castle_Stats_Array[level].spawn_Cooldown;
+	castle.current_Spawn_Cooldown = castle.castle_Stats_Array[level].current_Spawn_Cooldown;
+
+	add_Collider(&castle.rigid_Body.colliders, { 0.0f, 0.0f }, castle.sprite_Sheet_Tracker.sprite_Sheet_Array[selector].sprites[0].radius);
+
+    game_Data->player_Castle = castle;
+}
+
+void spawn_Enemy_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, Vector position_WS, Level level) {
+	Castle castle = {};
+
+	castle.castle_Stats_Array = castle_Stats_Array;
+
+	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(selector);
+
+	castle.rigid_Body = create_Rigid_Body(position_WS, false);
+
+	castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle.castle_Stats_Array[level].hp);
+
+	castle.fire_Cooldown = castle.castle_Stats_Array[level].fire_Cooldown;
+	castle.current_Fire_Cooldown = castle.castle_Stats_Array[level].current_Fire_Cooldown;
+	castle.spawn_Cooldown = castle.castle_Stats_Array[level].spawn_Cooldown;
+	castle.current_Spawn_Cooldown = castle.castle_Stats_Array[level].current_Spawn_Cooldown;
+
+	add_Collider(&castle.rigid_Body.colliders, { 0.0f, 0.0f }, castle.sprite_Sheet_Tracker.sprite_Sheet_Array[selector].sprites[0].radius);
+
+	game_Data->enemy_Castle = castle;
+}
 
 void spawn_Arrow(Game_Data* game_Data, Vector* spawn_Position, Vector* target_Position, Level level) {
     Arrow arrow = {};
@@ -702,9 +746,7 @@ void spawn_Player_Skeleton(Game_Data* game_Data, Vector spawn_Location, Rigid_Bo
 
 	skeleton.rigid_Body = create_Rigid_Body(spawn_Location, false);
 
-    skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2);
-    skeleton.health_Bar.max_HP = skeleton.skeleton_Stats_Array[level].max_HP;
-    skeleton.health_Bar.current_HP = skeleton.health_Bar.max_HP;
+    skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton.skeleton_Stats_Array[level].max_HP);
 
     skeleton.speed = skeleton.skeleton_Stats_Array[level].speed;
     skeleton.damage = skeleton.skeleton_Stats_Array[level].damage;
@@ -748,9 +790,7 @@ void spawn_Enemy_Skeleton(Game_Data* game_Data, Vector spawn_Location, Rigid_Bod
 
 	skeleton.rigid_Body = create_Rigid_Body(spawn_Location, false);
 
-	skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2);
-	skeleton.health_Bar.max_HP = skeleton.skeleton_Stats_Array[level].max_HP;
-	skeleton.health_Bar.current_HP = skeleton.health_Bar.max_HP;
+	skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton.skeleton_Stats_Array[level].max_HP);
 
 	skeleton.speed = skeleton.skeleton_Stats_Array[level].speed;
 	skeleton.damage = skeleton.skeleton_Stats_Array[level].damage;
@@ -789,9 +829,7 @@ void spawn_Archer(Game_Data* game_Data, Vector spawn_Location, Rigid_Body* targe
 
 	archer.archer_Stats_Array = archer_Stats_Array;
 
-	archer.health_Bar = create_Health_Bar(50, 13, 60, 2);
-	archer.health_Bar.max_HP = archer.archer_Stats_Array[level].hp;
-	archer.health_Bar.current_HP = archer.health_Bar.max_HP;
+	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, archer.archer_Stats_Array[level].hp);
 
 	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(ARCHER_WALKING);
 
@@ -1254,11 +1292,10 @@ int main(int argc, char** argv) {
     Image archer_Image_Walking = create_Image("images/unit_Archer_Sprite_Sheet.png");
     Image archer_Image_Stop = create_Image("images/unit_Archer.png");
 
-    // Sprite sheets
-    Sprite_Sheet gameloop_BKG_SS = create_Sprite_Sheet(&gameloop_BKG_Image, 1, 1);
-    Sprite_Sheet menu_BKG_SS = create_Sprite_Sheet(&menu_BKG_Image, 1, 1);
-    Sprite_Sheet terrain_SS = create_Sprite_Sheet(&terrain_Image, 1, 1);
-    Sprite_Sheet castle_SS = create_Sprite_Sheet(&castle_Image, 1, 1);
+	add_Sprite_Sheet_To_Array(BKG_GAMELOOP_1, &gameloop_BKG_Image, 1, 1);
+	add_Sprite_Sheet_To_Array(BKG_MENU_1, &menu_BKG_Image, 1, 1);
+    add_Sprite_Sheet_To_Array(TERRAIN_1, &terrain_Image, 1, 1);
+    add_Sprite_Sheet_To_Array(CASTLE_1, &castle_Image, 1, 1);
 
     add_Sprite_Sheet_To_Array(SKELETON_WALKING, &skeleton_Image_Walking, 1, 4);
     add_Sprite_Sheet_To_Array(SKELETON_STOP, &skeleton_Image_Stop, 1, 1);
@@ -1270,59 +1307,19 @@ int main(int argc, char** argv) {
 
     game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 
-	Rigid_Body arrow_RB = {
-		.rigid_Body_Faces_Velocity = true,
-		.position_WS = { 0.0f, 0.0f },
-		.velocity = { 0.0f, 0.0f },
-		.angle = 0.0f,
-		.colliders = {}
-	};
+    spawn_Player_Castle(
+        CASTLE_1,
+        &game_Data,
+        { (RESOLUTION_WIDTH * 0.05) , ((float)game_Data.terrain_Height_Map[(int)(RESOLUTION_WIDTH * 0.05)] + (int)25) },
+        LEVEL_1
+    );
 
-
-    Health_Bar castle_Health_Bar = {
-        .max_HP = 100,
-        .current_HP = castle_Health_Bar.max_HP,
-		.width = 90,
-	    .height = 20,
-        .y_Offset = 115,
-        .thickness = 3
-    };
-
-    Rigid_Body player_Castle_RB = {
-        .rigid_Body_Faces_Velocity = false,
-        .position_WS = { (RESOLUTION_WIDTH * 0.05) , ((float)game_Data.terrain_Height_Map[(int)(RESOLUTION_WIDTH * 0.05)] + (int)25) },
-        .velocity = { 0.0f, 0.0f },
-        .angle = 0.0f,
-        .colliders = {}
-    };
-    game_Data.player_Castle = {
-		.sprite_Sheet = castle_SS,
-		.rigid_Body = player_Castle_RB,
-		.health_Bar = castle_Health_Bar,
-		.fire_Cooldown = 0.1f,
-		.current_Fire_Cooldown = 0.0f,
-		.spawn_Cooldown = 0.0f,
-		.current_Spawn_Cooldown = 0.0f
-    };
-    add_Collider(&game_Data.player_Castle.rigid_Body.colliders, { 0.0f, 0.0f }, game_Data.player_Castle.sprite_Sheet.sprites[0].radius);
-
-    Rigid_Body enemy_Castle_RB = {
-        .rigid_Body_Faces_Velocity = false,
-		.position_WS = { (RESOLUTION_WIDTH * 0.95) , ((float)game_Data.terrain_Height_Map[(int)(RESOLUTION_WIDTH * 0.95)] + (int)25) },
-		.velocity = { 0.0f, 0.0f },
-        .angle = 0.0f,
-		.colliders = {}
-	};
-	game_Data.enemy_Castle = {
-	    .sprite_Sheet = castle_SS,
-	    .rigid_Body = enemy_Castle_RB,
-	    .health_Bar = castle_Health_Bar,
-	    .fire_Cooldown = 0.0f,
-	    .current_Fire_Cooldown = 0.0f,
-	    .spawn_Cooldown = 2.0f,
-	    .current_Spawn_Cooldown = game_Data.player_Castle.spawn_Cooldown
-	};
-	add_Collider(&game_Data.enemy_Castle.rigid_Body.colliders, { 0.0f, 0.0f }, game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius);
+    spawn_Enemy_Castle(
+        CASTLE_1, 
+        &game_Data, 
+        { (RESOLUTION_WIDTH * 0.95) , ((float)game_Data.terrain_Height_Map[(int)(RESOLUTION_WIDTH * 0.95)] + (int)25) }, 
+        LEVEL_1
+    );
 
     // Buttons
     SDL_Rect test = {};
@@ -1341,57 +1338,41 @@ int main(int argc, char** argv) {
     float delta_Time = 0.0f;
     // 0 - 1
     float time_Scalar = 1.0f;
-    bool up_Pressed = false;
-    bool down_Pressed = false;
-
-    bool key_Space_Pressed = false;
 
     bool spawn_Skeleton_Pressed = false;
     bool spawn_Archer_Pressed = false;
 
-    bool temp_W_Pressed = false;
-    bool temp_S_Pressed = false;
-
-    bool game_Paused = false;
-
     bool running = true;
 
+    std::unordered_map<SDL_Keycode, bool> key_States;
+    key_States[SDLK_ESCAPE] = false;
 	// Debugging visualization code
 	// Sprite_Sheet_Tracker sprite_Sheet_Tracker = { skeleton_Animations, WALKING, 0.0f, 0 };
 
-    Current_Game_State current_Game_State = Current_Game_State::GAMELOOP;
+    Current_Game_State current_Game_State = Current_Game_State::MENU;
 
     while (running) {
         mouse_Down_This_Frame = false;
         SDL_Event event = {};
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
-            // Key down gives events based off keyboard repeat-rate (Operating system)
             case SDL_KEYDOWN: {
                 switch (event.key.keysym.sym) {
                 case SDLK_SPACE: {
-                    key_Space_Pressed = true;
-                    break;
-                }
-                case SDLK_w: {
-                    temp_W_Pressed = true;
-                    break;
-                }
-                case SDLK_s: {
-                    temp_S_Pressed = true;
+                    key_States[event.key.keysym.sym] = true;
                     break;
                 }
                 case SDLK_UP: {
-                    up_Pressed = true;
+                    key_States[event.key.keysym.sym] = true;
                     break;
                 }
 				case SDLK_DOWN: {
-					down_Pressed = true;
+                    key_States[event.key.keysym.sym] = true;
 					break;
 				}
                 case SDLK_ESCAPE: {
                     if (event.key.repeat == 0) {
-                        game_Paused = !game_Paused;
+                        key_States[event.key.keysym.sym] = !key_States[event.key.keysym.sym];
                     }
                     break;
                 }
@@ -1404,23 +1385,15 @@ int main(int argc, char** argv) {
             case SDL_KEYUP: {
                 switch (event.key.keysym.sym) {
                 case SDLK_SPACE: {
-                    key_Space_Pressed = false;
-                    break;
-                }
-                case SDLK_w: {
-                    temp_W_Pressed = false;
-                    break;
-                }
-                case SDLK_s: {
-                    temp_S_Pressed = false;
+                    key_States[event.key.keysym.sym] = false;
                     break;
                 }
 				case SDLK_UP: {
-					up_Pressed = false;
+                    key_States[event.key.keysym.sym] = false;
 					break;
 				}
 				case SDLK_DOWN: {
-					down_Pressed = false;
+                    key_States[event.key.keysym.sym] = false;
 					break;
 				}
                 default: {
@@ -1452,7 +1425,7 @@ int main(int argc, char** argv) {
         if (current_Game_State == Current_Game_State::MENU) {
 			// No game logic
             SDL_RenderClear(renderer);
-			SDL_RenderCopy(renderer, menu_BKG_SS.sprites[0].image->texture, NULL, NULL);
+			SDL_RenderCopy(renderer, sprite_Sheet_Array[BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
         
             draw_String_With_Background(
                 &font_1, 
@@ -1479,10 +1452,10 @@ int main(int argc, char** argv) {
         
         }
         else if (current_Game_State == Current_Game_State::GAMELOOP) {
-            if (up_Pressed) {
+            if (key_States[SDLK_UP] == true) {
                 time_Scalar += 0.01f;
             }
-            if (down_Pressed) {
+            if (key_States[SDLK_DOWN] == true) {
                 if (time_Scalar > 0) {
                     time_Scalar -= 0.01f;
                 }
@@ -1495,9 +1468,9 @@ int main(int argc, char** argv) {
             delta_Time *= time_Scalar;
             delta_Time /= 1000;
 
-            if (!game_Paused && time_Scalar > 0) {
+            if (key_States[SDLK_ESCAPE] == false && time_Scalar > 0) {
                 // Spawn Arrows and update lifetime
-                if (key_Space_Pressed) {
+                if (key_States[SDLK_SPACE] == true) {
                     if (game_Data.player_Castle.current_Fire_Cooldown < 0) {
                         Vector target_Mouse = {};
                         int x, y = 0;
@@ -1521,25 +1494,29 @@ int main(int argc, char** argv) {
 
                 // Spawn Player Skeletons
                 if (spawn_Skeleton_Pressed) {
+                    Castle* player_Castle = &game_Data.player_Castle;
+                    Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Player_Skeleton(
                         &game_Data,
                         {
-                            (float)game_Data.player_Castle.rigid_Body.position_WS.x,
-                            ((float)game_Data.terrain_Height_Map[(int)game_Data.player_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius)
+                            (float)player_Castle->rigid_Body.position_WS.x,
+							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + player_Castle->sprite_Sheet_Tracker.sprite_Sheet_Array[player_Castle->sprite_Sheet_Tracker.selected].sprites[0].radius)
                         },
-                        &game_Data.enemy_Castle.rigid_Body,
+                        &enemy_Castle->rigid_Body,
                         LEVEL_3
                     );
                     spawn_Skeleton_Pressed = false;
                 }
                 if (spawn_Archer_Pressed) {
+					Castle* player_Castle = &game_Data.player_Castle;
+					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Archer(
                         &game_Data,
-                        {
-                            (float)game_Data.player_Castle.rigid_Body.position_WS.x,
-                            ((float)game_Data.terrain_Height_Map[(int)game_Data.player_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius)
-                        },
-                        &game_Data.enemy_Castle.rigid_Body,
+						{
+							(float)player_Castle->rigid_Body.position_WS.x,
+							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + player_Castle->sprite_Sheet_Tracker.sprite_Sheet_Array[player_Castle->sprite_Sheet_Tracker.selected].sprites[0].radius)
+						},
+                        &enemy_Castle->rigid_Body,
                         LEVEL_2
                     );
                     spawn_Archer_Pressed = false;
@@ -1547,16 +1524,18 @@ int main(int argc, char** argv) {
 
                 // Spawn enemy skeletons
                 if (game_Data.enemy_Castle.current_Spawn_Cooldown < 0) {
+					Castle* player_Castle = &game_Data.player_Castle;
+					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Enemy_Skeleton(
-                        &game_Data,
-                        { 
-                            (float)game_Data.enemy_Castle.rigid_Body.position_WS.x,
-                            ((float)game_Data.terrain_Height_Map[(int)game_Data.enemy_Castle.rigid_Body.position_WS.x] + game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius) 
-                        },
-                        &game_Data.player_Castle.rigid_Body,
-                        LEVEL_1
-                    );
-                    game_Data.enemy_Castle.current_Spawn_Cooldown = game_Data.enemy_Castle.spawn_Cooldown;
+						&game_Data,
+						{
+							(float)enemy_Castle->rigid_Body.position_WS.x,
+							((float)game_Data.terrain_Height_Map[(int)enemy_Castle->rigid_Body.position_WS.x] + enemy_Castle->sprite_Sheet_Tracker.sprite_Sheet_Array[enemy_Castle->sprite_Sheet_Tracker.selected].sprites[0].radius)
+						},
+						&player_Castle->rigid_Body,
+						LEVEL_2
+					);
+                    enemy_Castle->current_Spawn_Cooldown = enemy_Castle->spawn_Cooldown;
                 }
                 else {
                     game_Data.enemy_Castle.current_Spawn_Cooldown -= delta_Time;
@@ -1792,15 +1771,15 @@ int main(int argc, char** argv) {
             SDL_RenderClear(renderer);
 
             // ***Renderering happens here***
-            draw_Layer(gameloop_BKG_Image.texture);
-            draw_Layer(terrain_Image.texture);
+            draw_Layer(sprite_Sheet_Array[BKG_GAMELOOP_1].sprites[0].image->texture);
+            draw_Layer(sprite_Sheet_Array[TERRAIN_1].sprites[0].image->texture);
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
 
             SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
-            draw_Circle(game_Data.enemy_Castle.rigid_Body.position_WS.x, (float)(game_Data.enemy_Castle.rigid_Body.position_WS.y), game_Data.enemy_Castle.sprite_Sheet.sprites[0].radius, Select_Color::GREEN);
-            draw_Circle(game_Data.player_Castle.rigid_Body.position_WS.x, (float)((int)game_Data.player_Castle.rigid_Body.position_WS.y), game_Data.player_Castle.sprite_Sheet.sprites[0].radius, Select_Color::GREEN);
+            draw_Circle(game_Data.enemy_Castle.rigid_Body.position_WS.x, (float)(game_Data.enemy_Castle.rigid_Body.position_WS.y), game_Data.enemy_Castle.sprite_Sheet_Tracker.sprite_Sheet_Array[game_Data.enemy_Castle.sprite_Sheet_Tracker.selected].sprites[0].radius, Select_Color::GREEN);
+            draw_Circle(game_Data.player_Castle.rigid_Body.position_WS.x, (float)((int)game_Data.player_Castle.rigid_Body.position_WS.y), game_Data.enemy_Castle.sprite_Sheet_Tracker.sprite_Sheet_Array[game_Data.enemy_Castle.sprite_Sheet_Tracker.selected].sprites[0].radius, Select_Color::GREEN);
 
             // Draw player arrows
             for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
@@ -1920,7 +1899,7 @@ int main(int argc, char** argv) {
 			}
             button_Pos_X += x_Offset;
 
-            if (game_Paused) {
+            if (key_States[SDLK_ESCAPE] == true) {
                 draw_String_With_Background(
                     &font_1,
                     "Game Paused",
