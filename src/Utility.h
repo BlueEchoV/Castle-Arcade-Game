@@ -67,3 +67,10 @@ float linear_Interpolation(float left_Point, float right_Point, float percent) {
 	// A is the left side, B is the right side, T is the percentage of the interpolation
 	return ((left_Point) * (1 - percent) + (right_Point)*percent);
 }
+
+// Operator overload
+// Multiply this vector by this scalar (0.5)
+Vector calculate_Center(float w, float h) {
+	Vector result = { w / 2, h / 2 };
+	return result;
+}
