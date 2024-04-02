@@ -43,10 +43,6 @@ Vector operator-(Vector& a, Vector& b) {
 }
 
 Vector operator/(const Vector& vector, float scalar) {
-	if (scalar == 0) {
-		SDL_Log("ERROR: operator overload / - Division by zero");
-		return vector; // or handle it in some other way
-	}
 	return { vector.x / scalar, vector.y / scalar };
 }
 
