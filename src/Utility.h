@@ -24,26 +24,26 @@ struct ExitScopeHelp
 #define SG_CONCAT(a, b) _SG_CONCAT(a, b)
 #define DEFER auto SG_CONCAT(defer__, __LINE__) = ExitScopeHelp() + [&]()
 
-struct Vector {
+struct V2{
 	float x;
 	float y;
 };
 
-Vector operator+(const Vector& a, const Vector& b) {
-	Vector result = {};
+V2 operator+(const V2& a, const V2& b) {
+	V2 result = {};
 	result.x = a.x + b.x;
 	result.y = a.y + b.y;
 	return result;
 }
 
-Vector operator-(Vector& a, Vector& b) {
+V2 operator-(V2& a, V2& b) {
 	a.x -= b.x;
 	a.y -= b.y;
 	return a;
 }
 
-Vector operator/(const Vector& vector, float scalar) {
-	return { vector.x / scalar, vector.y / scalar };
+V2 operator/(const V2& V2, float scalar) {
+	return { V2.x / scalar, V2.y / scalar };
 }
 
 void my_Memory_Copy(void* dest, const void* src, size_t count) {
@@ -65,8 +65,8 @@ float linear_Interpolation(float left_Point, float right_Point, float percent) {
 }
 
 // Operator overload
-// Multiply this vector by this scalar (0.5)
-Vector calculate_Center(float w, float h) {
-	Vector result = { w / 2, h / 2 };
+// Multiply this V2 by this scalar (0.5)
+V2 calculate_Center(float w, float h) {
+	V2 result = { w / 2, h / 2 };
 	return result;
 }

@@ -91,14 +91,14 @@ struct Health_Bar {
 };
 
 struct Collider {
-	Vector position_LS;
+    V2 position_LS;
 	float radius;
 };
 
 struct Rigid_Body {
     bool rigid_Body_Faces_Velocity;
-    Vector position_WS;
-    Vector velocity;
+    V2 position_WS;
+    V2 velocity;
     float angle;
     std::vector<Collider> colliders;
 };
@@ -157,34 +157,46 @@ enum Level {
 	TOTAL_LEVELS
 };                                      
 
+struct Cooldown {
+    float duration;
+    float remaining;
+};
+
 struct Castle_Stats {
     float hp;
-    float fire_Cooldown;
-	float current_Fire_Cooldown;
-	float spawn_Cooldown;
-	float current_Spawn_Cooldown;
+
+    Cooldown fire_Cooldown;
+    Cooldown spawn_Cooldown;
+
+    int arrow_Ammo;
+    Cooldown arrow_Ammo_Cooldown;
 };
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
-	{.hp = 100.0f, .fire_Cooldown = 0.01f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
-	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
-	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
-	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f},
-	{.hp = 100.0f, .fire_Cooldown = 1.0f, .current_Fire_Cooldown = 0.0f, .spawn_Cooldown = 1.0f, .current_Spawn_Cooldown = 0.0f}
+	// hp        fire_Cooldown   spawn_Cooldown     arrow_Ammo       arrow_Ammo_Cooldown
+    {  100.0f,  {0.01f, 0.0f},  {1.0f, 0.0f},       0,              {0.25f, 0.0f}},
+
+	{.hp = 100.0f, .fire_Cooldown = {1.0f, 0.0f}, .spawn_Cooldown = {1.0f, 0.0f}, .arrow_Ammo = 0, .arrow_Ammo_Cooldown = {0.25f, 0.0f}},
 };
 
 struct Castle {
-    const Castle_Stats* castle_Stats_Array;
-
     Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 
 	Rigid_Body rigid_Body;
 	Health_Bar health_Bar;
 
-	float fire_Cooldown;
-	float current_Fire_Cooldown;
-	float spawn_Cooldown;
-	float current_Spawn_Cooldown;
+	Cooldown fire_Cooldown;
+	Cooldown spawn_Cooldown;
+
+	int arrow_Ammo;
+	Cooldown arrow_Ammo_Cooldown;
+};
+
+enum Current_Weapon {
+    CW_ARROWS,
+    CW_FIREBALLS,
+
+    CW_TOTAL_WEAPONS
 };
 
 struct Arrow_Stats {
@@ -236,7 +248,8 @@ const Skeleton_Stats skeleton_Stats_Array[TOTAL_LEVELS] = {
 struct Attached_Entity{
     Sprite* sprite;
     float angle;
-    Vector offset;
+    V2 offset;
+    // could store skeleton ID
 };
 
 struct Skeleton {
@@ -254,6 +267,7 @@ struct Skeleton {
 	float current_Attack_Cooldown;
 	float attack_Range;
 
+    // Could make this a fixed size array for serialization
     std::vector<Attached_Entity> attached_Entities;
 
 	bool destroyed;
@@ -322,16 +336,16 @@ void save_Game(Game_Data* game_Data, const char* file_Name) {
 		return;
 	}
 
-    fwrite(&game_Data->player_Castle, sizeof(Castle), 1, file);
-    fwrite(&game_Data->enemy_Castle, sizeof(Castle), 1, file);
+    fwrite(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
+    fwrite(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
      
     size_t terrain_Size = game_Data->terrain_Height_Map.size();
-    fwrite(&terrain_Size, sizeof(size_t), 1, file);
-    fwrite(game_Data->terrain_Height_Map.data(), sizeof(size_t), terrain_Size, file);
+    fwrite(&terrain_Size, sizeof(terrain_Size), 1, file);
+    fwrite(game_Data->terrain_Height_Map.data(), sizeof(game_Data->terrain_Height_Map[0]), terrain_Size, file);
 
 	size_t player_Arrows_Size = game_Data->player_Arrows.size();
-	fwrite(&player_Arrows_Size, sizeof(size_t), 1, file);
-	fwrite(game_Data->player_Arrows.data(), sizeof(Arrow), player_Arrows_Size, file);
+	fwrite(&player_Arrows_Size, sizeof(player_Arrows_Size), 1, file);
+	fwrite(game_Data->player_Arrows.data(), sizeof(game_Data->player_Arrows), player_Arrows_Size, file);
 
     size_t enemy_Skeletons_Size = game_Data->enemy_Skeletons.size();
     fwrite(&enemy_Skeletons_Size, sizeof(size_t), 1, file);
@@ -509,7 +523,7 @@ void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int
 	}
 }
 
-void add_Collider(std::vector<Collider>* colliders, Vector position_LS, float radius) {
+void add_Collider(std::vector<Collider>* colliders, V2 position_LS, float radius) {
     Collider collider = {};
     collider.position_LS = position_LS;
     collider.radius = radius;
@@ -524,7 +538,7 @@ void draw_Layer(SDL_Texture* texture) {
 void draw_Castle(Castle* castle, bool flip) {
     SDL_Rect temp = {};
 	SDL_Rect* src_Rect = &sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect;
-    Vector sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
+    V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
     sprite_Half_Size = sprite_Half_Size / 2;
     temp = { 
 		((int)castle->rigid_Body.position_WS.x - (int)sprite_Half_Size.x),
@@ -539,7 +553,7 @@ void draw_Arrow(Arrow* arrow, bool flip) {
     SDL_Rect temp = {};
     Sprite* sprite = &sprite_Sheet_Array[arrow->sprite_Sheet_Tracker.selected].sprites[0];
     SDL_Rect* src_Rect = &sprite->source_Rect;
-	Vector sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
+	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
     temp = {
         ((int)arrow->rigid_Body.position_WS.x - (int)sprite_Half_Size.x),
@@ -550,7 +564,7 @@ void draw_Arrow(Arrow* arrow, bool flip) {
     SDL_RenderCopyEx(renderer, sprite->image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
-Attached_Entity return_Attached_Entity(Sprite* sprite, float angle, Vector offset) {
+Attached_Entity return_Attached_Entity(Sprite* sprite, float angle, V2 offset) {
     Attached_Entity result = {};
 
     result.sprite = sprite;
@@ -560,12 +574,12 @@ Attached_Entity return_Attached_Entity(Sprite* sprite, float angle, Vector offse
     return result;
 }
 
-void draw_Attached_Entity(Attached_Entity* Attached_Entity, Vector position_WS, bool flip) {
+void draw_Attached_Entity(Attached_Entity* Attached_Entity, V2 position_WS, bool flip) {
 	SDL_Rect temp = {};
     SDL_Rect* src_Rect = &Attached_Entity->sprite->source_Rect;
-	Vector sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
+	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
-    Vector new_Pos = position_WS + Attached_Entity->offset;
+    V2 new_Pos = position_WS + Attached_Entity->offset;
 	temp = {
 		((int)new_Pos.x - (int)sprite_Half_Size.x),
 		((int)new_Pos.y - (int)sprite_Half_Size.y),
@@ -609,7 +623,7 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 	SDL_Rect current_Frame_Rect = sprite_Sheet->sprites[sprite_Frame].source_Rect;
 
 	const SDL_Rect* src_Rect = &sprite_Sheet->sprites[0].source_Rect;
-	Vector sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
+	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
 
 	SDL_Rect destination_Rect = {
@@ -619,7 +633,7 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 		current_Frame_Rect.h
 	};
 
-    Vector pivot = calculate_Center(
+    V2 pivot = calculate_Center(
         (float)sprite_Sheet->sprites[sprite_Frame].source_Rect.w,
         (float)sprite_Sheet->sprites[sprite_Frame].source_Rect.h
     );
@@ -710,8 +724,8 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* Unit_Animat
 }
 */
 
-Vector get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
-	Vector result = rigid_Body->position_WS;
+V2 get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
+	V2 result = rigid_Body->position_WS;
 
 	float angle_In_Radians = rigid_Body->angle * (float)(M_PI / 180.0);
 	if (rigid_Body->rigid_Body_Faces_Velocity) {
@@ -759,7 +773,7 @@ Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness,
 	return result;
 }
 
-Rigid_Body create_Rigid_Body(Vector position_WS, bool rigid_Body_Faces_Velocity) {
+Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity) {
 	Rigid_Body result = {};
 
 	result.rigid_Body_Faces_Velocity = rigid_Body_Faces_Velocity;
@@ -771,50 +785,47 @@ Rigid_Body create_Rigid_Body(Vector position_WS, bool rigid_Body_Faces_Velocity)
 	return result;
 }
 
-void spawn_Player_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, Vector position_WS, Level level) {
+void spawn_Player_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, V2 position_WS, Level level) {
     Castle castle = {};
-
-    castle.castle_Stats_Array = castle_Stats_Array;
 
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(selector);
 
     castle.rigid_Body = create_Rigid_Body(position_WS, false);
 	
-    castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle.castle_Stats_Array[level].hp);
+    castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp);
 
-    castle.fire_Cooldown = castle.castle_Stats_Array[level].fire_Cooldown;
-	castle.current_Fire_Cooldown = castle.castle_Stats_Array[level].current_Fire_Cooldown;
-	castle.spawn_Cooldown = castle.castle_Stats_Array[level].spawn_Cooldown;
-	castle.current_Spawn_Cooldown = castle.castle_Stats_Array[level].current_Spawn_Cooldown;
+    castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
+	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
+    castle.arrow_Ammo = castle_Stats_Array[level].arrow_Ammo;
+    castle.arrow_Ammo_Cooldown = castle_Stats_Array[level].arrow_Ammo_Cooldown;
 
 	add_Collider(&castle.rigid_Body.colliders, { 0.0f, 0.0f }, sprite_Sheet_Array[selector].sprites[0].radius);
 
     game_Data->player_Castle = castle;
 }
 
-void spawn_Enemy_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, Vector position_WS, Level level) {
+void spawn_Enemy_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
-	castle.castle_Stats_Array = castle_Stats_Array;
+    // Would be the appropriate way to do it but it breaks the serialization
+    // castle.stats_Info = &castle_Stats_Array[level];
 
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(selector);
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
-	castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle.castle_Stats_Array[level].hp);
+	castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp);
 
-	castle.fire_Cooldown = castle.castle_Stats_Array[level].fire_Cooldown;
-	castle.current_Fire_Cooldown = castle.castle_Stats_Array[level].current_Fire_Cooldown;
-	castle.spawn_Cooldown = castle.castle_Stats_Array[level].spawn_Cooldown;
-	castle.current_Spawn_Cooldown = castle.castle_Stats_Array[level].current_Spawn_Cooldown;
+	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
+	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
 
 	add_Collider(&castle.rigid_Body.colliders, { 0.0f, 0.0f }, sprite_Sheet_Array[selector].sprites[0].radius);
 
 	game_Data->enemy_Castle = castle;
 }
 
-Vector calculate_Direction_Vector(Vector target, Vector start) {
-	Vector result = {};
+V2 calculate_Direction_V2(V2 target, V2 start) {
+	V2 result = {};
 
 	result.x = target.x - start.x;
 	result.y = target.y - start.y;
@@ -827,7 +838,7 @@ Vector calculate_Direction_Vector(Vector target, Vector start) {
     return result;
 }
 
-void spawn_Arrow(Game_Data* game_Data, Vector spawn_Position, Vector target_Position, Level level) {
+void spawn_Arrow(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
     Arrow arrow = {};
     arrow.arrow_Stats_Array = arrow_Stats_Array;
 
@@ -842,10 +853,10 @@ void spawn_Arrow(Game_Data* game_Data, Vector spawn_Position, Vector target_Posi
     arrow.stop = false;
     arrow.destroyed = false;
 
-    Vector direction_Vector = calculate_Direction_Vector(target_Position, spawn_Position);
+    V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
-    arrow.rigid_Body.velocity.x = direction_Vector.x * arrow.speed;
-    arrow.rigid_Body.velocity.y = direction_Vector.y * arrow.speed;
+    arrow.rigid_Body.velocity.x = direction_V2.x * arrow.speed;
+    arrow.rigid_Body.velocity.y = direction_V2.y * arrow.speed;
 
     // Improved readability
 	float radius = get_Sprite_Radius(&arrow.sprite_Sheet_Tracker);
@@ -859,7 +870,7 @@ void spawn_Arrow(Game_Data* game_Data, Vector spawn_Position, Vector target_Posi
     game_Data->player_Arrows.push_back(arrow);
 }
 
-void spawn_Player_Skeleton(Game_Data* game_Data, Vector spawn_Position, Vector target_Position, Level level) {
+void spawn_Player_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
 	Skeleton skeleton = {};
 
     skeleton.skeleton_Stats_Array = skeleton_Stats_Array;
@@ -879,11 +890,11 @@ void spawn_Player_Skeleton(Game_Data* game_Data, Vector spawn_Position, Vector t
 	skeleton.destroyed = false;
 	skeleton.stop = false;
 
-    Vector direction_Vector = calculate_Direction_Vector(target_Position, spawn_Position);
+    V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	skeleton.rigid_Body.velocity.x = direction_Vector.x * skeleton.skeleton_Stats_Array[level].speed;
-	skeleton.rigid_Body.velocity.y = direction_Vector.y * skeleton.skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton.skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton.skeleton_Stats_Array[level].speed;
 
 	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
 
@@ -895,7 +906,7 @@ void spawn_Player_Skeleton(Game_Data* game_Data, Vector spawn_Position, Vector t
 	game_Data->player_Skeletons.push_back(skeleton);
 }
 
-void spawn_Enemy_Skeleton(Game_Data* game_Data, Vector spawn_Position, Vector target_Position, Level level) {
+void spawn_Enemy_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
 	Skeleton skeleton = {};
 
 	skeleton.skeleton_Stats_Array = skeleton_Stats_Array;
@@ -915,11 +926,11 @@ void spawn_Enemy_Skeleton(Game_Data* game_Data, Vector spawn_Position, Vector ta
 	skeleton.destroyed = false;
 	skeleton.stop = false;
 
-    Vector direction_Vector = calculate_Direction_Vector(target_Position, spawn_Position);
+    V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	skeleton.rigid_Body.velocity.x = direction_Vector.x * skeleton.skeleton_Stats_Array[level].speed;
-	skeleton.rigid_Body.velocity.y = direction_Vector.y * skeleton.skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton.skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton.skeleton_Stats_Array[level].speed;
 
 	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
 
@@ -931,7 +942,7 @@ void spawn_Enemy_Skeleton(Game_Data* game_Data, Vector spawn_Position, Vector ta
 	game_Data->enemy_Skeletons.push_back(skeleton);
 }
 
-void spawn_Archer(Game_Data* game_Data, Vector spawn_Position, Vector target_Position, Level level) {
+void spawn_Archer(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
 	Archer archer = {};
 
 	archer.archer_Stats_Array = archer_Stats_Array;
@@ -951,11 +962,11 @@ void spawn_Archer(Game_Data* game_Data, Vector spawn_Position, Vector target_Pos
     archer.destroyed = false;
     archer.stop = false;
     
-    Vector direction_Vector = calculate_Direction_Vector(target_Position, spawn_Position);
+    V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-    archer.rigid_Body.velocity.x = direction_Vector.x * archer.archer_Stats_Array[level].speed;
-    archer.rigid_Body.velocity.y = direction_Vector.y * archer.archer_Stats_Array[level].speed;
+    archer.rigid_Body.velocity.x = direction_V2.x * archer.archer_Stats_Array[level].speed;
+    archer.rigid_Body.velocity.y = direction_V2.y * archer.archer_Stats_Array[level].speed;
 
 	float radius = get_Sprite_Radius(&archer.sprite_Sheet_Tracker);
     
@@ -994,7 +1005,7 @@ void draw_Circle(float center_X, float center_Y, float radius, Color_Index color
 
 void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Color_Index color) {
 	for (const auto& collider : rigid_Body->colliders) {
-		Vector world_Position = get_WS_Position(rigid_Body, &collider);
+		V2 world_Position = get_WS_Position(rigid_Body, &collider);
 		draw_Circle(world_Position.x, world_Position.y, collider.radius, color);
 	}
 }
@@ -1032,7 +1043,7 @@ void outline_Rect(SDL_Rect* rect, int outline_Thickness) {
     SDL_RenderDrawRect(renderer, rect);
 }
 
-void draw_HP_Bar(Vector* position, Health_Bar* health_Bar) {
+void draw_HP_Bar(V2* position, Health_Bar* health_Bar) {
     float remaining_HP_Percent = (health_Bar->current_HP / health_Bar->max_HP);
     if (remaining_HP_Percent < 0) {
         remaining_HP_Percent = 0;
@@ -1204,7 +1215,7 @@ void draw_String_With_Background(Font* font, const char* string, int position_X,
     draw_String(font, string, position_X, position_Y, size, center);
 }
 
-void draw_Timer(Font* font, Vector position, int timer_Size, Color_Index color, int outline_Padding) {
+void draw_Timer(Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
     SDL_Rect temp = {};
     Uint64 time_Elapsed = SDL_GetTicks64() / 1000;
 
@@ -1218,11 +1229,13 @@ std::string current_frame_Hot_Name;
 std::string next_Frame_Hot_Name;
 bool draw_Rect = false;
 
-bool button(Font* font, const char* string, int position_X, int position_Y, int w, int h, int string_Size) {
+bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int string_Size) {
 	SDL_Rect button_Area = {};
+    int outline_Thickness = 5;
+
 	// Centers the button
-	button_Area.x = (position_X - (w / 2));
-	button_Area.y = (position_Y - (h / 2));
+	button_Area.x = ((int)pos.x - (w / 2));
+	button_Area.y = ((int)pos.y - (h / 2));
 	button_Area.w = w;
 	button_Area.h = h;
 
@@ -1230,7 +1243,7 @@ bool button(Font* font, const char* string, int position_X, int position_Y, int 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(renderer, &button_Area);
 
-	draw_String(font, string, position_X, position_Y, string_Size, true);
+	draw_String(font, string, (int)pos.x, (int)pos.y, string_Size, true);
 	SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
@@ -1258,7 +1271,60 @@ bool button(Font* font, const char* string, int position_X, int position_Y, int 
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	}
 
-	outline_Rect(&button_Area, 10);
+	outline_Rect(&button_Area, outline_Thickness);
+
+	return button_Pressed;
+}
+
+bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
+	SDL_Rect button_Area = {};
+    int outline_Thickness = 5;
+    
+    // Centers the button
+	button_Area.x = ((int)pos.x - (h / 2));
+	button_Area.y = ((int)pos.y - (h / 2));
+	button_Area.w = h;
+	button_Area.h = h;
+
+	SDL_Rect image_Area = button_Area;
+    image_Area.w -= outline_Thickness * 2;
+    image_Area.h -= outline_Thickness * 2;
+	image_Area.x += outline_Thickness;
+	image_Area.y += outline_Thickness;
+
+	// Set background as black
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(renderer, &button_Area);
+
+    SDL_RenderCopyEx(renderer, texture, NULL, &image_Area, 0, NULL, SDL_FLIP_NONE);
+	SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+
+	int x, y;
+	Uint32 mouse = SDL_GetMouseState(&x, &y);
+	bool button_Pressed = false;
+
+	bool was_Hot = (current_frame_Hot_Name == string);
+
+	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
+		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		if (mouse_Down_This_Frame) {
+			next_Frame_Hot_Name = string;
+		}
+		else if (was_Hot && !(mouse & SDL_BUTTON_LMASK)) {
+			button_Pressed = true;
+		}
+		else
+		{
+			SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+		}
+	}
+	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
+		next_Frame_Hot_Name = string;
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	}
+
+	outline_Rect(&button_Area, outline_Thickness);
 
 	return button_Pressed;
 }
@@ -1296,7 +1362,7 @@ std::vector<int> create_Height_Map(const char* filename) {
 
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map) {
 	for (const auto& collider : rigid_Body->colliders) {
-		Vector world_Position = get_WS_Position(rigid_Body, &collider);
+		V2 world_Position = get_WS_Position(rigid_Body, &collider);
 
 		int collider_X = (int)world_Position.x;
 		int collider_Y = (int)world_Position.y + (int)collider.radius;
@@ -1320,10 +1386,10 @@ bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2) {
     // LOCAL POSITION DOES NOT CHANGE
     // SET THE LOCAL POSITION ONE TIME BUT THAT'S IT. Unless I want to animate the collider.
     for (const auto& collider_1 : rigid_Body_1->colliders) {
-        Vector world_Pos_1 = get_WS_Position(rigid_Body_1, &collider_1);
+        V2 world_Pos_1 = get_WS_Position(rigid_Body_1, &collider_1);
 
 		for (const auto& collider_2 : rigid_Body_2->colliders) {
-            Vector world_Pos_2 = get_WS_Position(rigid_Body_2, &collider_2);
+            V2 world_Pos_2 = get_WS_Position(rigid_Body_2, &collider_2);
 
 			float distance_Between = calculate_Distance(
                 world_Pos_1.x, world_Pos_1.y,
@@ -1343,6 +1409,13 @@ void change_Animation(Sprite_Sheet_Tracker* tracker, Sprite_Sheet_Selector selec
         tracker->selected = selected;
         tracker->current_Frame = 0;
     }
+}
+
+void draw_Arrow_Ammo_Tracker(Font* font, int ammo, V2 pos, int size) {
+	std::string str_1 = std::to_string(ammo);
+	std::string str_2 = "Arrow ammo:" + str_1;
+	const char* ptr = str_2.c_str();
+	draw_String_With_Background(font, ptr, (int)pos.x, (int)pos.y, size, true, CI_BLACK, 5);
 }
 
 void draw_Time_Scalar(Font* font, float time_Scalar, int pos_X, int pos_Y, int size) {
@@ -1406,7 +1479,7 @@ int main(int argc, char** argv) {
     Image castle_Image = create_Image("images/player_Castle.png");
     Image arrow_Image = create_Image("images/arrow.png");
     Image skeleton_Image_Walking = create_Image("images/unit_Skeleton_Sprite_Sheet.png");
-    Image skeleton_Image_Stop = create_Image("images/skeleton_Image_Walking");
+    Image skeleton_Image_Stop = create_Image("images/unit_Skeleton.png");
     Image archer_Image_Walking = create_Image("images/unit_Archer_Sprite_Sheet.png");
     Image archer_Image_Stop = create_Image("images/unit_Archer.png");
 
@@ -1465,7 +1538,7 @@ int main(int argc, char** argv) {
     // Debugging visualization code
 	// Sprite_Sheet_Tracker sprite_Sheet_Tracker = { skeleton_Animations, WALKING, 0.0f, 0 };
 
-    Game_State current_Game_State = GS_MENU;
+    Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -1527,32 +1600,31 @@ int main(int argc, char** argv) {
                 20
             );
             
-            int button_Pos_X = RESOLUTION_WIDTH / 2;
-            int button_Pos_Y = RESOLUTION_HEIGHT / 2 + 50;
+            V2 button_Pos = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 50 };
             int button_Width = 300;
             int button_Height = 100;
             int string_Size = 4;
 
-			if (button(&font_1, "Play", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+			if (button_Text(&font_1, "Play", button_Pos, button_Width, button_Height, string_Size)) {
                 current_Game_State = GS_GAMELOOP;
 			}
-            button_Pos_Y += 100;
-			if (button(&font_1, "Options", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+            button_Pos.y += 100;
+			if (button_Text(&font_1, "Options", button_Pos, button_Width, button_Height, string_Size)) {
 
 			}
-            button_Pos_Y += 100;
-			if (button(&font_1, "Quit", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+            button_Pos.y += 100;
+			if (button_Text(&font_1, "Quit", button_Pos, button_Width, button_Height, string_Size)) {
 				running = false;
 			}
-            button_Pos_Y += 100;
-			if (button(&font_1, "Save Game", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+            button_Pos.y += 100;
+			if (button_Text(&font_1, "Save Game", button_Pos, button_Width, button_Height, string_Size)) {
 				save_Game(&game_Data, "Save_Game.txt");
 			}
-			button_Pos_Y += 100;
-			if (button(&font_1, "Load Game", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+			button_Pos.y += 100;
+			if (button_Text(&font_1, "Load Game", button_Pos, button_Width, button_Height, string_Size)) {
 				load_Game(&game_Data, "Save_Game.txt");
 			}
-			button_Pos_Y += 100;
+            button_Pos.y += 100;
 
             SDL_RenderPresent(renderer);
         
@@ -1576,9 +1648,9 @@ int main(int argc, char** argv) {
 
             if (current_Game_State == GS_GAMELOOP && time_Scalar > 0) {
                 // Spawn Arrows and update lifetime
-                if (key_States[SDLK_SPACE].held_Down == true) {
-                    if (game_Data.player_Castle.current_Fire_Cooldown < 0) {
-                        Vector target_Mouse = {};
+                if (key_States[SDLK_SPACE].held_Down == true && game_Data.player_Castle.arrow_Ammo > 0) {
+                    if (game_Data.player_Castle.fire_Cooldown.remaining < 0) {
+                        V2 target_Mouse = {};
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
@@ -1588,15 +1660,23 @@ int main(int argc, char** argv) {
                             target_Mouse,
                             LEVEL_1
                         );
-                        game_Data.player_Castle.current_Fire_Cooldown = game_Data.player_Castle.fire_Cooldown;
-                    }
-                    else {
-                        game_Data.player_Castle.current_Fire_Cooldown -= delta_Time;
+                        game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
+                        if (game_Data.player_Castle.arrow_Ammo > 0) {
+                            game_Data.player_Castle.arrow_Ammo--;
+                        } else {
+                            game_Data.player_Castle.arrow_Ammo = 0;
+                        }
                     }
                 }
-                else {
-                    game_Data.player_Castle.current_Fire_Cooldown -= delta_Time;
+                game_Data.player_Castle.fire_Cooldown.remaining -= delta_Time;
+                
+                if (game_Data.player_Castle.arrow_Ammo_Cooldown.remaining < 0) {
+                    Castle* player_Castle = &game_Data.player_Castle;
+
+                    player_Castle->arrow_Ammo++;
+                    player_Castle->arrow_Ammo_Cooldown.remaining = player_Castle->arrow_Ammo_Cooldown.duration;
                 }
+                game_Data.player_Castle.arrow_Ammo_Cooldown.remaining -= delta_Time;
 
                 // Spawn Player Skeletons
                 if (spawn_Skeleton_Pressed) {
@@ -1629,7 +1709,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Spawn enemy skeletons
-                if (game_Data.enemy_Castle.current_Spawn_Cooldown < 0) {
+                if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
 					Castle* player_Castle = &game_Data.player_Castle;
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     // Readability
@@ -1643,10 +1723,10 @@ int main(int argc, char** argv) {
 						player_Castle->rigid_Body.position_WS,
 						LEVEL_2
 					);
-                    enemy_Castle->current_Spawn_Cooldown = enemy_Castle->spawn_Cooldown;
+                    enemy_Castle->spawn_Cooldown.remaining = enemy_Castle->spawn_Cooldown.duration;
                 }
                 else {
-                    game_Data.enemy_Castle.current_Spawn_Cooldown -= delta_Time;
+                    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
                 }
 
                 // Update arrow positions
@@ -1726,7 +1806,7 @@ int main(int argc, char** argv) {
                         if (check_RB_Collision(&arrow->rigid_Body, &enemy_Skeleton->rigid_Body)) {
                             if (!arrow->stop) {
                                 enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
-                                Vector offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
+                                V2 offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
                                 Attached_Entity attached_Entity = return_Attached_Entity(
                                     &sprite_Sheet_Array[arrow->sprite_Sheet_Tracker.selected].sprites[0],
                                     arrow->rigid_Body.angle,
@@ -1854,7 +1934,7 @@ int main(int argc, char** argv) {
                             archer->stop = true;
                             if (archer->current_Attack_Cooldown <= 0) {
                                 archer->current_Attack_Cooldown = archer->attack_Cooldown;
-                                Vector aim_Head = skeleton->rigid_Body.position_WS;
+                                V2 aim_Head = skeleton->rigid_Body.position_WS;
                                 Sprite_Sheet_Selector selected = game_Data.enemy_Skeletons[0].sprite_Sheet_Tracker.selected;
                                 aim_Head.x += sprite_Sheet_Array[selected].sprites[0].radius;
                                 spawn_Arrow(
@@ -2035,24 +2115,29 @@ int main(int argc, char** argv) {
             draw_Unit_Animated(&temp_RB, &animation_Tracker, false);
 #endif
 
-            int button_Pos_X = (RESOLUTION_WIDTH / 8);
-            int button_Pos_Y = ((RESOLUTION_HEIGHT / 16) * 15);
+            V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
             int button_Width = 325;
-            int button_Height = 80;
+            int button_Height = 125;
             int string_Size = 3;
-            int x_Offset = button_Width;
-            if (button(&font_1, "Spawn Skeleton", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+            // int x_Offset = button_Width;
+            if (button_Image(sprite_Sheet_Array[SSS_SKELETON_STOP].sprites[0].image->texture, "Spawn Skeleton", button_Pos, button_Height)) {
                 spawn_Skeleton_Pressed = true;
             } 
-            button_Pos_X += x_Offset;
-			if (button(&font_1, "Spawn Archer", button_Pos_X, button_Pos_Y, button_Width, button_Height, string_Size)) {
+            button_Pos.x += button_Height;
+            if (button_Image(sprite_Sheet_Array[SSS_ARCHER_STOP].sprites[0].image->texture, "Spawn Archer", button_Pos, button_Height)) {
 				spawn_Archer_Pressed = true;
 			}
-            button_Pos_X += x_Offset;
+            button_Pos.x += button_Height;
+			
+            draw_Arrow_Ammo_Tracker(
+                &font_1, 
+                game_Data.player_Castle.arrow_Ammo, 
+                { ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 7) },
+                3
+            );
 
             if (current_Game_State == GS_PAUSED) {
-                int x_Pos = RESOLUTION_WIDTH / 2;
-                int temp_Offset = RESOLUTION_HEIGHT / 2;
+                V2 button_Pos_Paused = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 2 };
                 draw_String_With_Background(
                     &font_1,
                     "Game Paused",
@@ -2063,19 +2148,19 @@ int main(int argc, char** argv) {
                     CI_BLACK,
                     5
                 );
-                temp_Offset += 100;
-				if (button(&font_1, "Return to Menu", x_Pos, temp_Offset, button_Width, button_Height, string_Size)) {
+                button_Pos_Paused.x += 100;
+				if (button_Text(&font_1, "Return to Menu", button_Pos_Paused, button_Width, button_Height, string_Size)) {
                     current_Game_State = GS_MENU;
 				}
-                temp_Offset += 100;
-				if (button(&font_1, "Save Game", x_Pos, temp_Offset, button_Width, button_Height, string_Size)) {
+                button_Pos_Paused.x += 100;
+				if (button_Text(&font_1, "Save Game", button_Pos_Paused, button_Width, button_Height, string_Size)) {
 					save_Game(&game_Data, "Save_Game.txt");
 				}
-                temp_Offset += 100;
-				if (button(&font_1, "Load Game", x_Pos, temp_Offset, button_Width, button_Height, string_Size)) {
+                button_Pos_Paused.x += 100;
+				if (button_Text(&font_1, "Load Game", button_Pos_Paused, button_Width, button_Height, string_Size)) {
 					load_Game(&game_Data, "Save_Game.txt");
 				}
-                temp_Offset += 100;
+                button_Pos_Paused.x += 100;
             }
 
             // Erase destroyed arrows
