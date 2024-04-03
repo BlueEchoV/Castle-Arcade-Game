@@ -13,6 +13,7 @@
 #define RESOLUTION_HEIGHT 1080
 
 const float GRAVITY = 300;
+const float ARCHER_ARROW_GRAVITY = 100;
 const int MAX_ATTACHED_ENTITY = 1000;
 
 bool temp_Bool = false;
@@ -51,6 +52,11 @@ enum Color_Index {
     CI_RED,
     CI_GREEN,
     CI_BLUE
+};
+
+enum Arrow_Type {
+    AT_PLAYER_ARROW,
+    AT_ARCHER_ARROW,
 };
 
 // Chris does this instead of enums
@@ -152,9 +158,6 @@ Sprite_Sheet_Tracker create_Sprite_Sheet_Tracker(Sprite_Sheet_Selector selected)
 enum Level {
 	LEVEL_1,
 	LEVEL_2,
-	LEVEL_3,
-	LEVEL_4,
-	LEVEL_5,
 	TOTAL_LEVELS
 };                                      
 
@@ -174,10 +177,9 @@ struct Castle_Stats {
 };
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
-	// hp        fire_Cooldown   spawn_Cooldown     arrow_Ammo       arrow_Ammo_Cooldown
-    {  100.0f,  {0.01f, 0.0f},  {1.0f, 0.0f},       0,              {0.25f, 0.0f}},
-
-	{.hp = 100.0f, .fire_Cooldown = {1.0f, 0.0f}, .spawn_Cooldown = {1.0f, 0.0f}, .arrow_Ammo = 0, .arrow_Ammo_Cooldown = {0.25f, 0.0f}},
+	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown
+    {  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f}     },
+	{  100.0f,    {1.0f, 0.0f},      {1.0f, 0.0f},       0,                {0.25f, 0.0f}     },
 };
 
 struct Castle {
@@ -207,15 +209,13 @@ struct Arrow_Stats {
 };
 
 const Arrow_Stats arrow_Stats_Array[TOTAL_LEVELS] = {
-	{.speed = 800, .damage = 2, .life_Time = 100},
-	{.speed = 800, .damage = 25, .life_Time = 100},
-	{.speed = 800, .damage = 30, .life_Time = 100},
-	{.speed = 800, .damage = 35, .life_Time = 100},
-	{.speed = 800, .damage = 40, .life_Time = 100}
+    // speed    |   damage  |   life_Time
+	{  800,         2,          100     },
+	{  800,         25,         100     }
 };
 
 struct Arrow {
-	const Arrow_Stats* arrow_Stats_Array;
+    Arrow_Type type;
 
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 
@@ -239,11 +239,9 @@ struct Skeleton_Stats {
 };
 
 const Skeleton_Stats skeleton_Stats_Array[TOTAL_LEVELS] = {
-	{.speed = 100, .damage = 20, .max_HP = 100, .attack_Cooldown = 1, .attack_Range = 150},
-	{.speed = 200, .damage = 25, .max_HP = 125, .attack_Cooldown = 1, .attack_Range = 150},
-	{.speed = 300, .damage = 30, .max_HP = 150, .attack_Cooldown = 1, .attack_Range = 150},
-	{.speed = 400, .damage = 35, .max_HP = 175, .attack_Cooldown = 1, .attack_Range = 150},
-	{.speed = 500, .damage = 40, .max_HP = 200, .attack_Cooldown = 1, .attack_Range = 150}
+    // speed    |   damage  |   max_HP  |   attack_Cooldown  |  attack_Range
+	{  100,         20,         100,        1,                  150},
+	{  200,         25,         125,        1,                  150}
 };
 
 struct Attached_Entity{
@@ -254,8 +252,6 @@ struct Attached_Entity{
 };
 
 struct Skeleton {
-	const Skeleton_Stats* skeleton_Stats_Array;
-
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 
 	Rigid_Body rigid_Body;
@@ -289,16 +285,12 @@ struct Archer_Stats {
 };
 
 const Archer_Stats archer_Stats_Array[TOTAL_LEVELS] = {
-	{.speed = 100, .damage = 10, .hp = 100, .attack_Cooldown = 1, .current_Attack_Cooldown = 0.0, .attack_Range = 750},
-	{.speed = 150, .damage = 15, .hp = 125, .attack_Cooldown = 1, .current_Attack_Cooldown = 0.0, .attack_Range = 750},
-	{.speed = 200, .damage = 20, .hp = 150, .attack_Cooldown = 1, .current_Attack_Cooldown = 0.0, .attack_Range = 750},
-	{.speed = 250, .damage = 25, .hp = 175, .attack_Cooldown = 1, .current_Attack_Cooldown = 0.0, .attack_Range = 750},
-	{.speed = 300, .damage = 30, .hp = 200, .attack_Cooldown = 1, .current_Attack_Cooldown = 0.0, .attack_Range = 750}
+	// speed | damage |  hp  |  attack_Cooldown | current_Attack_Cooldown | attack_Range
+	{  100,    10,      100,    1,                0.0,                      750},
+	{  150,    15,      125,    1,                0.0,                      750}
 };
 
 struct Archer {
-    const Archer_Stats* archer_Stats_Array;
-
     Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 
 	Rigid_Body rigid_Body;
@@ -306,7 +298,6 @@ struct Archer {
 	Health_Bar health_Bar;
 
 	float speed;
-	float damage;
     float attack_Cooldown;
 	float current_Attack_Cooldown;
 	float attack_Range;
@@ -748,7 +739,13 @@ V2 get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
 
 void update_Arrow_Position(Arrow* arrow, float delta_Time) {
 	if (!arrow->stop) {
-		arrow->rigid_Body.velocity.y += GRAVITY * delta_Time;
+        if (arrow->type == AT_PLAYER_ARROW) {
+            arrow->rigid_Body.velocity.y += GRAVITY * delta_Time;
+        } else if (arrow->type == AT_ARCHER_ARROW) {
+            arrow->rigid_Body.velocity.y += ARCHER_ARROW_GRAVITY * delta_Time;
+        } else {
+            SDL_Log("ERROR: Arrow type not specified. update_Arrow_Position()");
+        }
 
 		arrow->rigid_Body.position_WS.x += arrow->rigid_Body.velocity.x * delta_Time;
 		arrow->rigid_Body.position_WS.y += arrow->rigid_Body.velocity.y * delta_Time;
@@ -841,9 +838,10 @@ V2 calculate_Direction_V2(V2 target, V2 start) {
     return result;
 }
 
-void spawn_Arrow(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Arrow(Arrow_Type type, Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
     Arrow arrow = {};
-    arrow.arrow_Stats_Array = arrow_Stats_Array;
+
+    arrow.type = type;
 
 	arrow.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_ARROW_DEFAULT);
 
@@ -876,19 +874,17 @@ void spawn_Arrow(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Le
 void spawn_Player_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
 	Skeleton skeleton = {};
 
-    skeleton.skeleton_Stats_Array = skeleton_Stats_Array;
-
     skeleton.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_SKELETON_WALKING);
 
 	skeleton.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-    skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton.skeleton_Stats_Array[level].max_HP);
+    skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton_Stats_Array[level].max_HP);
 
-    skeleton.speed = skeleton.skeleton_Stats_Array[level].speed;
-    skeleton.damage = skeleton.skeleton_Stats_Array[level].damage;
-    skeleton.attack_Cooldown = skeleton.skeleton_Stats_Array[level].attack_Cooldown;
+    skeleton.speed = skeleton_Stats_Array[level].speed;
+    skeleton.damage = skeleton_Stats_Array[level].damage;
+    skeleton.attack_Cooldown = skeleton_Stats_Array[level].attack_Cooldown;
     skeleton.current_Attack_Cooldown = 0.0f;
-	skeleton.attack_Range = skeleton.skeleton_Stats_Array[level].attack_Range;
+	skeleton.attack_Range = skeleton_Stats_Array[level].attack_Range;
 
 	skeleton.destroyed = false;
 	skeleton.stop = false;
@@ -896,8 +892,8 @@ void spawn_Player_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Po
     V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton.skeleton_Stats_Array[level].speed;
-	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton.skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton_Stats_Array[level].speed;
 
 	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
 
@@ -912,19 +908,17 @@ void spawn_Player_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Po
 void spawn_Enemy_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
 	Skeleton skeleton = {};
 
-	skeleton.skeleton_Stats_Array = skeleton_Stats_Array;
-
 	skeleton.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_SKELETON_WALKING);
 
 	skeleton.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton.skeleton_Stats_Array[level].max_HP);
+	skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton_Stats_Array[level].max_HP);
 
-	skeleton.speed = skeleton.skeleton_Stats_Array[level].speed;
-	skeleton.damage = skeleton.skeleton_Stats_Array[level].damage;
-	skeleton.attack_Cooldown = skeleton.skeleton_Stats_Array[level].attack_Cooldown;
+	skeleton.speed = skeleton_Stats_Array[level].speed;
+	skeleton.damage = skeleton_Stats_Array[level].damage;
+	skeleton.attack_Cooldown = skeleton_Stats_Array[level].attack_Cooldown;
 	skeleton.current_Attack_Cooldown = 0.0f;
-	skeleton.attack_Range = skeleton.skeleton_Stats_Array[level].attack_Range;
+	skeleton.attack_Range = skeleton_Stats_Array[level].attack_Range;
 
 	skeleton.destroyed = false;
 	skeleton.stop = false;
@@ -932,8 +926,8 @@ void spawn_Enemy_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Pos
     V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton.skeleton_Stats_Array[level].speed;
-	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton.skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton_Stats_Array[level].speed;
+	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton_Stats_Array[level].speed;
 
 	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
 
@@ -948,19 +942,16 @@ void spawn_Enemy_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Pos
 void spawn_Archer(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
 	Archer archer = {};
 
-	archer.archer_Stats_Array = archer_Stats_Array;
-
-	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, archer.archer_Stats_Array[level].hp);
+	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, archer_Stats_Array[level].hp);
 
 	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_ARCHER_WALKING);
 
 	archer.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-    archer.speed = archer.archer_Stats_Array[level].speed;
-    archer.damage = archer.archer_Stats_Array[level].damage;
-    archer.attack_Cooldown = archer.archer_Stats_Array[level].attack_Cooldown;
+    archer.speed = archer_Stats_Array[level].speed;
+    archer.attack_Cooldown = archer_Stats_Array[level].attack_Cooldown;
     archer.current_Attack_Cooldown = 0.0f;
-    archer.attack_Range = archer.archer_Stats_Array[level].attack_Range;
+    archer.attack_Range = archer_Stats_Array[level].attack_Range;
 
     archer.destroyed = false;
     archer.stop = false;
@@ -968,8 +959,8 @@ void spawn_Archer(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, L
     V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-    archer.rigid_Body.velocity.x = direction_V2.x * archer.archer_Stats_Array[level].speed;
-    archer.rigid_Body.velocity.y = direction_V2.y * archer.archer_Stats_Array[level].speed;
+    archer.rigid_Body.velocity.x = direction_V2.x * archer_Stats_Array[level].speed;
+    archer.rigid_Body.velocity.y = direction_V2.y * archer_Stats_Array[level].speed;
 
 	float radius = get_Sprite_Radius(&archer.sprite_Sheet_Tracker);
     
@@ -1658,6 +1649,7 @@ int main(int argc, char** argv) {
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
                         spawn_Arrow(
+                            AT_PLAYER_ARROW,
                             &game_Data,
                             game_Data.player_Castle.rigid_Body.position_WS,
                             target_Mouse,
@@ -1941,10 +1933,11 @@ int main(int argc, char** argv) {
                                 Sprite_Sheet_Selector selected = game_Data.enemy_Skeletons[0].sprite_Sheet_Tracker.selected;
                                 aim_Head.x += sprite_Sheet_Array[selected].sprites[0].radius;
                                 spawn_Arrow(
+                                    AT_ARCHER_ARROW,
                                     &game_Data,
                                     archer->rigid_Body.position_WS,
                                     aim_Head,
-                                    LEVEL_1
+                                    LEVEL_2
                                 );
                             }
                         }
