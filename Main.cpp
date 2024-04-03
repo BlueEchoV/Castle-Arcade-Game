@@ -247,7 +247,7 @@ const Skeleton_Stats skeleton_Stats_Array[TOTAL_LEVELS] = {
 };
 
 struct Attached_Entity{
-    Sprite* sprite;
+    Sprite_Sheet_Tracker tracker;
     float angle;
     V2 offset;
     // could store skeleton ID
@@ -348,21 +348,21 @@ void save_Game(Game_Data* game_Data, const char* file_Name) {
 
 	size_t player_Arrows_Size = game_Data->player_Arrows.size();
 	fwrite(&player_Arrows_Size, sizeof(player_Arrows_Size), 1, file);
-	fwrite(game_Data->player_Arrows.data(), sizeof(game_Data->player_Arrows), player_Arrows_Size, file);
+	fwrite(game_Data->player_Arrows.data(), sizeof(game_Data->player_Arrows[0]), player_Arrows_Size, file);
 
     size_t enemy_Skeletons_Size = game_Data->enemy_Skeletons.size();
-    fwrite(&enemy_Skeletons_Size, sizeof(size_t), 1, file);
-    fwrite(game_Data->enemy_Skeletons.data(), sizeof(Skeleton), enemy_Skeletons_Size, file);
+    fwrite(&enemy_Skeletons_Size, sizeof(enemy_Skeletons_Size), 1, file);
+    fwrite(game_Data->enemy_Skeletons.data(), sizeof(game_Data->enemy_Skeletons[0]), enemy_Skeletons_Size, file);
 
     size_t player_Skeletons_Size = game_Data->player_Skeletons.size();
-    fwrite(&player_Skeletons_Size, sizeof(size_t), 1, file);
-    fwrite(game_Data->player_Skeletons.data(), sizeof(Skeleton), player_Skeletons_Size, file);
+    fwrite(&player_Skeletons_Size, sizeof(player_Skeletons_Size), 1, file);
+    fwrite(game_Data->player_Skeletons.data(), sizeof(game_Data->player_Skeletons[0]), player_Skeletons_Size, file);
     
     size_t player_Archer_Size = game_Data->player_Archers.size();
-    fwrite(&player_Archer_Size , sizeof(size_t), 1, file);
-    fwrite(game_Data->player_Archers.data(), sizeof(Skeleton), player_Archer_Size, file);
+    fwrite(&player_Archer_Size , sizeof(player_Archer_Size), 1, file);
+    fwrite(game_Data->player_Archers.data(), sizeof(game_Data->player_Archers[0]), player_Archer_Size, file);
  
-    fwrite(&game_Data->next_Entity_ID, sizeof(size_t), 1, file);
+    fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
 }
 
 void load_Game(Game_Data* game_Data, const char* file_Name) {
@@ -380,30 +380,30 @@ void load_Game(Game_Data* game_Data, const char* file_Name) {
 
 	// fread(game_Data, sizeof(Game_Data), 1, file);
 
-    fread(&game_Data->player_Castle, sizeof(Castle), 1, file);
-    fread(&game_Data->enemy_Castle, sizeof(Castle), 1, file);
-     
-    size_t terrain_Size = game_Data->terrain_Height_Map.size();
-    fread(&terrain_Size, sizeof(size_t), 1, file);
-    fread(game_Data->terrain_Height_Map.data(), sizeof(size_t), terrain_Size, file);
+	fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
+	fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
+
+	size_t terrain_Size = game_Data->terrain_Height_Map.size();
+	fread(&terrain_Size, sizeof(terrain_Size), 1, file);
+	fread(game_Data->terrain_Height_Map.data(), sizeof(game_Data->terrain_Height_Map[0]), terrain_Size, file);
 
 	size_t player_Arrows_Size = game_Data->player_Arrows.size();
-    fread(&player_Arrows_Size, sizeof(size_t), 1, file);
-    fread(game_Data->player_Arrows.data(), sizeof(Arrow), player_Arrows_Size, file);
+	fread(&player_Arrows_Size, sizeof(player_Arrows_Size), 1, file);
+	fread(game_Data->player_Arrows.data(), sizeof(game_Data->player_Arrows[0]), player_Arrows_Size, file);
 
-    size_t enemy_Skeletons_Size = game_Data->enemy_Skeletons.size();
-    fread(&enemy_Skeletons_Size, sizeof(size_t), 1, file);
-    fread(game_Data->enemy_Skeletons.data(), sizeof(Skeleton), enemy_Skeletons_Size, file);
+	size_t enemy_Skeletons_Size = game_Data->enemy_Skeletons.size();
+	fread(&enemy_Skeletons_Size, sizeof(enemy_Skeletons_Size), 1, file);
+	fread(game_Data->enemy_Skeletons.data(), sizeof(game_Data->enemy_Skeletons[0]), enemy_Skeletons_Size, file);
 
-    size_t player_Skeletons_Size = game_Data->player_Skeletons.size();
-    fread(&player_Skeletons_Size, sizeof(size_t), 1, file);
-    fread(game_Data->player_Skeletons.data(), sizeof(Skeleton), player_Skeletons_Size, file);
-    
-    size_t player_Archer_Size = game_Data->player_Archers.size();
-    fread(&player_Archer_Size , sizeof(size_t), 1, file);
-    fread(game_Data->player_Archers.data(), sizeof(Skeleton), player_Archer_Size, file);
- 
-    fread(&game_Data->next_Entity_ID, sizeof(size_t), 1, file);
+	size_t player_Skeletons_Size = game_Data->player_Skeletons.size();
+	fread(&player_Skeletons_Size, sizeof(player_Skeletons_Size), 1, file);
+	fread(game_Data->player_Skeletons.data(), sizeof(game_Data->player_Skeletons[0]), player_Skeletons_Size, file);
+
+	size_t player_Archer_Size = game_Data->player_Archers.size();
+	fread(&player_Archer_Size, sizeof(player_Archer_Size), 1, file);
+	fread(game_Data->player_Archers.data(), sizeof(game_Data->player_Archers[0]), player_Archer_Size, file);
+
+	fread(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
 }
 
 float return_Sprite_Radius(Sprite sprite) {
@@ -1815,7 +1815,7 @@ int main(int argc, char** argv) {
                                     arrow->rigid_Body.angle,
                                     offset
                                 );
-                                enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
+                                // enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
                                 arrow->destroyed = true;
                             }
                         }
@@ -2031,10 +2031,11 @@ int main(int argc, char** argv) {
                     false
                 );
                 draw_HP_Bar(&skeleton->rigid_Body.position_WS, &skeleton->health_Bar);
-
+                /*
                 for (int j = 0; j < skeleton->attached_Entities_Size; j++) {
                     draw_Attached_Entity(&skeleton->attached_Entities[j], skeleton->rigid_Body.position_WS, false);
 				}
+                */
 			}
 
             // Draw player skeletons
@@ -2119,18 +2120,16 @@ int main(int argc, char** argv) {
 #endif
 
             V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
-            int button_Width = 325;
-            int button_Height = 125;
-            int string_Size = 3;
+			int button_Height_Unit_Spawn = 90;
             // int x_Offset = button_Width;
-            if (button_Image(sprite_Sheet_Array[SSS_SKELETON_STOP].sprites[0].image->texture, "Spawn Skeleton", button_Pos, button_Height)) {
+            if (button_Image(sprite_Sheet_Array[SSS_SKELETON_STOP].sprites[0].image->texture, "Spawn Skeleton", button_Pos, button_Height_Unit_Spawn)) {
                 spawn_Skeleton_Pressed = true;
             } 
-            button_Pos.x += button_Height;
-            if (button_Image(sprite_Sheet_Array[SSS_ARCHER_STOP].sprites[0].image->texture, "Spawn Archer", button_Pos, button_Height)) {
+            button_Pos.x += button_Height_Unit_Spawn;
+            if (button_Image(sprite_Sheet_Array[SSS_ARCHER_STOP].sprites[0].image->texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
 				spawn_Archer_Pressed = true;
 			}
-            button_Pos.x += button_Height;
+            button_Pos.x += button_Height_Unit_Spawn;
 			
             draw_Arrow_Ammo_Tracker(
                 &font_1, 
@@ -2140,6 +2139,9 @@ int main(int argc, char** argv) {
             );
 
             if (current_Game_State == GS_PAUSED) {
+                int button_Width_Paused = 325;
+                int button_Height_Paused = 90;
+                int string_Size_Paused = 3;
                 V2 button_Pos_Paused = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 2 };
                 draw_String_With_Background(
                     &font_1,
@@ -2151,19 +2153,19 @@ int main(int argc, char** argv) {
                     CI_BLACK,
                     5
                 );
-                button_Pos_Paused.x += 100;
-				if (button_Text(&font_1, "Return to Menu", button_Pos_Paused, button_Width, button_Height, string_Size)) {
+                button_Pos_Paused.y += button_Height_Paused;
+				if (button_Text(&font_1, "Return to Menu", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
                     current_Game_State = GS_MENU;
 				}
-                button_Pos_Paused.x += 100;
-				if (button_Text(&font_1, "Save Game", button_Pos_Paused, button_Width, button_Height, string_Size)) {
+                button_Pos_Paused.y += button_Height_Paused;
+				if (button_Text(&font_1, "Save Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
 					save_Game(&game_Data, "Save_Game.txt");
 				}
-                button_Pos_Paused.x += 100;
-				if (button_Text(&font_1, "Load Game", button_Pos_Paused, button_Width, button_Height, string_Size)) {
+                button_Pos_Paused.y += button_Height_Paused;
+				if (button_Text(&font_1, "Load Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
 					load_Game(&game_Data, "Save_Game.txt");
 				}
-                button_Pos_Paused.x += 100;
+                button_Pos_Paused.y += button_Height_Paused;
             }
 
             // Erase destroyed arrows
