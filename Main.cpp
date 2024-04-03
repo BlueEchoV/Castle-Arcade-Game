@@ -378,8 +378,6 @@ void load_Game(Game_Data* game_Data, const char* file_Name) {
 		return;
 	}
 
-	// fread(game_Data, sizeof(Game_Data), 1, file);
-
 	fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
 	fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
 
@@ -567,29 +565,31 @@ void draw_Arrow(Arrow* arrow, bool flip) {
     SDL_RenderCopyEx(renderer, sprite->image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
-Attached_Entity return_Attached_Entity(Sprite* sprite, float angle, V2 offset) {
+Attached_Entity return_Attached_Entity(Sprite_Sheet_Selector selected, float angle, V2 offset) {
     Attached_Entity result = {};
 
-    result.sprite = sprite;
+    //                 selected     animation_Time      current_Frame
+    result.tracker = { selected,    0.0f,               0 };
     result.angle = angle;
     result.offset = offset;
 
     return result;
 }
 
-void draw_Attached_Entity(Attached_Entity* Attached_Entity, V2 position_WS, bool flip) {
+void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip) {
 	SDL_Rect temp = {};
-    SDL_Rect* src_Rect = &Attached_Entity->sprite->source_Rect;
+    Sprite* sprite = &sprite_Sheet_Array[attached_Entity->tracker.selected].sprites[0];
+    SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
-    V2 new_Pos = position_WS + Attached_Entity->offset;
+    V2 new_Pos = position_WS + attached_Entity->offset;
 	temp = {
 		((int)new_Pos.x - (int)sprite_Half_Size.x),
 		((int)new_Pos.y - (int)sprite_Half_Size.y),
-        Attached_Entity->sprite->source_Rect.w,
-        Attached_Entity->sprite->source_Rect.h
+        sprite->source_Rect.w,
+        sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(renderer, Attached_Entity->sprite->image->texture, NULL, &temp, Attached_Entity->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	SDL_RenderCopyEx(renderer, sprite->image->texture, NULL, &temp, attached_Entity->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time) {
@@ -1811,11 +1811,11 @@ int main(int argc, char** argv) {
                                 enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
                                 V2 offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
                                 Attached_Entity attached_Entity = return_Attached_Entity(
-                                    &sprite_Sheet_Array[arrow->sprite_Sheet_Tracker.selected].sprites[0],
+                                    SSS_ARROW_DEFAULT,
                                     arrow->rigid_Body.angle,
                                     offset
                                 );
-                                // enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
+                                enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
                                 arrow->destroyed = true;
                             }
                         }
@@ -2031,11 +2031,9 @@ int main(int argc, char** argv) {
                     false
                 );
                 draw_HP_Bar(&skeleton->rigid_Body.position_WS, &skeleton->health_Bar);
-                /*
                 for (int j = 0; j < skeleton->attached_Entities_Size; j++) {
                     draw_Attached_Entity(&skeleton->attached_Entities[j], skeleton->rigid_Body.position_WS, false);
 				}
-                */
 			}
 
             // Draw player skeletons
