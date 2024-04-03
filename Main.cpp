@@ -13,6 +13,7 @@
 #define RESOLUTION_HEIGHT 1080
 
 const float GRAVITY = 300;
+const int MAX_ATTACHED_ENTITY = 1000;
 
 bool temp_Bool = false;
 
@@ -268,7 +269,9 @@ struct Skeleton {
 	float attack_Range;
 
     // Could make this a fixed size array for serialization
-    std::vector<Attached_Entity> attached_Entities;
+    // std::vector<Attached_Entity> attached_Entities;
+    Attached_Entity attached_Entities[MAX_ATTACHED_ENTITY] = {};
+    int attached_Entities_Size = 0;
 
 	bool destroyed;
 	bool stop;
@@ -1812,7 +1815,7 @@ int main(int argc, char** argv) {
                                     arrow->rigid_Body.angle,
                                     offset
                                 );
-                                enemy_Skeleton->attached_Entities.push_back(attached_Entity);
+                                enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
                                 arrow->destroyed = true;
                             }
                         }
@@ -2028,11 +2031,11 @@ int main(int argc, char** argv) {
                     false
                 );
                 draw_HP_Bar(&skeleton->rigid_Body.position_WS, &skeleton->health_Bar);
-                
-                for (Attached_Entity attached_Entity : game_Data.enemy_Skeletons[i].attached_Entities) {
-                    draw_Attached_Entity(&attached_Entity, game_Data.enemy_Skeletons[i].rigid_Body.position_WS, false);
-                }
-            }
+
+                for (int j = 0; j < skeleton->attached_Entities_Size; j++) {
+                    draw_Attached_Entity(&skeleton->attached_Entities[j], skeleton->rigid_Body.position_WS, false);
+				}
+			}
 
             // Draw player skeletons
             for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
