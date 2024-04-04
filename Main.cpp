@@ -371,8 +371,6 @@ void load_Game(Game_Data* game_Data, const char* file_Name) {
 		return;
 	}
 
-    // game_Data = {};
-
 	fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
 	fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
 
@@ -1439,7 +1437,7 @@ void draw_Time_Scalar(Font* font, float time_Scalar, int pos_X, int pos_Y, int s
     std::string str_2 = std::to_string((int)converted_Time_Scalar);
     std::string str_3 = str_1 + str_2;
     const char* ptr = str_3.c_str();
-    draw_String(font, ptr, pos_X, pos_Y, size, true);
+    draw_String_With_Background(font, ptr, pos_X, pos_Y, size, true, CI_BLACK, 5);
 }
 
 // Doesn't account for empty height map
@@ -2087,22 +2085,30 @@ int main(int argc, char** argv) {
 
             draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
             draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
-
+            
+            // UI
             draw_Timer(
                 &font_1, 
-                { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 30 }, 
+                { RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 }, 
                 6, 
                 CI_BLACK, 
-                4
+                3
             );
 
             draw_Time_Scalar(
                 &font_1, 
                 time_Scalar, 
-                RESOLUTION_WIDTH / 2, 
-                RESOLUTION_HEIGHT / 2,
-                4
+                (int)((RESOLUTION_WIDTH / 16) * 14),
+                (int)(RESOLUTION_HEIGHT / 9 * 0.5),
+                3
             );
+
+			draw_Arrow_Ammo_Tracker(
+				&font_1,
+				game_Data.player_Castle.arrow_Ammo,
+				{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
+				3
+			);
 
             // Debugging visualization code
 #if 0
@@ -2139,13 +2145,6 @@ int main(int argc, char** argv) {
 				spawn_Archer_Pressed = true;
 			}
             button_Pos.x += button_Height_Unit_Spawn;
-			
-            draw_Arrow_Ammo_Tracker(
-                &font_1, 
-                game_Data.player_Castle.arrow_Ammo, 
-                { ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 7) },
-                3
-            );
 
             if (current_Game_State == GS_PAUSED) {
                 int button_Width_Paused = 325;
