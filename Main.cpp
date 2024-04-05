@@ -15,7 +15,7 @@
 const float GRAVITY = 300;
 const float ARCHER_ARROW_GRAVITY = 50;
 const int MAX_ATTACHED_ENTITY = 1000;
-const int MAX_COLLIDERS = 1000;
+const int MAX_COLLIDERS = 100;
 
 bool temp_Bool = false;
 
@@ -108,7 +108,7 @@ struct Rigid_Body {
     V2 position_WS;
     V2 velocity;
     float angle;
-    // std::vector<Collider> colliders;
+    // num_Colliders
     int colliders_Array_Size;
     Collider colliders_Array[MAX_COLLIDERS];
 };
@@ -162,7 +162,12 @@ enum Level {
 	LEVEL_1,
 	LEVEL_2,
 	TOTAL_LEVELS
-};                                      
+};  
+
+struct Stored_Units {
+    int current;
+    int max;
+};
 
 struct Cooldown {
     float duration;
@@ -177,12 +182,14 @@ struct Castle_Stats {
 
     int arrow_Ammo;
     Cooldown arrow_Ammo_Cooldown;
+
+    Stored_Units stored_Units;
 };
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
-	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown
-    {  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f}     },
-	{  100.0f,    {1.0f, 0.0f},      {1.0f, 0.0f},       0,                {0.25f, 0.0f}     },
+	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
+    {  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
+	{  100.0f,    {1.0f, 0.0f},      {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
 
 struct Castle {
@@ -196,6 +203,8 @@ struct Castle {
 
 	int arrow_Ammo;
 	Cooldown arrow_Ammo_Cooldown;
+
+    Stored_Units stored_Units;
 };
 
 enum Current_Weapon {
@@ -266,8 +275,6 @@ struct Skeleton {
 	float current_Attack_Cooldown;
 	float attack_Range;
 
-    // Could make this a fixed size array for serialization
-    // std::vector<Attached_Entity> attached_Entities;
     Attached_Entity attached_Entities[MAX_ATTACHED_ENTITY] = {};
     int attached_Entities_Size = 0;
 
@@ -358,6 +365,15 @@ void save_Game(Game_Data* game_Data, const char* file_Name) {
     fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
 }
 
+template <typename T>
+void read_Vector(std::vector<T>& vector, FILE* file) {
+	size_t vector_Size = 0;
+	fread(&vector_Size, sizeof(vector_Size), 1, file);
+	vector.clear();
+	vector.resize(vector_Size);
+	fread(vector.data(), sizeof(vector[0]), vector_Size, file);
+}
+
 void load_Game(Game_Data* game_Data, const char* file_Name) {
 	FILE* file = NULL;
 	errno_t err = fopen_s(&file, file_Name, "rb");
@@ -374,35 +390,15 @@ void load_Game(Game_Data* game_Data, const char* file_Name) {
 	fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
 	fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
 
-	size_t terrain_Size = 0;
-	fread(&terrain_Size, sizeof(terrain_Size), 1, file);
-	game_Data->terrain_Height_Map.clear();
-	game_Data->terrain_Height_Map.resize(terrain_Size);
-	fread(game_Data->terrain_Height_Map.data(), sizeof(game_Data->terrain_Height_Map[0]), terrain_Size, file);
+    read_Vector(game_Data->terrain_Height_Map, file);
 
-	size_t player_Arrows_Size = 0;
-	fread(&player_Arrows_Size, sizeof(player_Arrows_Size), 1, file);
-    game_Data->player_Arrows.clear();
-    game_Data->player_Arrows.resize(player_Arrows_Size);
-	fread(game_Data->player_Arrows.data(), sizeof(game_Data->player_Arrows[0]), player_Arrows_Size, file);
+    read_Vector(game_Data->player_Arrows, file);
 
-	size_t enemy_Skeletons_Size = 0;
-	fread(&enemy_Skeletons_Size, sizeof(enemy_Skeletons_Size), 1, file);
-	game_Data->enemy_Skeletons.clear();
-	game_Data->enemy_Skeletons.resize(enemy_Skeletons_Size);
-	fread(game_Data->enemy_Skeletons.data(), sizeof(game_Data->enemy_Skeletons[0]), enemy_Skeletons_Size, file);
+    read_Vector(game_Data->enemy_Skeletons, file);
 
-	size_t player_Skeletons_Size = 0;
-	fread(&player_Skeletons_Size, sizeof(player_Skeletons_Size), 1, file);
-	game_Data->player_Skeletons.clear();
-	game_Data->player_Skeletons.resize(player_Skeletons_Size);
-	fread(game_Data->player_Skeletons.data(), sizeof(game_Data->player_Skeletons[0]), player_Skeletons_Size, file);
+    read_Vector(game_Data->player_Skeletons, file);
 
-	size_t player_Archer_Size = 0;
-	fread(&player_Archer_Size, sizeof(player_Archer_Size), 1, file);
-	game_Data->player_Archers.clear();
-	game_Data->player_Archers.resize(player_Archer_Size);
-	fread(game_Data->player_Archers.data(), sizeof(game_Data->player_Archers[0]), player_Archer_Size, file);
+    read_Vector(game_Data->player_Archers, file);
 
     game_Data->next_Entity_ID = 0;
 	fread(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
@@ -528,8 +524,11 @@ void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int
 	}
 }
 
-void add_Collider(Collider* collider, V2 position_LS, float radius) {
-	collider->position_LS = position_LS;
+void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
+    assert(rigid_Body->colliders_Array_Size < MAX_COLLIDERS);
+
+    Collider* collider = &rigid_Body->colliders_Array[rigid_Body->colliders_Array_Size++];
+    collider->position_LS = position_LS;
 	collider->radius = radius;
 }
 
@@ -755,6 +754,7 @@ void update_Arrow_Position(Arrow* arrow, float delta_Time) {
             arrow->rigid_Body.velocity.y += ARCHER_ARROW_GRAVITY * delta_Time;
         } else {
             SDL_Log("ERROR: Arrow type not specified. update_Arrow_Position()");
+            return;
         }
 
 		arrow->rigid_Body.position_WS.x += arrow->rigid_Body.velocity.x * delta_Time;
@@ -806,8 +806,7 @@ void spawn_Player_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, V
     castle.arrow_Ammo = castle_Stats_Array[level].arrow_Ammo;
     castle.arrow_Ammo_Cooldown = castle_Stats_Array[level].arrow_Ammo_Cooldown;
 
-    assert(castle.rigid_Body.colliders_Array_Size < MAX_COLLIDERS);
-	add_Collider(&castle.rigid_Body.colliders_Array[castle.rigid_Body.colliders_Array_Size++], { 0.0f, 0.0f }, sprite_Sheet_Array[selector].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, sprite_Sheet_Array[selector].sprites[0].radius);
 
     game_Data->player_Castle = castle;
 }
@@ -827,8 +826,7 @@ void spawn_Enemy_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, V2
 	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
 	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
 
-    assert(castle.rigid_Body.colliders_Array_Size < MAX_COLLIDERS);
-	add_Collider(&castle.rigid_Body.colliders_Array[castle.rigid_Body.colliders_Array_Size++], { 0.0f, 0.0f }, sprite_Sheet_Array[selector].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, sprite_Sheet_Array[selector].sprites[0].radius);
 
 	game_Data->enemy_Castle = castle;
 }
@@ -872,7 +870,7 @@ void spawn_Arrow(Arrow_Type type, Game_Data* game_Data, V2 spawn_Position, V2 ta
 	float radius = get_Sprite_Radius(&arrow.sprite_Sheet_Tracker);
 	
     add_Collider(
-		&arrow.rigid_Body.colliders_Array[arrow.rigid_Body.colliders_Array_Size++],
+		&arrow.rigid_Body,
 		{ (radius * 0.75f), 0.0f },
 		(radius * 0.25f)
 	);
@@ -906,9 +904,9 @@ void spawn_Player_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Po
 
 	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
 
-    add_Collider(&skeleton.rigid_Body.colliders_Array[skeleton.rigid_Body.colliders_Array_Size++], { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body.colliders_Array[skeleton.rigid_Body.colliders_Array_Size++], { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body.colliders_Array[skeleton.rigid_Body.colliders_Array_Size++], { 0.0f, (radius / 2) }, (radius / 2));
+    add_Collider(&skeleton.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&skeleton.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&skeleton.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
     skeleton.ID = game_Data->next_Entity_ID++;
 	game_Data->player_Skeletons.push_back(skeleton);
@@ -940,9 +938,9 @@ void spawn_Enemy_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Pos
 
 	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
 
-	add_Collider(&skeleton.rigid_Body.colliders_Array[skeleton.rigid_Body.colliders_Array_Size++], { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body.colliders_Array[skeleton.rigid_Body.colliders_Array_Size++], { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body.colliders_Array[skeleton.rigid_Body.colliders_Array_Size++], { 0.0f, (radius / 2) }, (radius / 2));
+	add_Collider(&skeleton.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&skeleton.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&skeleton.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
     skeleton.ID = game_Data->next_Entity_ID++;
 	game_Data->enemy_Skeletons.push_back(skeleton);
@@ -973,9 +971,9 @@ void spawn_Archer(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, L
 
 	float radius = get_Sprite_Radius(&archer.sprite_Sheet_Tracker);
     
-    add_Collider(&archer.rigid_Body.colliders_Array[archer.rigid_Body.colliders_Array_Size++], { 0.0f, -(radius / 2) }, (radius / 2));
-    add_Collider(&archer.rigid_Body.colliders_Array[archer.rigid_Body.colliders_Array_Size++], { 0.0f, 0.0f }, (radius / 2));
-    add_Collider(&archer.rigid_Body.colliders_Array[archer.rigid_Body.colliders_Array_Size++], { 0.0f, (radius / 2) }, (radius / 2));
+    add_Collider(&archer.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+    add_Collider(&archer.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+    add_Collider(&archer.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
     game_Data->player_Archers.push_back(archer);
 }
@@ -1546,7 +1544,7 @@ int main(int argc, char** argv) {
     // Debugging visualization code
 	// Sprite_Sheet_Tracker sprite_Sheet_Tracker = { skeleton_Animations, WALKING, 0.0f, 0 };
 
-    Game_State current_Game_State = GS_GAMELOOP;
+    Game_State current_Game_State = GS_MENU;
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -1667,7 +1665,7 @@ int main(int argc, char** argv) {
                             &game_Data,
                             game_Data.player_Castle.rigid_Body.position_WS,
                             target_Mouse,
-                            LEVEL_2
+                            LEVEL_1
                         );
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
                         if (game_Data.player_Castle.arrow_Ammo > 0) {
