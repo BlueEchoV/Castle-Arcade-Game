@@ -329,6 +329,7 @@ struct Game_Data {
 	std::vector<Skeleton>       player_Skeletons;
     std::vector<Archer>         player_Archers;
     int                         next_Entity_ID;
+    float                       timer;
 };
 
 enum GAME_DATA_OPERATION {
@@ -384,6 +385,7 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
         write_Vector(game_Data->player_Skeletons, file);
         write_Vector(game_Data->player_Archers, file);
         fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
+        fwrite(&game_Data->timer, sizeof(game_Data->timer), 1, file);
     }
     else if (operation == GDO_LOAD) {
 		errno_t err = fopen_s(&file, file_Name, "rb");
@@ -399,6 +401,7 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
         read_Vector(game_Data->player_Skeletons, file);
         read_Vector(game_Data->player_Archers, file);
         fread(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
+        fread(&game_Data->timer, sizeof(game_Data->timer), 1, file);
     }
 }
 /*
@@ -1227,11 +1230,11 @@ void draw_String_With_Background(Font* font, const char* string, int position_X,
     draw_String(font, string, position_X, position_Y, size, center);
 }
 
-void draw_Timer(Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
+void draw_Timer(Game_Data* game_Data, float delta_Time, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
     SDL_Rect temp = {};
-    Uint64 time_Elapsed = SDL_GetTicks64() / 1000;
+    game_Data->timer += delta_Time;
 
-    std::string str = std::to_string(time_Elapsed);
+    std::string str = std::to_string((int)game_Data->timer);
     const char* ptr = str.c_str();
     draw_String_With_Background(font, ptr, (int)(position.x - (font->char_Width / 2)), (int)(position.y - (font->char_Height / 2)), timer_Size, true, color, outline_Padding);
 }
@@ -2186,6 +2189,8 @@ int main(int argc, char** argv) {
             
             // UI
             draw_Timer(
+                &game_Data,
+                delta_Time,
                 &font_1, 
                 { RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 }, 
                 6, 
@@ -2207,8 +2212,6 @@ int main(int argc, char** argv) {
 				{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
 				3
 			);
-
-
 
             // Debugging visualization code
 #if 0
