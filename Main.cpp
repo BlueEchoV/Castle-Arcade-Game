@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <sys/stat.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -66,7 +67,11 @@ const Color BLACK = {0, 0, 0, 0};
 enum Game_State {
     GS_MENU,
     GS_GAMELOOP,
-    GS_PAUSED
+    GS_PAUSED,
+    GS_GAMEOVER,
+    GS_VICTORY,
+    GS_LOADGAME,
+    GS_SAVEGAME
 };
 
 struct Key_State {
@@ -108,9 +113,8 @@ struct Rigid_Body {
     V2 position_WS;
     V2 velocity;
     float angle;
-    // num_Colliders
-    int colliders_Array_Size;
-    Collider colliders_Array[MAX_COLLIDERS];
+    int num_Colliders;
+    Collider colliders[MAX_COLLIDERS];
 };
 
 struct Sprite_Sheet {
@@ -134,6 +138,7 @@ enum Sprite_Sheet_Selector {
 
     SSS_BKG_GAMELOOP_1,
     SSS_BKG_MENU_1,
+    SSS_BKG_GAMEOVER,
 
     SSS_TERRAIN_1,
 
@@ -326,43 +331,28 @@ struct Game_Data {
     int                         next_Entity_ID;
 };
 
-void save_Game(Game_Data* game_Data, const char* file_Name) {
-	FILE* file = NULL;
-	errno_t err = fopen_s(&file, file_Name, "wb");
+enum GAME_DATA_OPERATION {
+	GDO_SAVE,
+	GDO_LOAD
+};
 
-    DEFER{
-        fclose(file);
-    };
-
-	if (err != 0 || !file) {
-		SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
-		return;
+// Checks if the file exists, even if the file is locked. And it's faster.
+bool check_If_File_Exists(const char* file_Name) {
+	struct stat stat_Temp = {};
+	int result = stat(file_Name, &stat_Temp);
+	if (result == -1) {
+		SDL_Log("ERROR: File does not exist");
+		assert(errno == ENOENT);
+		return false;
 	}
+	return true;
+};
 
-    fwrite(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
-    fwrite(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
-     
-    size_t terrain_Size = game_Data->terrain_Height_Map.size();
-    fwrite(&terrain_Size, sizeof(terrain_Size), 1, file);
-    fwrite(game_Data->terrain_Height_Map.data(), sizeof(game_Data->terrain_Height_Map[0]), terrain_Size, file);
-
-	size_t player_Arrows_Size = game_Data->player_Arrows.size();
-	fwrite(&player_Arrows_Size, sizeof(player_Arrows_Size), 1, file);
-	fwrite(game_Data->player_Arrows.data(), sizeof(game_Data->player_Arrows[0]), player_Arrows_Size, file);
-
-    size_t enemy_Skeletons_Size = game_Data->enemy_Skeletons.size();
-    fwrite(&enemy_Skeletons_Size, sizeof(enemy_Skeletons_Size), 1, file);
-    fwrite(game_Data->enemy_Skeletons.data(), sizeof(game_Data->enemy_Skeletons[0]), enemy_Skeletons_Size, file);
-
-    size_t player_Skeletons_Size = game_Data->player_Skeletons.size();
-    fwrite(&player_Skeletons_Size, sizeof(player_Skeletons_Size), 1, file);
-    fwrite(game_Data->player_Skeletons.data(), sizeof(game_Data->player_Skeletons[0]), player_Skeletons_Size, file);
-    
-    size_t player_Archer_Size = game_Data->player_Archers.size();
-    fwrite(&player_Archer_Size , sizeof(player_Archer_Size), 1, file);
-    fwrite(game_Data->player_Archers.data(), sizeof(game_Data->player_Archers[0]), player_Archer_Size, file);
- 
-    fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
+template <typename T>
+void write_Vector(std::vector<T>& vector, FILE* file) {
+	size_t vector_Size = vector.size();
+	fwrite(&vector_Size, sizeof(vector_Size), 1, file);
+	fwrite(vector.data(), sizeof(vector[0]), vector_Size, file);
 }
 
 template <typename T>
@@ -374,35 +364,54 @@ void read_Vector(std::vector<T>& vector, FILE* file) {
 	fread(vector.data(), sizeof(vector[0]), vector_Size, file);
 }
 
-void load_Game(Game_Data* game_Data, const char* file_Name) {
-	FILE* file = NULL;
-	errno_t err = fopen_s(&file, file_Name, "rb");
-	
+void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OPERATION operation) {
+    FILE* file = NULL;
     DEFER{
-	    fclose(file);
-	};
+        fclose(file);
+    };
 
-	if (err != 0 || !file) {
-		SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
-		return;
-	}
-
-	fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
-	fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
-
-    read_Vector(game_Data->terrain_Height_Map, file);
-
-    read_Vector(game_Data->player_Arrows, file);
-
-    read_Vector(game_Data->enemy_Skeletons, file);
-
-    read_Vector(game_Data->player_Skeletons, file);
-
-    read_Vector(game_Data->player_Archers, file);
-
-    game_Data->next_Entity_ID = 0;
-	fread(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
+    if (operation == GDO_SAVE) {
+		errno_t err = fopen_s(&file, file_Name, "wb");
+		if (err != 0 || !file) {
+			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
+			return;
+		}
+        fwrite(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
+        fwrite(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
+        write_Vector(game_Data->terrain_Height_Map, file);
+        write_Vector(game_Data->player_Arrows, file);
+        write_Vector(game_Data->enemy_Skeletons, file);
+        write_Vector(game_Data->player_Skeletons, file);
+        write_Vector(game_Data->player_Archers, file);
+        fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
+    }
+    else if (operation == GDO_LOAD) {
+		errno_t err = fopen_s(&file, file_Name, "rb");
+		if (err != 0 || !file) {
+			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
+			return;
+		}
+        fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
+        fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
+        read_Vector(game_Data->terrain_Height_Map, file);
+        read_Vector(game_Data->player_Arrows, file);
+        read_Vector(game_Data->enemy_Skeletons, file);
+        read_Vector(game_Data->player_Skeletons, file);
+        read_Vector(game_Data->player_Archers, file);
+        fread(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
+    }
 }
+/*
+void load_Save_Game(Game_Data* game_Data) {
+    const char* file_Name = "test_Save_Game.txt";
+    save_Game(game_Data, file_Name);
+
+    Game_Data temp = {};
+    load_Game(&temp, file_Name);
+    int i = 0;
+    i++;
+}
+*/
 
 float return_Sprite_Radius(Sprite sprite) {
 	float max_Distance = 0;
@@ -525,9 +534,9 @@ void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
-    assert(rigid_Body->colliders_Array_Size < MAX_COLLIDERS);
+    assert(rigid_Body->num_Colliders < MAX_COLLIDERS);
 
-    Collider* collider = &rigid_Body->colliders_Array[rigid_Body->colliders_Array_Size++];
+    Collider* collider = &rigid_Body->colliders[rigid_Body->num_Colliders++];
     collider->position_LS = position_LS;
 	collider->radius = radius;
 }
@@ -1006,8 +1015,8 @@ void draw_Circle(float center_X, float center_Y, float radius, Color_Index color
 
 void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Color_Index color) {
     // This is a little weird
-    for (int i = 0; i < rigid_Body->colliders_Array_Size; i++) {
-        Collider* collider = &rigid_Body->colliders_Array[i];
+    for (int i = 0; i < rigid_Body->num_Colliders; i++) {
+        Collider* collider = &rigid_Body->colliders[i];
 		V2 world_Position = get_WS_Position(rigid_Body, collider);
 		draw_Circle(world_Position.x, world_Position.y, collider->radius, color);
 	}
@@ -1290,10 +1299,11 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 	button_Area.h = h;
 
 	SDL_Rect image_Area = button_Area;
-    image_Area.w -= outline_Thickness * 2;
-    image_Area.h -= outline_Thickness * 2;
-	image_Area.x += outline_Thickness;
-	image_Area.y += outline_Thickness;
+    int image_Size_Based_On_Outline = 6;
+    image_Area.w -= outline_Thickness * image_Size_Based_On_Outline;
+    image_Area.h -= outline_Thickness * image_Size_Based_On_Outline;
+	image_Area.x += outline_Thickness * (image_Size_Based_On_Outline / 2);
+	image_Area.y += outline_Thickness * (image_Size_Based_On_Outline / 2);
 
 	// Set background as black
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -1364,8 +1374,8 @@ std::vector<int> create_Height_Map(const char* filename) {
 }
 
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map) {
-    for (int i = 0; i < rigid_Body->colliders_Array_Size; i++) {
-        Collider* collider = &rigid_Body->colliders_Array[i];
+    for (int i = 0; i < rigid_Body->num_Colliders; i++) {
+        Collider* collider = &rigid_Body->colliders[i];
 		V2 world_Position = get_WS_Position(rigid_Body, collider);
 
 		int collider_X = (int)world_Position.x;
@@ -1389,12 +1399,12 @@ bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2) {
 	// Apply rotation at this point
     // LOCAL POSITION DOES NOT CHANGE
     // SET THE LOCAL POSITION ONE TIME BUT THAT'S IT. Unless I want to animate the collider.
-    for (int i = 0; i < rigid_Body_1->colliders_Array_Size; i++) {
-        Collider* collider_1 = &rigid_Body_1->colliders_Array[i];
+    for (int i = 0; i < rigid_Body_1->num_Colliders; i++) {
+        Collider* collider_1 = &rigid_Body_1->colliders[i];
         V2 world_Pos_1 = get_WS_Position(rigid_Body_1, collider_1);
 
-		for (int j = 0; j < rigid_Body_2->colliders_Array_Size; j++) {
-            Collider* collider_2 = &rigid_Body_2->colliders_Array[j];
+		for (int j = 0; j < rigid_Body_2->num_Colliders; j++) {
+            Collider* collider_2 = &rigid_Body_2->colliders[j];
             V2 world_Pos_2 = get_WS_Position(rigid_Body_2, collider_2);
 
 			float distance_Between = calculate_Distance(
@@ -1456,6 +1466,23 @@ void reset_Pressed_This_Frame() {
     }
 }
 
+void reset_Game(Game_Data* game_Data) {
+    *game_Data = {};
+	game_Data->terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
+	spawn_Player_Castle(
+		SSS_CASTLE_1,
+		game_Data,
+		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) + 25.0f },
+		LEVEL_1
+	);
+	spawn_Enemy_Castle(
+		SSS_CASTLE_1,
+		game_Data,
+		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
+		LEVEL_1
+	);
+}
+
 int main(int argc, char** argv) {
     REF(argc);
     REF(argv);
@@ -1483,40 +1510,38 @@ int main(int argc, char** argv) {
     // Image menu_BKG_Image = create_Image("images/background_3.png");
     Image terrain_Image = create_Image("images/collision_Terrain_1.png");
     Image castle_Image = create_Image("images/player_Castle.png");
+    Image game_Over_Image = create_Image("images/game_Over.png");
     Image arrow_Image = create_Image("images/arrow.png");
     Image skeleton_Image_Walking = create_Image("images/unit_Skeleton_Sprite_Sheet.png");
+    // Image warrior_Image_Walking = create_Image("images/unit_Warrior.png");
+    Image warrior_Image_Walking = create_Image("images/unit_Warrior_Short.png");
     Image skeleton_Image_Stop = create_Image("images/unit_Skeleton.png");
-    Image archer_Image_Walking = create_Image("images/unit_Archer_Sprite_Sheet.png");
-    Image archer_Image_Stop = create_Image("images/unit_Archer.png");
+    // Image archer_Image_Walking = create_Image("images/unit_Archer_Sprite_Sheet.png");
+    // Image archer_Image_Stop = create_Image("images/unit_Archer.png");
+    Image archer_Image_Stop = create_Image("images/unit_Archer_Short.png");
 
 	add_Sprite_Sheet_To_Array(SSS_BKG_GAMELOOP_1, &gameloop_BKG_Image, 1, 1);
 	add_Sprite_Sheet_To_Array(SSS_BKG_MENU_1, &menu_BKG_Image, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_TERRAIN_1, &terrain_Image, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_CASTLE_1, &castle_Image, 1, 1);
+    add_Sprite_Sheet_To_Array(SSS_BKG_GAMEOVER, &game_Over_Image, 1, 1);
                             
-    add_Sprite_Sheet_To_Array(SSS_SKELETON_WALKING, &skeleton_Image_Walking, 1, 4);
-    add_Sprite_Sheet_To_Array(SSS_SKELETON_STOP, &skeleton_Image_Stop, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Walking, 1, 2);
+    add_Sprite_Sheet_To_Array(SSS_SKELETON_WALKING, &warrior_Image_Walking, 1, 1);
+    add_Sprite_Sheet_To_Array(SSS_SKELETON_STOP, &warrior_Image_Walking, 1, 1);
+    // add_Sprite_Sheet_To_Array(SSS_SKELETON_WALKING, &skeleton_Image_Walking, 1, 4);
+    // add_Sprite_Sheet_To_Array(SSS_SKELETON_STOP, &skeleton_Image_Stop, 1, 1);
+
+    add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Stop, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_ARCHER_STOP, &archer_Image_Stop, 1, 1);
+	// add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Walking, 1, 2);
+	// add_Sprite_Sheet_To_Array(SSS_ARCHER_STOP, &archer_Image_Stop, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_ARROW_DEFAULT, &arrow_Image, 1, 1);
 
     Game_Data game_Data = {};
 
-    game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
+    const char* saved_Game_1 = "Save_Game_1.txt";
 
-    spawn_Player_Castle(
-        SSS_CASTLE_1,
-        &game_Data,
-        { (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(&game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) + 25.0f },
-        LEVEL_1
-    );
-
-    spawn_Enemy_Castle(
-        SSS_CASTLE_1,
-        &game_Data, 
-        { (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(&game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
-        LEVEL_1
-    );
+    reset_Game(&game_Data);
 
     // Buttons
     SDL_Rect test = {};
@@ -1544,7 +1569,7 @@ int main(int argc, char** argv) {
     // Debugging visualization code
 	// Sprite_Sheet_Tracker sprite_Sheet_Tracker = { skeleton_Animations, WALKING, 0.0f, 0 };
 
-    Game_State current_Game_State = GS_MENU;
+    Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -1581,6 +1606,34 @@ int main(int argc, char** argv) {
 		next_Frame_Hot_Name = "";
 		SDL_GetMouseState(&mouse_X, &mouse_Y);
 
+		last_Ticks = ticks;
+		ticks = (float)SDL_GetTicks64();
+		delta_Time = ticks - last_Ticks;
+        // Clamps the game time
+        if (delta_Time > 250) {
+            delta_Time = 250;
+        }
+		// Multiply by the scalar
+		delta_Time *= time_Scalar;
+		delta_Time /= 1000;
+
+		SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(renderer);
+
+
+		if (key_States[SDLK_F1].pressed_This_Frame) {
+            if (check_If_File_Exists(saved_Game_1)) {
+                remove(saved_Game_1);
+            }
+            process_Game_Data(&game_Data, saved_Game_1, GDO_SAVE);
+		}
+
+		if (key_States[SDLK_F2].pressed_This_Frame) {
+			if (check_If_File_Exists(saved_Game_1)) {
+                process_Game_Data(&game_Data, saved_Game_1, GDO_LOAD);
+			}
+		}
+
         if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
             if (current_Game_State == GS_GAMELOOP) {
                 current_Game_State = GS_PAUSED;
@@ -1592,7 +1645,6 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_MENU) {
 			// No game logic
-            SDL_RenderClear(renderer);
 			SDL_RenderCopy(renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
         
             draw_String_With_Background(
@@ -1613,6 +1665,11 @@ int main(int argc, char** argv) {
 
 			if (button_Text(&font_1, "Play", button_Pos, button_Width, button_Height, string_Size)) {
                 current_Game_State = GS_GAMELOOP;
+                reset_Game(&game_Data);
+			}
+			button_Pos.y += 100;
+			if (button_Text(&font_1, "Load Game", button_Pos, button_Width, button_Height, string_Size)) {
+                current_Game_State = GS_LOADGAME;
 			}
             button_Pos.y += 100;
 			if (button_Text(&font_1, "Options", button_Pos, button_Width, button_Height, string_Size)) {
@@ -1623,19 +1680,65 @@ int main(int argc, char** argv) {
 				running = false;
 			}
             button_Pos.y += 100;
-			if (button_Text(&font_1, "Save Game", button_Pos, button_Width, button_Height, string_Size)) {
-				save_Game(&game_Data, "Save_Game.txt");
-			}
-			button_Pos.y += 100;
-			if (button_Text(&font_1, "Load Game", button_Pos, button_Width, button_Height, string_Size)) {
-				load_Game(&game_Data, "Save_Game.txt");
-			}
-            button_Pos.y += 100;
-
-            SDL_RenderPresent(renderer);
-        
         }
-        else if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED) {
+        else if (current_Game_State == GS_LOADGAME) {
+			SDL_RenderCopy(renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
+
+            int button_Width = 325;
+            int button_Height = 90;
+            int offset = button_Height;
+            V2 button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
+            V2 delete_Button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
+            delete_Button_Pos.x += button_Width;
+            int size = 3;
+
+            draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
+            if (check_If_File_Exists(saved_Game_1)) {
+				if (button_Text(&font_1, "Load Game #1", button_Pos, button_Width, button_Height, size)) {
+                    process_Game_Data(&game_Data, saved_Game_1, GDO_LOAD);
+                    current_Game_State = GS_GAMELOOP;
+				}
+                button_Pos.y += offset;
+                if (button_Text(&font_1, "Delete", delete_Button_Pos, button_Width, button_Height, size)) {
+                    remove(saved_Game_1);
+                }
+                delete_Button_Pos.y += offset;
+			}
+			if (button_Text(&font_1, "Return to Menu", button_Pos, button_Width, button_Height, size)) {
+				current_Game_State = GS_MENU;
+			}
+        }
+		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
+			SDL_RenderCopy(renderer, sprite_Sheet_Array[SSS_BKG_GAMEOVER].sprites[0].image->texture, NULL, NULL);
+			if (current_Game_State == GS_VICTORY) {
+				draw_String_With_Background(
+					&font_1,
+					"Victory!!!",
+					RESOLUTION_WIDTH / 2,
+					RESOLUTION_HEIGHT / 2,
+					4,
+					true,
+					CI_BLACK,
+					3
+				);
+			}
+			if (current_Game_State == GS_GAMEOVER) {
+				draw_String_With_Background(
+					&font_1,
+					"Game Over",
+					RESOLUTION_WIDTH / 2,
+					RESOLUTION_HEIGHT / 2,
+					4,
+					true,
+					CI_BLACK,
+					3
+				);
+			}
+			if (button_Text(&font_1, "Return to Menu", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 90 }, 325, 90, 3)) {
+				current_Game_State = GS_MENU;
+			}
+		}
+        else if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED || current_Game_State == GS_SAVEGAME) {
             if (key_States[SDLK_UP].held_Down == true) {
                 time_Scalar += 0.01f;
             }
@@ -1644,14 +1747,7 @@ int main(int argc, char** argv) {
                     time_Scalar -= 0.01f;
                 }
             }
-            
-            last_Ticks = ticks;
-            ticks = (float)SDL_GetTicks64();
-            delta_Time = ticks - last_Ticks;
-            // Multiply by the scalar
-            delta_Time *= time_Scalar;
-            delta_Time /= 1000;
-
+           
             if (current_Game_State == GS_GAMELOOP && time_Scalar > 0) {
                 // Spawn Arrows and update lifetime
                 if (key_States[SDLK_SPACE].held_Down == true && game_Data.player_Castle.arrow_Ammo > 0) {
@@ -1989,8 +2085,13 @@ int main(int argc, char** argv) {
 
             }
 
-            SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderClear(renderer);
+            if (game_Data.player_Castle.health_Bar.current_HP <= 0) {
+                current_Game_State = GS_GAMEOVER;
+            }
+			if (game_Data.enemy_Castle.health_Bar.current_HP <= 0) {
+				current_Game_State = GS_VICTORY;
+			}
+
 
             // ***Renderering happens here***
             draw_Layer(sprite_Sheet_Array[SSS_BKG_GAMELOOP_1].sprites[0].image->texture);
@@ -1999,7 +2100,6 @@ int main(int argc, char** argv) {
             draw_Castle(&game_Data.enemy_Castle, true);
 
             SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
-
 
             draw_Circle(
                 game_Data.enemy_Castle.rigid_Body.position_WS.x, 
@@ -2035,7 +2135,7 @@ int main(int argc, char** argv) {
                 draw_Unit_Animated(
                     &skeleton->rigid_Body,
                     &skeleton->sprite_Sheet_Tracker,
-                    false
+                    true
                 );
                 draw_HP_Bar(&skeleton->rigid_Body.position_WS, &skeleton->health_Bar);
                 for (int j = 0; j < skeleton->attached_Entities_Size; j++) {
@@ -2062,7 +2162,7 @@ int main(int argc, char** argv) {
                 draw_Unit_Animated(
                     &player_Skeleton->rigid_Body,
                     &player_Skeleton->sprite_Sheet_Tracker,
-                    true
+                    false
                 );
                 draw_HP_Bar(&player_Skeleton->rigid_Body.position_WS, &player_Skeleton->health_Bar);
             }
@@ -2107,6 +2207,8 @@ int main(int argc, char** argv) {
 				{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
 				3
 			);
+
+
 
             // Debugging visualization code
 #if 0
@@ -2165,13 +2267,34 @@ int main(int argc, char** argv) {
 				}
                 button_Pos_Paused.y += button_Height_Paused;
 				if (button_Text(&font_1, "Save Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
-					save_Game(&game_Data, "Save_Game.txt");
+                    current_Game_State = GS_SAVEGAME;
 				}
                 button_Pos_Paused.y += button_Height_Paused;
 				if (button_Text(&font_1, "Load Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
-					load_Game(&game_Data, "Save_Game.txt");
+                    current_Game_State = GS_LOADGAME;
 				}
                 button_Pos_Paused.y += button_Height_Paused;
+            }
+            if (current_Game_State == GS_SAVEGAME) {
+				int button_Width_Saved = 325;
+				int button_Height_Saved = 90;
+				int offset = button_Height_Saved;
+				V2 button_Pos_Saved = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
+				int size = 3;
+
+				draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
+				
+                if (button_Text(&font_1, "Save Game #1", button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+					if (check_If_File_Exists(saved_Game_1)) {
+                        remove(saved_Game_1);
+                    }
+                    process_Game_Data(&game_Data, saved_Game_1, GDO_SAVE);
+				}
+                button_Pos_Saved.y += offset;
+				if (button_Text(&font_1, "Return to Menu", button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+					current_Game_State = GS_MENU;
+				}
+
             }
 
             // Erase destroyed arrows
@@ -2197,9 +2320,8 @@ int main(int argc, char** argv) {
 				// Return if we want the value to be destroyed
 				return archer.destroyed || archer.health_Bar.current_HP <= 0;
 				});
-
-            SDL_RenderPresent(renderer);
         }
+        SDL_RenderPresent(renderer);
     }
 
     return 0;
