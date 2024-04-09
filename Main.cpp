@@ -151,6 +151,7 @@ struct Arrow {
 	float damage;
 	float speed;
 	float life_Time;
+    Cooldown collision_Delay;
 
 	bool stop;
 	bool destroyed;
@@ -636,6 +637,9 @@ void spawn_Arrow(Arrow_Type type, Game_Data* game_Data, V2 spawn_Position, V2 ta
 	arrow.damage = arrow_Stats_Array[level].damage;
 	arrow.speed = arrow_Stats_Array[level].speed;
 	arrow.life_Time = arrow_Stats_Array[level].life_Time;
+    // 90000 is a pretty garbage number. I may want to come up with a better means of measuring speed
+    arrow.collision_Delay.duration = arrow_Stats_Array[level].speed / 90000;
+    arrow.collision_Delay.remaining = arrow.collision_Delay.duration;
 
     arrow.stop = false;
     arrow.destroyed = false;
@@ -1433,6 +1437,7 @@ int main(int argc, char** argv) {
     float delta_Time = 0.0f;
     // 0 - 1
     float time_Scalar = 1.0f;
+    float in_Game_Time_Elapsed = 0.0f;
 
     bool spawn_Skeleton_Pressed = false;
     bool spawn_Archer_Pressed = false;
@@ -1788,17 +1793,26 @@ int main(int argc, char** argv) {
                     for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
                         Skeleton* enemy_Skeleton = &game_Data.enemy_Skeletons[j];
                         if (check_RB_Collision(&arrow->rigid_Body, &enemy_Skeleton->rigid_Body)) {
-                            if (!arrow->stop) {
-                                enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
-                                V2 offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
-                                Attached_Entity attached_Entity = return_Attached_Entity(
-                                    SSS_ARROW_DEFAULT,
-                                    arrow->rigid_Body.angle,
-                                    offset
-                                );
-                                enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
-                                arrow->destroyed = true;
-                            }
+							if (!arrow->stop) {
+                                // On first hit, proc the damage
+                                if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
+                                    enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
+                                }
+                                // Won't always stick, but it will always proc the damage
+								if (arrow->collision_Delay.remaining > 0) {
+									arrow->collision_Delay.remaining -= delta_Time;
+								}
+								else {
+									V2 offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
+									Attached_Entity attached_Entity = return_Attached_Entity(
+										SSS_ARROW_DEFAULT,
+										arrow->rigid_Body.angle,
+										offset
+									);
+									enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
+									arrow->destroyed = true;
+								}
+							}
                         }
                     }
                 }
