@@ -152,6 +152,7 @@ struct Arrow {
 	float speed;
 	float life_Time;
     Cooldown collision_Delay;
+    int target_ID;
 
 	bool stop;
 	bool destroyed;
@@ -638,7 +639,7 @@ void spawn_Arrow(Arrow_Type type, Game_Data* game_Data, V2 spawn_Position, V2 ta
 	arrow.speed = arrow_Stats_Array[level].speed;
 	arrow.life_Time = arrow_Stats_Array[level].life_Time;
     // 90000 is a pretty garbage number. I may want to come up with a better means of measuring speed
-    arrow.collision_Delay.duration = arrow_Stats_Array[level].speed / 90000;
+    arrow.collision_Delay.duration = 0.02f;
     arrow.collision_Delay.remaining = arrow.collision_Delay.duration;
 
     arrow.stop = false;
@@ -1001,9 +1002,9 @@ void draw_String_With_Background(Font* font, const char* string, int position_X,
     draw_String(font, string, position_X, position_Y, size, center);
 }
 
-void draw_Timer(Game_Data* game_Data, float delta_Time, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
+void draw_Timer(Game_Data* game_Data, float game_Loop_Time, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
     SDL_Rect temp = {};
-    game_Data->timer += delta_Time;
+    game_Data->timer = game_Loop_Time;
 
     std::string str = std::to_string((int)game_Data->timer);
     const char* ptr = str.c_str();
@@ -1437,7 +1438,7 @@ int main(int argc, char** argv) {
     float delta_Time = 0.0f;
     // 0 - 1
     float time_Scalar = 1.0f;
-    float in_Game_Time_Elapsed = 0.0f;
+    float in_Game_Time_Elapsed = 0;
 
     bool spawn_Skeleton_Pressed = false;
     bool spawn_Archer_Pressed = false;
@@ -1494,6 +1495,10 @@ int main(int argc, char** argv) {
 		// Multiply by the scalar
 		delta_Time *= time_Scalar;
 		delta_Time /= 1000;
+
+		if (current_Game_State == GS_GAMELOOP) {
+			in_Game_Time_Elapsed += delta_Time;
+		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
@@ -1776,7 +1781,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Collision detection for arrows
+                // arrow collision
                 for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
                     Arrow* arrow = &game_Data.player_Arrows[i];
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
@@ -1797,21 +1802,35 @@ int main(int argc, char** argv) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
                                     enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
+                                    arrow->target_ID = enemy_Skeleton->ID;
                                 }
-                                // Won't always stick, but it will always proc the damage
-								if (arrow->collision_Delay.remaining > 0) {
-									arrow->collision_Delay.remaining -= delta_Time;
-								}
-								else {
-									V2 offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
-									Attached_Entity attached_Entity = return_Attached_Entity(
-										SSS_ARROW_DEFAULT,
-										arrow->rigid_Body.angle,
-										offset
-									);
-									enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
-									arrow->destroyed = true;
-								}
+                                bool targeted_Unit_Still_Alive = false;
+                                for (int e = 0; e < game_Data.enemy_Skeletons.size(); e++) {
+                                    if (arrow->target_ID == game_Data.enemy_Skeletons[e].ID) {
+                                        targeted_Unit_Still_Alive = true;
+                                    }
+                                }
+                                // Won't always stick, but it will always proc the damage.
+                                // This way, if the arrow is fast and goes through the target (which is fine),
+                                // then the arrow is bound to the unit but will also die with the unit.
+                                if (targeted_Unit_Still_Alive) {
+                                    if (arrow->collision_Delay.remaining > 0) {
+                                        arrow->collision_Delay.remaining -= delta_Time;
+                                    }
+                                    else {
+                                        V2 offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
+                                        Attached_Entity attached_Entity = return_Attached_Entity(
+                                            SSS_ARROW_DEFAULT,
+                                            arrow->rigid_Body.angle,
+                                            offset
+                                        );
+                                        enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
+                                        arrow->destroyed = true;
+                                    }
+                                }
+                                else {
+                                    arrow->destroyed = true;
+                                }
 							}
                         }
                     }
@@ -2082,7 +2101,7 @@ int main(int argc, char** argv) {
             // UI
             draw_Timer(
                 &game_Data,
-                delta_Time,
+                in_Game_Time_Elapsed,
                 &font_1, 
                 { RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 }, 
                 6, 
@@ -2167,7 +2186,10 @@ int main(int argc, char** argv) {
                 button_Pos_Paused.y += button_Height_Paused;
             }
             if (current_Game_State == GS_SAVEGAME) {
-				int button_Width_Saved = 325;
+                if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
+                    current_Game_State = GS_GAMELOOP;
+                }
+                int button_Width_Saved = 325;
 				int button_Height_Saved = 90;
 				int offset = button_Height_Saved;
 				V2 button_Pos_Saved = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
