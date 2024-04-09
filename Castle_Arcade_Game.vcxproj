@@ -150,9 +150,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Image.cpp" />
+    <ClCompile Include="src\Menu_System.cpp" />
+    <ClCompile Include="src\Sprite.cpp" />
+    <ClCompile Include="src\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Entity_Data.h" />
+    <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\Global_Variables.h" />
+    <ClInclude Include="src\Image.h" />
+    <ClInclude Include="src\Menu_System.h" />
+    <ClInclude Include="src\Sprite.h" />
     <ClInclude Include="src\Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

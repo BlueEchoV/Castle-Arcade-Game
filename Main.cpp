@@ -1,4 +1,3 @@
-#include <SDL.h>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -7,40 +6,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include "Utility.h"
-#include "Entity_Data.h"
-
-#define RESOLUTION_WIDTH 1920
-#define RESOLUTION_HEIGHT 1080
-
-const float GRAVITY = 300;
-const float ARCHER_ARROW_GRAVITY = 50;
-const int MAX_ATTACHED_ENTITY = 1000;
-const int MAX_COLLIDERS = 100;
-
-bool temp_Bool = false;
-
-SDL_Renderer* renderer = NULL;
-
-struct Color {
-    Uint8 r;
-    Uint8 g;
-    Uint8 b;
-    Uint8 a;
-};
-
-struct Image {
-	int width;
-	int height;
-    SDL_Texture* texture;
-    unsigned char* pixel_Data;
-};
-
-struct Sprite {
-	SDL_Rect source_Rect;
-	float radius;
-	Image* image;
-};
+#include "Sprite.h"
 
 enum Button_State {
     BS_NORMAL,
@@ -49,20 +15,10 @@ enum Button_State {
     BS_PRESSED
 };
 
-enum Color_Index {
-    CI_BLACK,
-    CI_RED,
-    CI_GREEN,
-    CI_BLUE
-};
-
 enum Arrow_Type {
     AT_PLAYER_ARROW,
     AT_ARCHER_ARROW,
 };
-
-// Chris does this instead of enums
-const Color BLACK = {0, 0, 0, 0};
 
 enum Game_State {
     GS_MENU,
@@ -116,52 +72,6 @@ struct Rigid_Body {
     int num_Colliders;
     Collider colliders[MAX_COLLIDERS];
 };
-
-struct Sprite_Sheet {
-    std::vector<Sprite> sprites;
-};
-
-enum Sprite_Sheet_Selector {
-    SSS_SKELETON_WALKING,
-    SSS_SKELETON_STOP,
-    SSS_SKELETON_ATTACKING,
-    SSS_SKELETON_DYING,
-
-    SSS_ARCHER_WALKING,
-    SSS_ARCHER_STOP,
-    SSS_ARCHER_ATTACKING,
-    SSS_ARCHER_DYING,
-
-    SSS_ARROW_DEFAULT,
-
-    SSS_CASTLE_1,
-
-    SSS_BKG_GAMELOOP_1,
-    SSS_BKG_MENU_1,
-    SSS_BKG_GAMEOVER,
-
-    SSS_TERRAIN_1,
-
-    SSS_TOTAL_SPRITE_SHEETS
-};
-
-Sprite_Sheet sprite_Sheet_Array[SSS_TOTAL_SPRITE_SHEETS] = {};
-
-struct Sprite_Sheet_Tracker {
-    Sprite_Sheet_Selector selected;
-	float animation_Time;
-	int current_Frame;
-};
-
-Sprite_Sheet_Tracker create_Sprite_Sheet_Tracker(Sprite_Sheet_Selector selected) {
-    Sprite_Sheet_Tracker result;
-
-    result.selected = selected;
-    result.animation_Time = 0.0f;
-    result.current_Frame = 0;
-
-    return result;
-}
 
 enum Level {
 	LEVEL_1,
@@ -280,7 +190,7 @@ struct Skeleton {
 	float current_Attack_Cooldown;
 	float attack_Range;
 
-    Attached_Entity attached_Entities[MAX_ATTACHED_ENTITY] = {};
+    Attached_Entity attached_Entities[MAX_ATTACHED_ENTITIES];
     int attached_Entities_Size = 0;
 
 	bool destroyed;
@@ -321,6 +231,7 @@ struct Archer {
 };
 
 struct Game_Data {
+    float                       timer;
     Castle                      player_Castle;
     Castle                      enemy_Castle;
     std::vector<int>            terrain_Height_Map;
@@ -329,7 +240,6 @@ struct Game_Data {
 	std::vector<Skeleton>       player_Skeletons;
     std::vector<Archer>         player_Archers;
     int                         next_Entity_ID;
-    float                       timer;
 };
 
 enum GAME_DATA_OPERATION {
@@ -377,6 +287,7 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
 			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
 			return;
 		}
+        fwrite(&game_Data->timer, sizeof(game_Data->timer), 1, file);
         fwrite(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
         fwrite(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
         write_Vector(game_Data->terrain_Height_Map, file);
@@ -385,7 +296,6 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
         write_Vector(game_Data->player_Skeletons, file);
         write_Vector(game_Data->player_Archers, file);
         fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
-        fwrite(&game_Data->timer, sizeof(game_Data->timer), 1, file);
     }
     else if (operation == GDO_LOAD) {
 		errno_t err = fopen_s(&file, file_Name, "rb");
@@ -393,6 +303,7 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
 			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
 			return;
 		}
+        fread(&game_Data->timer, sizeof(game_Data->timer), 1, file);
         fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
         fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
         read_Vector(game_Data->terrain_Height_Map, file);
@@ -401,9 +312,9 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
         read_Vector(game_Data->player_Skeletons, file);
         read_Vector(game_Data->player_Archers, file);
         fread(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
-        fread(&game_Data->timer, sizeof(game_Data->timer), 1, file);
     }
 }
+
 /*
 void load_Save_Game(Game_Data* game_Data) {
     const char* file_Name = "test_Save_Game.txt";
@@ -415,29 +326,6 @@ void load_Save_Game(Game_Data* game_Data) {
     i++;
 }
 */
-
-float return_Sprite_Radius(Sprite sprite) {
-	float max_Distance = 0;
-	for (int y = sprite.source_Rect.y; y < (sprite.source_Rect.h + sprite.source_Rect.y); y++) {
-		for (int x = sprite.source_Rect.x; x < (sprite.source_Rect.w + sprite.source_Rect.x); x++) {
-			int index = 0;
-			index = (4 * ((y * sprite.image->width) + x)) + 3;
-			if (sprite.image->pixel_Data[index] != 0) {
-				float distance = 
-                    calculate_Distance(
-                        (float)x, 
-                        (float)y, 
-                        (float)(sprite.source_Rect.x + sprite.source_Rect.w / 2), 
-                        (float)(sprite.source_Rect.y + sprite.source_Rect.h / 2)
-                    );
-				if (distance > max_Distance) {
-					max_Distance = distance;
-				}
-			}
-		}
-	}
-	return max_Distance;
-}
 
 Image create_Image(const char* file_name) {
     Image result = {};
@@ -481,59 +369,6 @@ Image create_Image(const char* file_name) {
 	SDL_UnlockTexture(temp);
 
 	return result;
-}
-
-// Returns the radius of the first sprite in the sprite sheet
-// get_Radius_Of_First_Sprite_In_Selected_Sheet???? Way too long
-float get_Sprite_Radius(Sprite_Sheet_Tracker* tracker) {
-	const Sprite_Sheet* arr = sprite_Sheet_Array;
-	Sprite_Sheet_Selector selected = tracker->selected;
-	Sprite sprite = arr[selected].sprites[0];
-	float radius = sprite.radius;
-	return radius;
-}
-
-Sprite create_Sprite(Image* image, SDL_Rect* source_Rect) {
-    Sprite result = {};
-
-    result.image = image;
-    // This is the width and height of the individual sprite
-    result.source_Rect = *source_Rect;
-	result.radius = return_Sprite_Radius(result);
-
-    return result;
-}
-
-Sprite_Sheet create_Sprite_Sheet(Image* image, int rows, int columns) {
-    Sprite_Sheet result = {};
-	for (int c = 0; c < columns; ++c)
-	{
-		for (int r = 0; r < rows; ++r)
-		{
-			SDL_Rect source;
-			source.x = (c * (image->width / columns));
-			source.y = (r * (image->height / rows));
-			source.w = (image->width / columns);
-			source.h = (image->height / rows);
-			result.sprites.push_back(create_Sprite(image, &source));
-		}
-	}
-	return result;
-}
-
-void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int rows, int columns) {
-	for (int c = 0; c < columns; ++c)
-	{
-		for (int r = 0; r < rows; ++r)
-		{
-			SDL_Rect source;
-			source.x = (c * (image->width / columns));
-			source.y = (r * (image->height / rows));
-			source.w = (image->width / columns);
-			source.h = (image->height / rows);
-            sprite_Sheet_Array[selected].sprites.push_back(create_Sprite(image, &source));
-		}
-	}
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
@@ -670,74 +505,6 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 		(flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE)
 	);
 }
-
-/*
-void draw_Unit_Animated(Rigid_Body* rigid_Body, Unit_Animation_Data* Unit_Animation_Data, float play_Speed, bool flip) {
-	if (play_Speed <= 0) {
-		// SDL_Log("ERROR: draw_Unit_Animated() - Animation speed <= 0");
-		return;
-	}
-	Uint64 ticks = SDL_GetTicks64();
-	// Convert to percent
-	float play_Speed_Percent = (play_Speed / 100.0f);
-	if (play_Speed_Percent > 1.0f) {
-		play_Speed_Percent = 1.0f;
-	}
-	if (play_Speed_Percent < 0.0f) {
-		play_Speed_Percent = 0.0f;
-	}
-	// Invert
-	play_Speed_Percent = 1.0f - play_Speed_Percent;
-	float new_Play_Speed = linear_Interpolation(
-		(float)Unit_Animation_Data->data.play_Range.min,
-		(float)Unit_Animation_Data->data.play_Range.max,
-		play_Speed_Percent
-	);
-
-	// 1000 / 250 = 4  %  4 = 0
-	// 1250 / 250 = 5  %  4 = 1
-	// 1500 / 250 = 6  %  4 = 2
-    if (new_Play_Speed < 0) {
-        SDL_Log("ERROR: draw_Unit_Animated - new_Play_Speed less than 0: %f", new_Play_Speed);
-    }
-    int ticks_Divided_Speed = (int)((float)ticks / (float)(new_Play_Speed));
-	Uint32 sprite_Frame = (ticks_Divided_Speed % (int)Unit_Animation_Data->data.num_Of_Frames);
-	if (temp_Bool) {
-		SDL_Log("**************************************");
-		SDL_Log("ticks = %i", ticks);
-		SDL_Log("play_Speed = %f", play_Speed);
-		SDL_Log("(ticks / new_Play_Speed) = %i", ticks_Divided_Speed);
-		SDL_Log("new_Play_Speed = %f", new_Play_Speed);
-		SDL_Log("sprite_Frame = %i", sprite_Frame);
-	}
-
-	SDL_Rect current_Frame_Rect = Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].source_Rect;
-
-	SDL_Rect destination_Rect = {
-		(int)(rigid_Body->position_WS.x - Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.x),
-		(int)(rigid_Body->position_WS.y - Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.y),
-		current_Frame_Rect.w,
-		current_Frame_Rect.h
-	};
-
-	// Set the center of the rotation
-	SDL_Point center = {
-		(int)Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.x,
-		(int)Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].center.y
-	};
-
-	// Render the current frame of the animation
-	SDL_RenderCopyEx(
-		renderer,
-		Unit_Animation_Data->data.sprite_Sheet.sprites[sprite_Frame].image->texture,
-		&current_Frame_Rect,
-		&destination_Rect,
-		rigid_Body->angle,
-		&center,
-		(flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE)
-	);
-}
-*/
 
 V2 get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
 	V2 result = rigid_Body->position_WS;
@@ -1486,6 +1253,107 @@ void reset_Game(Game_Data* game_Data) {
 	);
 }
 
+bool load_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V2 pos, int w, int h, int size) {
+    bool result = false;
+    if (check_If_File_Exists(file_Name)) {
+        std::string file_String = file_Name;
+        std::string file_String_Trimmed;
+
+        if (file_String.length() >= 4 && file_String.substr(file_String.length() - 4) == ".txt") {
+            file_String_Trimmed = file_String.substr(0, file_String.length() - 4);
+        }
+        else {
+            file_String_Trimmed = file_String;
+            SDL_Log("ERROR: File_Name doesn't end in .txt");
+        }
+        const char* file_Name_Trimmed = file_String_Trimmed.c_str();
+
+        if (button_Text(font, file_Name_Trimmed, pos, w, h, size)) {
+            result = true;
+        }
+
+		FILE* file = NULL;
+		errno_t err = fopen_s(&file, file_Name, "rb");
+		if (err != 0 || !file) {
+			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
+			return false;
+		}
+        float timer = 0;
+		fread(&timer, sizeof(game_Data->timer), 1, file);
+        // I need to close the file before I use remove or else it won't delete properly
+        fclose(file);
+
+        std::string game_Time = std::to_string((int)timer);
+        std::string final_Str = "Game time: " + game_Time;
+        const char* str = final_Str.c_str();
+        draw_String(font, str, (int)pos.x, (int)pos.y + 27, 2, true);
+
+        V2 delete_Button_Pos = pos;
+        delete_Button_Pos.x += (w / 2) + (h / 2);
+        if (button_Text(font, "X", delete_Button_Pos, h, h, size + 2)) {
+            remove(file_Name);
+        }
+    }
+
+    return result;
+}
+
+bool save_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V2 pos, int w, int h, int size) {
+    bool result = false;
+	std::string file_String = file_Name;
+	std::string file_String_Trimmed;
+
+	if (file_String.length() >= 4 && file_String.substr(file_String.length() - 4) == ".txt") {
+		file_String_Trimmed = file_String.substr(0, file_String.length() - 4);
+	}
+	else {
+		file_String_Trimmed = file_String;
+		SDL_Log("ERROR: File_Name doesn't end in .txt");
+	}
+	const char* file_Name_Trimmed = file_String_Trimmed.c_str();
+
+	if (button_Text(font, file_Name_Trimmed, pos, w, h, size)) {
+		result = true;
+	}
+
+    // Repeated check (Probably bad)
+	// Moved if (check_If_File_Exists(file_Name)) { remove(file_Name } to be included below
+    float timer = 0;
+    if (check_If_File_Exists(file_Name)) {
+		FILE* file = NULL;
+
+		DEFER{
+			fclose(file);
+		};
+
+		errno_t err = fopen_s(&file, file_Name, "rb");
+		if (err != 0 || !file) {
+			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
+			return false;
+		}
+
+		fread(&timer, sizeof(game_Data->timer), 1, file);
+
+        if (result == true) {
+            remove(file_Name);
+        }
+    } 
+
+	if (timer <= 0) {
+		std::string final_Str = "Empty";
+		const char* str = final_Str.c_str();
+		draw_String(font, str, (int)pos.x, (int)pos.y + 27, 2, true);
+	}
+	else {
+		std::string game_Time = std::to_string((int)timer);
+		std::string final_Str = "Game time: " + game_Time;
+		const char* str = final_Str.c_str();
+		draw_String(font, str, (int)pos.x, (int)pos.y + 27, 2, true);
+	}
+
+	return result;
+}
+
 int main(int argc, char** argv) {
     REF(argc);
     REF(argv);
@@ -1542,7 +1410,9 @@ int main(int argc, char** argv) {
 
     Game_Data game_Data = {};
 
-    const char* saved_Game_1 = "Save_Game_1.txt";
+    const char* saved_Game_1 = "Save Game 1.txt";
+    const char* saved_Game_2 = "Save Game 2.txt";
+    const char* saved_Game_3 = "Save Game 3.txt";
 
     reset_Game(&game_Data);
 
@@ -1572,7 +1442,7 @@ int main(int argc, char** argv) {
     // Debugging visualization code
 	// Sprite_Sheet_Tracker sprite_Sheet_Tracker = { skeleton_Animations, WALKING, 0.0f, 0 };
 
-    Game_State current_Game_State = GS_GAMELOOP;
+    Game_State current_Game_State = GS_MENU;
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -1690,22 +1560,30 @@ int main(int argc, char** argv) {
             int button_Width = 325;
             int button_Height = 90;
             int offset = button_Height;
-            V2 button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
-            V2 delete_Button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
-            delete_Button_Pos.x += button_Width;
+			V2 button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
             int size = 3;
 
             draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
             if (check_If_File_Exists(saved_Game_1)) {
-				if (button_Text(&font_1, "Load Game #1", button_Pos, button_Width, button_Height, size)) {
+                if (load_Game_Button(&game_Data, saved_Game_1, &font_1, button_Pos, button_Width, button_Height, size)) {
                     process_Game_Data(&game_Data, saved_Game_1, GDO_LOAD);
-                    current_Game_State = GS_GAMELOOP;
+					current_Game_State = GS_GAMELOOP;
 				}
                 button_Pos.y += offset;
-                if (button_Text(&font_1, "Delete", delete_Button_Pos, button_Width, button_Height, size)) {
-                    remove(saved_Game_1);
-                }
-                delete_Button_Pos.y += offset;
+			}
+			if (check_If_File_Exists(saved_Game_2)) {
+				if (load_Game_Button(&game_Data, saved_Game_2, &font_1, button_Pos, button_Width, button_Height, size)) {
+					process_Game_Data(&game_Data, saved_Game_2, GDO_LOAD);
+					current_Game_State = GS_GAMELOOP;
+				}
+				button_Pos.y += offset;
+			}
+			if (check_If_File_Exists(saved_Game_3)) {
+				if (load_Game_Button(&game_Data, saved_Game_3, &font_1, button_Pos, button_Width, button_Height, size)) {
+					process_Game_Data(&game_Data, saved_Game_3, GDO_LOAD);
+					current_Game_State = GS_GAMELOOP;
+				}
+				button_Pos.y += offset;
 			}
 			if (button_Text(&font_1, "Return to Menu", button_Pos, button_Width, button_Height, size)) {
 				current_Game_State = GS_MENU;
@@ -2273,10 +2151,6 @@ int main(int argc, char** argv) {
                     current_Game_State = GS_SAVEGAME;
 				}
                 button_Pos_Paused.y += button_Height_Paused;
-				if (button_Text(&font_1, "Load Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
-                    current_Game_State = GS_LOADGAME;
-				}
-                button_Pos_Paused.y += button_Height_Paused;
             }
             if (current_Game_State == GS_SAVEGAME) {
 				int button_Width_Saved = 325;
@@ -2287,11 +2161,16 @@ int main(int argc, char** argv) {
 
 				draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
 				
-                if (button_Text(&font_1, "Save Game #1", button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-					if (check_If_File_Exists(saved_Game_1)) {
-                        remove(saved_Game_1);
-                    }
+                if (save_Game_Button(&game_Data, saved_Game_1, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
                     process_Game_Data(&game_Data, saved_Game_1, GDO_SAVE);
+				}
+                button_Pos_Saved.y += offset;
+				if (save_Game_Button(&game_Data, saved_Game_2, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+					process_Game_Data(&game_Data, saved_Game_2, GDO_SAVE);
+				}
+                button_Pos_Saved.y += offset;
+				if (save_Game_Button(&game_Data, saved_Game_3, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+					process_Game_Data(&game_Data, saved_Game_3, GDO_SAVE);
 				}
                 button_Pos_Saved.y += offset;
 				if (button_Text(&font_1, "Return to Menu", button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
