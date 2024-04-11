@@ -25,6 +25,9 @@
     <ClCompile Include="src\Utility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Globals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utility.h">
@@ -33,7 +36,7 @@
     <ClInclude Include="src\Menu_System.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Global_Variables.h">
+    <ClInclude Include="src\Globals.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Image.h">

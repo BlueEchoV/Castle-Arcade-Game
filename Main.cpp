@@ -70,7 +70,7 @@ struct Rigid_Body {
     V2 velocity;
     float angle;
     int num_Colliders;
-    Collider colliders[MAX_COLLIDERS];
+    Collider colliders[Globals::MAX_COLLIDERS];
 };
 
 enum Level {
@@ -192,7 +192,7 @@ struct Skeleton {
 	float current_Attack_Cooldown;
 	float attack_Range;
 
-    Attached_Entity attached_Entities[MAX_ATTACHED_ENTITIES];
+    Attached_Entity attached_Entities[Globals::MAX_ATTACHED_ENTITIES];
     int attached_Entities_Size = 0;
 
 	bool destroyed;
@@ -277,11 +277,39 @@ void read_Vector(std::vector<T>& vector, FILE* file) {
 	fread(vector.data(), sizeof(vector[0]), vector_Size, file);
 }
 
+struct Archive {
+    FILE* file;
+    GAME_DATA_OPERATION operation;
+};
+
+// Process the primitive (float, int, double)
+void process_Float(float& my_Float, Archive* archive) {
+    if (archive->operation == GDO_SAVE) {
+        fwrite(&my_Float, sizeof(my_Float), 1, archive->file);
+    }
+    else if (archive->operation == GDO_LOAD) {
+        fread(&my_Float, sizeof(my_Float), 1, archive->file);
+    }
+}
+
+// void process_Int
+// void process_etc..
+
+// function that opens archive
+// Close archive function as well
+
+// Save game function creates write archive
+// Load game will call read archive (process game_Data)
+
+// Should be given a file handle and not be responsible for opening the file
+// I will have a function that opens a archive for reading or writing
+//                                                          Archive param
 void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OPERATION operation) {
     FILE* file = NULL;
     DEFER{
         fclose(file);
     };
+    // Create archive
 
     if (operation == GDO_SAVE) {
 		errno_t err = fopen_s(&file, file_Name, "wb");
@@ -292,6 +320,8 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
         fwrite(&game_Data->timer, sizeof(game_Data->timer), 1, file);
         fwrite(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
         fwrite(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
+        // I could have a loop that processes each individual element at a time (Call a function)
+        // This would solve my vector inside of a vector problem. I could put the vectors back in.
         write_Vector(game_Data->terrain_Height_Map, file);
         write_Vector(game_Data->player_Arrows, file);
         write_Vector(game_Data->enemy_Skeletons, file);
@@ -349,7 +379,7 @@ Image create_Image(const char* file_name) {
 		// stbi_image_free(data);
 	};
 
-	SDL_Texture* temp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, result.width, result.height);
+	SDL_Texture* temp = SDL_CreateTexture(Globals::renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, result.width, result.height);
 
 	if (temp == NULL) {
 		SDL_Log("ERROR: SDL_CreateTexture returned NULL: %s", SDL_GetError());
@@ -374,7 +404,7 @@ Image create_Image(const char* file_name) {
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
-    assert(rigid_Body->num_Colliders < MAX_COLLIDERS);
+    assert(rigid_Body->num_Colliders < Globals::MAX_COLLIDERS);
 
     Collider* collider = &rigid_Body->colliders[rigid_Body->num_Colliders++];
     collider->position_LS = position_LS;
@@ -382,7 +412,7 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
 }
 
 void draw_Layer(SDL_Texture* texture) {
-    SDL_RenderCopyEx(renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
+    SDL_RenderCopyEx(Globals::renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
 }
 
 void draw_Castle(Castle* castle, bool flip) {
@@ -396,7 +426,7 @@ void draw_Castle(Castle* castle, bool flip) {
         sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect.w,
         sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect.h
     };
-    SDL_RenderCopyEx(renderer,  sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].image->texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+    SDL_RenderCopyEx(Globals::renderer,  sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].image->texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 void draw_Arrow(Arrow* arrow, bool flip) {
@@ -411,7 +441,7 @@ void draw_Arrow(Arrow* arrow, bool flip) {
 		sprite->source_Rect.w,
 		sprite->source_Rect.h
     };
-    SDL_RenderCopyEx(renderer, sprite->image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+    SDL_RenderCopyEx(Globals::renderer, sprite->image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 Attached_Entity return_Attached_Entity(Sprite_Sheet_Selector selected, float angle, V2 offset) {
@@ -438,7 +468,7 @@ void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool
         sprite->source_Rect.w,
         sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(renderer, sprite->image->texture, NULL, &temp, attached_Entity->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	SDL_RenderCopyEx(Globals::renderer, sprite->image->texture, NULL, &temp, attached_Entity->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time) {
@@ -498,7 +528,7 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 
 	// Render the current frame of the animation
 	SDL_RenderCopyEx(
-		renderer,
+        Globals::renderer,
         sprite_Sheet->sprites[sprite_Frame].image->texture,
 		&current_Frame_Rect,
 		&destination_Rect,
@@ -530,9 +560,9 @@ V2 get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
 void update_Arrow_Position(Arrow* arrow, float delta_Time) {
 	if (!arrow->stop) {
         if (arrow->type == AT_PLAYER_ARROW) {
-            arrow->rigid_Body.velocity.y += GRAVITY * delta_Time;
+            arrow->rigid_Body.velocity.y += Globals::GRAVITY * delta_Time;
         } else if (arrow->type == AT_ARCHER_ARROW) {
-            arrow->rigid_Body.velocity.y += ARCHER_ARROW_GRAVITY * delta_Time;
+            arrow->rigid_Body.velocity.y += Globals::ARCHER_ARROW_GRAVITY * delta_Time;
         } else {
             SDL_Log("ERROR: Arrow type not specified. update_Arrow_Position()");
             return;
@@ -545,7 +575,7 @@ void update_Arrow_Position(Arrow* arrow, float delta_Time) {
 
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time) {
     if (!stop_Unit) {
-		rigid_Body->position_WS.y += GRAVITY * delta_Time;
+		rigid_Body->position_WS.y += Globals::GRAVITY * delta_Time;
 		rigid_Body->position_WS.x += (rigid_Body->velocity.x * delta_Time);
 		rigid_Body->position_WS.y += (rigid_Body->velocity.y * delta_Time);
     }
@@ -774,17 +804,17 @@ void draw_Circle(float center_X, float center_Y, float radius, Color_Index color
         x2 = (int)(center_X + (radius * cos(angle)));
         y2 = (int)(center_Y + (radius * sin(angle)));
         if (color == CI_RED) {
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
         } else if (color == CI_GREEN) {
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
         } else if (color == CI_BLUE) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
         }
         else {
             // Yellow is default
-            SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
         }
-        SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+        SDL_RenderDrawLine(Globals::renderer, x1, y1, x2, y2);
 	}
 }
 
@@ -803,31 +833,31 @@ void outline_Rect(SDL_Rect* rect, int outline_Thickness) {
     top_Rect.y = rect->y;
     top_Rect.w = rect->w;
     top_Rect.h = outline_Thickness;
-    SDL_RenderFillRect(renderer, &top_Rect);
+    SDL_RenderFillRect(Globals::renderer, &top_Rect);
 
     SDL_Rect bottom_Rect = {};
     bottom_Rect.x = rect->x;
     bottom_Rect.y = ((rect->y + rect->h) - outline_Thickness);
     bottom_Rect.w = rect->w;
     bottom_Rect.h = outline_Thickness;
-    SDL_RenderFillRect(renderer, &bottom_Rect);
+    SDL_RenderFillRect(Globals::renderer, &bottom_Rect);
 
     SDL_Rect left_Rect = {};
     left_Rect.x = rect->x;
     left_Rect.y = rect->y;
     left_Rect.w = outline_Thickness;
     left_Rect.h = rect->h;
-    SDL_RenderFillRect(renderer, &left_Rect);
+    SDL_RenderFillRect(Globals::renderer, &left_Rect);
 
     SDL_Rect right_Rect = {};
     right_Rect.x = ((rect->x + rect->w) - outline_Thickness);
     right_Rect.y = rect->y;
     right_Rect.w = outline_Thickness;
     right_Rect.h = rect->h;
-    SDL_RenderFillRect(renderer, &right_Rect);
+    SDL_RenderFillRect(Globals::renderer, &right_Rect);
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer, rect);
+    SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(Globals::renderer, rect);
 }
 
 void draw_HP_Bar(V2* position, Health_Bar* health_Bar) {
@@ -845,14 +875,14 @@ void draw_HP_Bar(V2* position, Health_Bar* health_Bar) {
     rect_Green.h = (int)health_Bar->height;
     rect_Green.x = (int)((position->x) - health_Bar->width / 2);
     rect_Green.y = (int)((position->y) - health_Bar->y_Offset);
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &rect_Green);
+    SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(Globals::renderer, &rect_Green);
 
     SDL_Rect rect_Red = rect_Green;
     rect_Red.w = health_Bar->width - rect_Green.w;
     rect_Red.x = (int)(rect_Green.x + rect_Green.w);
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &rect_Red);
+    SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(Globals::renderer, &rect_Red);
 
     // Outline HP bars
     SDL_Rect outline = {};
@@ -860,7 +890,7 @@ void draw_HP_Bar(V2* position, Health_Bar* health_Bar) {
     outline.h = (int)health_Bar->height;
 	outline.x = (int)((position->x) - health_Bar->width / 2);
 	outline.y = (int)((position->y) - health_Bar->y_Offset);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     outline_Rect(&outline, health_Bar->thickness);
 }
 
@@ -895,7 +925,7 @@ Font load_Font_Bitmap(const char* font_File_Path) {
     result.char_Width = result.width / 18;
     result.char_Height = result.height / 7;
 
-    SDL_Texture* temp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, width, height);
+    SDL_Texture* temp = SDL_CreateTexture(Globals::renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, width, height);
 
     if (temp == NULL) {
         SDL_Log("ERROR: SDL_CreateTexture returned NULL: %s", SDL_GetError());
@@ -941,7 +971,7 @@ void draw_Character(Font* font, char character, int position_X, int position_Y, 
     dest_Rect.w = (int)(font->char_Width * size);
     dest_Rect.h = (int)(font->char_Height * size);
     
-    SDL_RenderCopyEx(renderer, font->texture, &src_Rect, &dest_Rect, 0, NULL, SDL_FLIP_NONE);
+    SDL_RenderCopyEx(Globals::renderer, font->texture, &src_Rect, &dest_Rect, 0, NULL, SDL_FLIP_NONE);
 }
 
 void draw_String(Font* font, const char* string, int position_X, int position_Y, int size, bool center) {
@@ -987,24 +1017,23 @@ void draw_String_With_Background(Font* font, const char* string, int position_X,
 
 	// Set background as black
     if (color == CI_BLACK) {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     } else if (color == CI_RED) {
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	} else if (color == CI_GREEN) {
-		SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+		SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 	} else if (color == CI_BLUE) {
-		SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+		SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
 	} else {
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+        SDL_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
     }
-    SDL_RenderFillRect(renderer, &canvas_Area);
+    SDL_RenderFillRect(Globals::renderer, &canvas_Area);
     
     draw_String(font, string, position_X, position_Y, size, center);
 }
 
-void draw_Timer(Game_Data* game_Data, float game_Loop_Time, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
+void draw_Timer(Game_Data* game_Data, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
     SDL_Rect temp = {};
-    game_Data->timer = game_Loop_Time;
 
     std::string str = std::to_string((int)game_Data->timer);
     const char* ptr = str.c_str();
@@ -1027,11 +1056,11 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 	button_Area.h = h;
 
 	// Set background as black
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(renderer, &button_Area);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &button_Area);
 
 	draw_String(font, string, (int)pos.x, (int)pos.y, string_Size, true);
-	SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
 	Uint32 mouse = SDL_GetMouseState(&x, &y);
@@ -1041,7 +1070,7 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 
 	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		if (mouse_Down_This_Frame) {
 			next_Frame_Hot_Name = string;
 		}
@@ -1050,12 +1079,12 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 		}
 		else
 		{
-			SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
 		}
 	}
 	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
 		next_Frame_Hot_Name = string;
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	}
 
 	outline_Rect(&button_Area, outline_Thickness);
@@ -1081,11 +1110,11 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 	image_Area.y += outline_Thickness * (image_Size_Based_On_Outline / 2);
 
 	// Set background as black
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(renderer, &button_Area);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &button_Area);
 
-    SDL_RenderCopyEx(renderer, texture, NULL, &image_Area, 0, NULL, SDL_FLIP_NONE);
-	SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderCopyEx(Globals::renderer, texture, NULL, &image_Area, 0, NULL, SDL_FLIP_NONE);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
 	Uint32 mouse = SDL_GetMouseState(&x, &y);
@@ -1095,7 +1124,7 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 
 	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		if (mouse_Down_This_Frame) {
 			next_Frame_Hot_Name = string;
 		}
@@ -1104,12 +1133,12 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 		}
 		else
 		{
-			SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
 		}
 	}
 	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
 		next_Frame_Hot_Name = string;
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	}
 
 	outline_Rect(&button_Area, outline_Thickness);
@@ -1277,6 +1306,9 @@ bool load_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V
             result = true;
         }
 
+        // When i switch to menu, cache all of these values. Only update them 
+        // when something changes. "Update_Cache_Saved_Game_Values"
+        // I could have a vector of game datas
 		FILE* file = NULL;
 		errno_t err = fopen_s(&file, file_Name, "rb");
 		if (err != 0 || !file) {
@@ -1323,28 +1355,24 @@ bool save_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V
 
     // Repeated check (Probably bad)
 	// Moved if (check_If_File_Exists(file_Name)) { remove(file_Name } to be included below
-    float timer = 0;
+    float timer = -1;
+    // bool valid = false;
     if (check_If_File_Exists(file_Name)) {
 		FILE* file = NULL;
-
+        errno_t err = fopen_s(&file, file_Name, "rb");
 		DEFER{
 			fclose(file);
 		};
 
-		errno_t err = fopen_s(&file, file_Name, "rb");
 		if (err != 0 || !file) {
 			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
 			return false;
 		}
 
 		fread(&timer, sizeof(game_Data->timer), 1, file);
-
-        if (result == true) {
-            remove(file_Name);
-        }
     } 
 
-	if (timer <= 0) {
+	if (timer < 0) {
 		std::string final_Str = "Empty";
 		const char* str = final_Str.c_str();
 		draw_String(font, str, (int)pos.x, (int)pos.y + 27, 2, true);
@@ -1357,6 +1385,41 @@ bool save_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V
 	}
 
 	return result;
+}
+
+void draw_Game_Loop_UI() {
+    // Draw game loop UI here
+    // Check the current units the player has selected and/or equipped
+    // and draw the associated buttons
+}
+
+void draw_Main_Menu() {
+    // Play, Load, Quit buttons
+}
+
+void draw_Sub_Menu_Paused() {
+    // Save, quit, return to main menu buttons
+}
+
+// Drawing the hud should be separate from drawing the menu
+
+// I could have a stack of menus and then I have a hierarchy of menus
+// When I press escape, I pop the top of the stack
+void draw_Menu(/*Menu mode enum*/) {
+    // ****************************
+    /*
+    if (mm == Menu) {
+        draw_Main_Menu();
+    } else if (mm == Gameloop) {
+        if (gs == paused) {
+            draw_Sub_Menu_Paused();
+		} else if (gs == Victory) {
+			draw_Victory_Screen();
+		} else if (gs == Game Over) {
+			draw_Game_Over_Screen();
+		}
+    }
+    */
 }
 
 int main(int argc, char** argv) {
@@ -1373,8 +1436,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (renderer == NULL) {
+    Globals::renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (Globals::renderer == NULL) {
         SDL_Log("ERROR: SDL_CreateRenderer returned NULL: %s", SDL_GetError());
         return 1;
     }
@@ -1438,7 +1501,6 @@ int main(int argc, char** argv) {
     float delta_Time = 0.0f;
     // 0 - 1
     float time_Scalar = 1.0f;
-    float in_Game_Time_Elapsed = 0;
 
     bool spawn_Skeleton_Pressed = false;
     bool spawn_Archer_Pressed = false;
@@ -1497,12 +1559,11 @@ int main(int argc, char** argv) {
 		delta_Time /= 1000;
 
 		if (current_Game_State == GS_GAMELOOP) {
-			in_Game_Time_Elapsed += delta_Time;
+			game_Data.timer += delta_Time;
 		}
 
-		SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
-
+		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(Globals::renderer);
 
 		if (key_States[SDLK_F1].pressed_This_Frame) {
             if (check_If_File_Exists(saved_Game_1)) {
@@ -1528,7 +1589,7 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_MENU) {
 			// No game logic
-			SDL_RenderCopy(renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
         
             draw_String_With_Background(
                 &font_1, 
@@ -1541,7 +1602,7 @@ int main(int argc, char** argv) {
                 20
             );
             
-            V2 button_Pos = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 50 };
+            V2 button_Pos = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 };
             int button_Width = 300;
             int button_Height = 100;
             int string_Size = 4;
@@ -1565,7 +1626,7 @@ int main(int argc, char** argv) {
             button_Pos.y += 100;
         }
         else if (current_Game_State == GS_LOADGAME) {
-			SDL_RenderCopy(renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
 
             int button_Width = 325;
             int button_Height = 90;
@@ -1600,7 +1661,7 @@ int main(int argc, char** argv) {
 			}
         }
 		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
-			SDL_RenderCopy(renderer, sprite_Sheet_Array[SSS_BKG_GAMEOVER].sprites[0].image->texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_GAMEOVER].sprites[0].image->texture, NULL, NULL);
 			if (current_Game_State == GS_VICTORY) {
 				draw_String_With_Background(
 					&font_1,
@@ -2013,7 +2074,7 @@ int main(int argc, char** argv) {
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
 
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
             draw_Circle(
                 game_Data.enemy_Castle.rigid_Body.position_WS.x, 
@@ -2101,7 +2162,6 @@ int main(int argc, char** argv) {
             // UI
             draw_Timer(
                 &game_Data,
-                in_Game_Time_Elapsed,
                 &font_1, 
                 { RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 }, 
                 6, 
@@ -2239,7 +2299,7 @@ int main(int argc, char** argv) {
 				return archer.destroyed || archer.health_Bar.current_HP <= 0;
 				});
         }
-        SDL_RenderPresent(renderer);
+        SDL_RenderPresent(Globals::renderer);
     }
 
     return 0;

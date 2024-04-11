@@ -2,9 +2,7 @@
 #include <SDL.h>
 
 #include "Utility.h"
-#include "Global_Variables.h"
-
-extern SDL_Renderer* renderer;
+#include "Globals.h"
 
 enum Color_Index {
 	CI_BLACK,
