@@ -263,7 +263,7 @@ struct Cache_Data {
 
 // So I can change the formatting in the future
 std::string create_Save_Game_File_Name(Saved_Games save_Game) {
-	return "Save Game " + std::to_string(save_Game + 1) + ".txt";
+	return "Save Game " + std::to_string(save_Game + 1) + ".dat";
 }
 
 // Checks if the file exists, even if the file is locked. And it's faster.
