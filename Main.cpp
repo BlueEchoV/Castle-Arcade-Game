@@ -261,6 +261,101 @@ bool check_If_File_Exists(const char* file_Name) {
 	return true;
 };
 
+struct File_Caching_Data {
+	bool is_Opened;
+    bool is_Empty;
+	const char* file_Name;
+    FILE* file;
+};
+
+/*
+FILE* open_File(const char* file_Name, GAME_DATA_OPERATION operation) {
+	FILE* file = NULL;
+    errno_t err = {};
+    if (operation == GDO_SAVE) {
+        err = fopen_s(&file, file_Name, "rb");
+    }
+    else if (operation == GDO_LOAD) {
+        err = fopen_s(&file, file_Name, "wb");
+    }
+
+	if (err != 0 || !file) {
+		SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
+        return NULL;
+	}
+	else {
+		std::string str = file_Name;
+        return file;
+	}
+}
+*/
+
+enum Saved_Games {
+	SG_SAVE_GAME_1,
+	SG_SAVE_GAME_2,
+	SG_SAVE_GAME_3,
+    SG_TOTAL
+};
+
+void open_File_In_Cache(File_Caching_Data* file_Caching_Data) {
+    file_Caching_Data->is_Opened = true;
+	errno_t err = fopen_s(&file_Caching_Data->file, file_Caching_Data->file_Name, "rb");
+	if (err != 0 || !&file_Caching_Data->file) {
+		SDL_Log("ERROR: Unable to open file %s in save_Game", file_Caching_Data->file_Name);
+	}
+}
+
+void close_File_In_Cache(File_Caching_Data* file_Caching_Data) {
+    file_Caching_Data->is_Opened = false;
+	fclose(file_Caching_Data->file);
+}
+
+// Could be pointless to have this function
+void remove_File_In_Cache(const char* file_Name, std::vector<File_Caching_Data*>& cache) {
+    for (int i = 0; i < cache.size(); i++) {
+		std::string file_1 = cache[i]->file_Name;
+		std::string file_2 = file_Name;
+		if (file_1 == file_2) {
+            if (cache[i]->is_Opened) {
+                close_File_In_Cache(cache[i]);
+            }
+            cache.erase(cache.begin() + i);
+            i--;
+        }
+    }
+}
+
+void create_Saved_Games_Cache(Saved_Games total, std::vector<File_Caching_Data*>& cache) {
+	File_Caching_Data* new_File_Data = {};
+
+    for (int i = 0; i < total; i++) {
+        std::string saved_Game_String = "Save game " + std::to_string(i + 1) + ".txt";
+        const char* ptr = saved_Game_String.c_str();
+        new_File_Data->file_Name = ptr;
+        new_File_Data->file = NULL;
+        new_File_Data->is_Opened = false;
+        new_File_Data->is_Empty = true;
+		cache.push_back(new_File_Data);
+    }
+}
+
+void overwrite_File_In_Cache(Saved_Games selected_Save_game, std::vector<File_Caching_Data*>& cache) {    
+    File_Caching_Data* new_File_Data = {};
+	
+	new_File_Data->file = NULL;
+	new_File_Data->is_Opened = false;
+    new_File_Data->is_Empty = true;
+
+    cache[selected_Save_game] = new_File_Data;
+}
+
+// void remove_File_From_Cache(const char* file_Name, std::vector<File_Caching_Data*>& cache)
+
+// Open the files
+
+// Step 1: Open the load screen
+// Step 2: Display the currently existing files
+
 template <typename T>
 void write_Vector(std::vector<T>& vector, FILE* file) {
 	size_t vector_Size = vector.size();
@@ -304,19 +399,19 @@ void process_Float(float& my_Float, Archive* archive) {
 // Should be given a file handle and not be responsible for opening the file
 // I will have a function that opens a archive for reading or writing
 //                                                          Archive param
-void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OPERATION operation) {
-    FILE* file = NULL;
-    DEFER{
-        fclose(file);
-    };
+void process_Game_Data(Game_Data* game_Data, GAME_DATA_OPERATION operation) {
+	// DEFER{
+		// fclose(file);
+	// };
     // Create archive
 
     if (operation == GDO_SAVE) {
-		errno_t err = fopen_s(&file, file_Name, "wb");
+		errno_t err = fopen_s(&cache.file, cache.file, "wb");
 		if (err != 0 || !file) {
 			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
 			return;
 		}
+
         fwrite(&game_Data->timer, sizeof(game_Data->timer), 1, file);
         fwrite(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
         fwrite(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
@@ -328,13 +423,9 @@ void process_Game_Data(Game_Data* game_Data, const char* file_Name, GAME_DATA_OP
         write_Vector(game_Data->player_Skeletons, file);
         write_Vector(game_Data->player_Archers, file);
         fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
+        fclose(file);
     }
     else if (operation == GDO_LOAD) {
-		errno_t err = fopen_s(&file, file_Name, "rb");
-		if (err != 0 || !file) {
-			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
-			return;
-		}
         fread(&game_Data->timer, sizeof(game_Data->timer), 1, file);
         fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
         fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
@@ -1287,7 +1378,7 @@ void reset_Game(Game_Data* game_Data) {
 	);
 }
 
-bool load_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V2 pos, int w, int h, int size) {
+bool load_Game_Button(Game_Data* game_Data, const char* file_Name, std::unordered_map<std::string, FILE*>& cached_Save_Game_Files, Font* font, V2 pos, int w, int h, int size) {
     bool result = false;
     if (check_If_File_Exists(file_Name)) {
         std::string file_String = file_Name;
@@ -1309,16 +1400,10 @@ bool load_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V
         // When i switch to menu, cache all of these values. Only update them 
         // when something changes. "Update_Cache_Saved_Game_Values"
         // I could have a vector of game datas
-		FILE* file = NULL;
-		errno_t err = fopen_s(&file, file_Name, "rb");
-		if (err != 0 || !file) {
-			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
-			return false;
-		}
+
         float timer = 0;
-		fread(&timer, sizeof(game_Data->timer), 1, file);
+        fread(&timer, sizeof(game_Data->timer), 1, cached_Save_Game_Files[file_String]);
         // I need to close the file before I use remove or else it won't delete properly
-        fclose(file);
 
         std::string game_Time = std::to_string((int)timer);
         std::string final_Str = "Game time: " + game_Time;
@@ -1328,14 +1413,17 @@ bool load_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V
         V2 delete_Button_Pos = pos;
         delete_Button_Pos.x += (w / 2) + (h / 2);
         if (button_Text(font, "X", delete_Button_Pos, h, h, size + 2)) {
+            fclose(cached_Save_Game_Files[file_String]);
+            // cached_Save_Game_Files.erase(file_String);
             remove(file_Name);
         }
+    
     }
 
     return result;
 }
 
-bool save_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V2 pos, int w, int h, int size) {
+bool save_Game_Button(Game_Data* game_Data, const char* file_Name, std::unordered_map<std::string, FILE*>& cached_Save_Game_Files, Font* font, V2 pos, int w, int h, int size) {
     bool result = false;
 	std::string file_String = file_Name;
 	std::string file_String_Trimmed;
@@ -1351,25 +1439,18 @@ bool save_Game_Button(Game_Data* game_Data, const char* file_Name, Font* font, V
 
 	if (button_Text(font, file_Name_Trimmed, pos, w, h, size)) {
 		result = true;
+        if (check_If_File_Exists(file_Name)) {
+			fclose(cached_Save_Game_Files[file_Name]);
+			remove(file_Name);
+        }
 	}
 
     // Repeated check (Probably bad)
 	// Moved if (check_If_File_Exists(file_Name)) { remove(file_Name } to be included below
     float timer = -1;
     // bool valid = false;
-    if (check_If_File_Exists(file_Name)) {
-		FILE* file = NULL;
-        errno_t err = fopen_s(&file, file_Name, "rb");
-		DEFER{
-			fclose(file);
-		};
-
-		if (err != 0 || !file) {
-			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
-			return false;
-		}
-
-		fread(&timer, sizeof(game_Data->timer), 1, file);
+    if (check_If_File_Exists(file_Name) && result == false) {
+		fread(&timer, sizeof(game_Data->timer), 1, cached_Save_Game_Files[file_Name]);
     } 
 
 	if (timer < 0) {
@@ -1478,10 +1559,6 @@ int main(int argc, char** argv) {
 
     Game_Data game_Data = {};
 
-    const char* saved_Game_1 = "Save Game 1.txt";
-    const char* saved_Game_2 = "Save Game 2.txt";
-    const char* saved_Game_3 = "Save Game 3.txt";
-
     reset_Game(&game_Data);
 
     // Buttons
@@ -1506,6 +1583,20 @@ int main(int argc, char** argv) {
     bool spawn_Archer_Pressed = false;
 
     bool running = true;
+
+    std::vector<File_Caching_Data*> saved_Games_Cache = {};
+
+	// const char* saved_Game_2 = "Save Game 2.txt";
+	// const char* saved_Game_3 = "Save Game 3.txt";
+    create_Saved_Games_Cache(SG_TOTAL, saved_Games_Cache);
+
+    // cache_Save_Game_File(saved_Game_1, cached_Save_Game_Files);
+    // cache_Save_Game_File(saved_Game_2, cached_Save_Game_Files);
+    // cache_Save_Game_File(saved_Game_3, cached_Save_Game_Files);
+
+    // Create_File_Caching_Data
+    // Update_File_Caching_Data
+    // wb or rb || save_Game or load_Game
 
     // Debugging visualization code
 	// Sprite_Sheet_Tracker sprite_Sheet_Tracker = { skeleton_Animations, WALKING, 0.0f, 0 };
@@ -1566,16 +1657,18 @@ int main(int argc, char** argv) {
         SDL_RenderClear(Globals::renderer);
 
 		if (key_States[SDLK_F1].pressed_This_Frame) {
-            if (check_If_File_Exists(saved_Game_1)) {
-                remove(saved_Game_1);
-            }
-            process_Game_Data(&game_Data, saved_Game_1, GDO_SAVE);
+            overwrite_File_In_Cache(SG_SAVE_GAME_1, saved_Games_Cache);
+            
+            //if (check_If_File_Exists(save_Game_1_Cache.file_Name)) {
+            //    remove(save_Game_1_Cache.file_Name);
+            //}
+            //process_Game_Data(&game_Data, saved_Game_1, cached_Save_Game_Files, GDO_SAVE);
 		}
 
 		if (key_States[SDLK_F2].pressed_This_Frame) {
-			if (check_If_File_Exists(saved_Game_1)) {
-                process_Game_Data(&game_Data, saved_Game_1, GDO_LOAD);
-			}
+			//if (check_If_File_Exists(saved_Game_1)) {
+            //    process_Game_Data(&game_Data, saved_Game_1, cached_Save_Game_Files, GDO_LOAD);
+			//}
 		}
 
         if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
@@ -1635,28 +1728,26 @@ int main(int argc, char** argv) {
             int size = 3;
 
             draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
-            if (check_If_File_Exists(saved_Game_1)) {
-                if (load_Game_Button(&game_Data, saved_Game_1, &font_1, button_Pos, button_Width, button_Height, size)) {
-                    process_Game_Data(&game_Data, saved_Game_1, GDO_LOAD);
-					current_Game_State = GS_GAMELOOP;
-				}
-                button_Pos.y += offset;
+            button_Pos.y += offset;
+            /*
+            if (load_Game_Button(&game_Data, saved_Game_1, cached_Save_Game_Files, &font_1, button_Pos, button_Width, button_Height, size)) {
+				process_Game_Data(&game_Data, saved_Game_1, cached_Save_Game_Files, GDO_LOAD);
+				current_Game_State = GS_GAMELOOP;
 			}
-			if (check_If_File_Exists(saved_Game_2)) {
-				if (load_Game_Button(&game_Data, saved_Game_2, &font_1, button_Pos, button_Width, button_Height, size)) {
-					process_Game_Data(&game_Data, saved_Game_2, GDO_LOAD);
-					current_Game_State = GS_GAMELOOP;
-				}
-				button_Pos.y += offset;
+
+			button_Pos.y += offset;
+			if (load_Game_Button(&game_Data, saved_Game_2, cached_Save_Game_Files, &font_1, button_Pos, button_Width, button_Height, size)) {
+				process_Game_Data(&game_Data, saved_Game_2, cached_Save_Game_Files, GDO_LOAD);
+				current_Game_State = GS_GAMELOOP;
 			}
-			if (check_If_File_Exists(saved_Game_3)) {
-				if (load_Game_Button(&game_Data, saved_Game_3, &font_1, button_Pos, button_Width, button_Height, size)) {
-					process_Game_Data(&game_Data, saved_Game_3, GDO_LOAD);
-					current_Game_State = GS_GAMELOOP;
-				}
-				button_Pos.y += offset;
+			button_Pos.y += offset;
+			if (load_Game_Button(&game_Data, saved_Game_3, cached_Save_Game_Files, &font_1, button_Pos, button_Width, button_Height, size)) {
+				process_Game_Data(&game_Data, saved_Game_3, cached_Save_Game_Files, GDO_LOAD);
+				current_Game_State = GS_GAMELOOP;
 			}
-			if (button_Text(&font_1, "Return to Menu", button_Pos, button_Width, button_Height, size)) {
+            */
+			button_Pos.y += offset;
+			if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
 				current_Game_State = GS_MENU;
 			}
         }
@@ -2256,22 +2347,23 @@ int main(int argc, char** argv) {
 				int size = 3;
 
 				draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
-				
-                if (save_Game_Button(&game_Data, saved_Game_1, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-                    process_Game_Data(&game_Data, saved_Game_1, GDO_SAVE);
+                /*
+                if (save_Game_Button(&game_Data, saved_Game_1, cached_Save_Game_Files , &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+                    process_Game_Data(&game_Data, saved_Game_1, cached_Save_Game_Files, GDO_SAVE);
 				}
                 button_Pos_Saved.y += offset;
-				if (save_Game_Button(&game_Data, saved_Game_2, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-					process_Game_Data(&game_Data, saved_Game_2, GDO_SAVE);
+				if (save_Game_Button(&game_Data, saved_Game_2, cached_Save_Game_Files , &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+					process_Game_Data(&game_Data, saved_Game_2, cached_Save_Game_Files, GDO_SAVE);
 				}
                 button_Pos_Saved.y += offset;
-				if (save_Game_Button(&game_Data, saved_Game_3, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-					process_Game_Data(&game_Data, saved_Game_3, GDO_SAVE);
+				if (save_Game_Button(&game_Data, saved_Game_3, cached_Save_Game_Files , &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+					process_Game_Data(&game_Data, saved_Game_3, cached_Save_Game_Files, GDO_SAVE);
 				}
                 button_Pos_Saved.y += offset;
 				if (button_Text(&font_1, "Return to Menu", button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
 					current_Game_State = GS_MENU;
 				}
+                */
 
             }
 
@@ -2301,6 +2393,11 @@ int main(int argc, char** argv) {
         }
         SDL_RenderPresent(Globals::renderer);
     }
+
+    for (auto& pair : cached_Save_Game_Files) {
+        fclose(pair.second);
+    }
+    cached_Save_Game_Files.clear();
 
     return 0;
 }
