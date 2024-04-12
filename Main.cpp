@@ -256,6 +256,11 @@ enum Saved_Games {
 	SG_TOTAL,
 };
 
+struct Cache_Data {
+	bool loaded;
+	std::unordered_map<std::string, Game_Data> cache;
+};
+
 // So I can change the formatting in the future
 std::string create_Save_Game_File_Name(Saved_Games save_Game) {
 	return "Save Game " + std::to_string(save_Game + 1) + ".txt";
@@ -1114,6 +1119,73 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 	return button_Pressed;
 }
 
+void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, V2 pos, int w, int h) {
+    std::string save_Game_String = create_Save_Game_File_Name(save_Game);
+    
+    SDL_Rect button_Area = {};
+	int outline_Thickness = 5;
+    REF(outline_Thickness);
+    REF(cache_Data);
+
+	// Centers the button
+	button_Area.x = ((int)(pos.x - w) - (w / 2));
+	button_Area.y = ((int)pos.y - (h / 2));
+	button_Area.w = w;
+	button_Area.h = h;
+    
+    SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &button_Area);
+}
+
+bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, const char* string, V2 pos, int w, int h, int string_Size) {
+	SDL_Rect button_Area = {};
+	int outline_Thickness = 5;
+
+	// Centers the button
+	button_Area.x = ((int)pos.x - (w / 2));
+	button_Area.y = ((int)pos.y - (h / 2));
+	button_Area.w = w;
+	button_Area.h = h;
+
+	// Set background as black
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &button_Area);
+
+	draw_String(font, string, (int)pos.x, (int)pos.y, string_Size, true);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+
+	int x, y;
+	Uint32 mouse = SDL_GetMouseState(&x, &y);
+	bool button_Pressed = false;
+
+	bool was_Hot = (current_frame_Hot_Name == string);
+
+	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
+		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
+		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        // Call the window that displays the info
+        display_Save_Game_Info(save_Game, cache_Data, pos, w, h);
+		if (mouse_Down_This_Frame) {
+			next_Frame_Hot_Name = string;
+		}
+		else if (was_Hot && !(mouse & SDL_BUTTON_LMASK)) {
+			button_Pressed = true;
+		}
+		else
+		{
+			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+		}
+	}
+	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
+		next_Frame_Hot_Name = string;
+		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	}
+
+	outline_Rect(&button_Area, outline_Thickness);
+
+	return button_Pressed;
+}
+
 bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 	SDL_Rect button_Area = {};
     int outline_Thickness = 5;
@@ -1309,41 +1381,44 @@ void reset_Game(Game_Data* game_Data) {
 	);
 }
 
-struct Cache_Data {
-	bool loaded;
-	std::unordered_map<std::string, Game_Data> cache;
-};
-
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache) {
-	Cache_Data result = {};
-
-	result.loaded = false;
-	result.cache = cache;
-
+    //                    Loaded | Cache
+    Cache_Data result = { false,   cache };
 	return result;
 }
 
-void load_Game_Data_Cache(Saved_Games total, Cache_Data* cache_Data) {
-	if (cache_Data->loaded == false) {
-		for (int i = 0; i < total; i++) {
-			std::string current_Save_Game = "Save Game " + std::to_string(i + 1) + ".txt";
+void load_Game_Data_Cache(Cache_Data& cache_Data) {
+	if (cache_Data.loaded == false) {
+		for (int i = 0; i < SG_TOTAL; i++) {
+			std::string current_Save_Game = create_Save_Game_File_Name((Saved_Games)(i));
 			const char* ptr = current_Save_Game.c_str();
 			if (check_If_File_Exists(ptr)) {
 				Game_Data game_Data = {};
                 // Casting to the enum seems to work like a charm
 				process_Game_Data(&game_Data, (Saved_Games)i, GDO_LOAD);
-				cache_Data->cache[current_Save_Game] = game_Data;
+				cache_Data.cache[current_Save_Game] = game_Data;
 			}
 		}
-		cache_Data->loaded = true;
+		cache_Data.loaded = true;
 	}
 }
 
-bool load_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, V2 pos, int w, int h, int size) {
+void save_Game_To_Cache(Saved_Games save_Game, Game_Data& game_Data, Cache_Data& cache_Data) {
+	process_Game_Data(&game_Data, save_Game, GDO_SAVE);
+    std::string save_Game_File_Name = create_Save_Game_File_Name(save_Game);
+    cache_Data.cache[save_Game_File_Name] = game_Data;
+}
+
+void display_Load_Game_Info() {
+
+}
+
+bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, V2 pos, int w, int h, int size) {
     bool result = false;
     std::string file_Name_String = create_Save_Game_File_Name(save_Game);
     const char* file_Name = file_Name_String.c_str();
     if (check_If_File_Exists(file_Name)) {
+        
         std::string file_String = file_Name;
         std::string file_String_Trimmed;
 
@@ -1356,7 +1431,7 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, 
         }
         const char* file_Name_Trimmed = file_String_Trimmed.c_str();
 
-        if (button_Text(font, file_Name_Trimmed, pos, w, h, size)) {
+        if (button_Text_Load_Game_Info(save_Game, cache_Data, font, file_Name_Trimmed, pos, w, h, size)) {
             result = true;
         }
 
@@ -1388,7 +1463,6 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, 
 bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, V2 pos, int w, int h, int size) {
     bool result = false;
     std::string file_String = create_Save_Game_File_Name(save_Game);
-    const char* file_Name = file_String.c_str();
     std::string file_String_Trimmed;
 
     if (file_String.length() >= 4 && file_String.substr(file_String.length() - 4) == ".txt") {
@@ -1402,17 +1476,12 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, 
 
     if (button_Text(font, file_Name_Trimmed, pos, w, h, size)) {
         result = true;
-        if (check_If_File_Exists(file_Name)) {
-            remove(file_Name);
-        }
     }
 
     float timer = -1;
     // bool valid = false;
     if (cache_Data.cache.find(file_String) != cache_Data.cache.end()) {
-		if (check_If_File_Exists(file_Name) && result == false) {
-			timer = cache_Data.cache[file_String].timer;
-		}
+		timer = cache_Data.cache[file_String].timer;
 	}
 
 	if (timer < 0) {
@@ -1546,6 +1615,7 @@ int main(int argc, char** argv) {
 
     bool running = true;
 
+    // This could just be an array
     std::unordered_map<std::string, Game_Data> saved_Games_Cache = {};
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
@@ -1605,26 +1675,23 @@ int main(int argc, char** argv) {
 		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(Globals::renderer);
 
+        // Load the cache once when the game starts
+		load_Game_Data_Cache(save_Game_Cache_Data);
+
 		if (key_States[SDLK_F1].pressed_This_Frame) {
             std::string save_Game_1_String = create_Save_Game_File_Name(SG_SAVE_GAME_1);
             const char* save_Game_1_Ptr = save_Game_1_String.c_str();
             if (check_If_File_Exists(save_Game_1_Ptr)) {
                 remove(save_Game_1_Ptr);
             }
-            save_Game_Cache_Data.loaded = false;
-            process_Game_Data(&game_Data, SG_SAVE_GAME_1, GDO_SAVE);
+            save_Game_To_Cache(SG_SAVE_GAME_1, game_Data, save_Game_Cache_Data);
 		}
-
-		load_Game_Data_Cache(SG_TOTAL, &save_Game_Cache_Data);
 
 		if (key_States[SDLK_F2].pressed_This_Frame) {
 			std::string save_Game_1_String = create_Save_Game_File_Name(SG_SAVE_GAME_1);
             if (save_Game_Cache_Data.cache.find(save_Game_1_String) != save_Game_Cache_Data.cache.end()) {
                 game_Data = save_Game_Cache_Data.cache[save_Game_1_String];
             }
-			//if (check_If_File_Exists(save_Game_1_Ptr)) {
-            //    process_Game_Data(&game_Data, SG_SAVE_GAME_1, GDO_LOAD);
-			//}
 		}
 
         if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
@@ -2278,19 +2345,18 @@ int main(int argc, char** argv) {
 
 				draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos_Saved.x, (int)button_Pos_Saved.y, size, true, CI_BLACK, 3);
                 
+                // This is a loop
                 if (save_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-                    save_Game_Cache_Data.loaded = false;
-                    process_Game_Data(&game_Data, SG_SAVE_GAME_1, GDO_SAVE);
+                    // Put this in the save_Game_Button
+                    save_Game_To_Cache(SG_SAVE_GAME_1, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
 				if (save_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-                    save_Game_Cache_Data.loaded = false;
-                    process_Game_Data(&game_Data, SG_SAVE_GAME_2, GDO_SAVE);
+                    save_Game_To_Cache(SG_SAVE_GAME_2, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
 				if (save_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-                    save_Game_Cache_Data.loaded = false;
-                    process_Game_Data(&game_Data, SG_SAVE_GAME_3, GDO_SAVE);
+                    save_Game_To_Cache(SG_SAVE_GAME_3, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
                 /*
