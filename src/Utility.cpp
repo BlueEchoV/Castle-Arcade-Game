@@ -41,3 +41,17 @@ V2 calculate_Center(float w, float h) {
 	V2 result = { w / 2, h / 2 };
 	return result;
 }
+
+V2 calculate_Direction_V2(V2 target, V2 start) {
+	V2 result = {};
+
+	result.x = target.x - start.x;
+	result.y = target.y - start.y;
+
+	float length = (float)sqrt((result.x * result.x) + (result.y * result.y));
+
+	result.x /= length;
+	result.y /= length;
+
+	return result;
+}

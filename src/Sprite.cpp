@@ -87,3 +87,9 @@ void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int
 		}
 	}
 }
+
+void draw_Layer(SDL_Texture* texture) {
+	SDL_RenderCopyEx(Globals::renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
+}
+
+

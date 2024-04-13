@@ -154,7 +154,9 @@
     <ClCompile Include="src\Globals.cpp" />
     <ClCompile Include="src\Image.cpp" />
     <ClCompile Include="src\Menu_System.cpp" />
+    <ClCompile Include="src\Particle_System.cpp" />
     <ClCompile Include="src\Sprite.cpp" />
+    <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -162,7 +164,9 @@
     <ClInclude Include="src\Globals.h" />
     <ClInclude Include="src\Image.h" />
     <ClInclude Include="src\Menu_System.h" />
+    <ClInclude Include="src\Particle_System.h" />
     <ClInclude Include="src\Sprite.h" />
+    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -57,3 +57,6 @@ Sprite create_Sprite(Image* image, SDL_Rect* source_Rect);
 Sprite_Sheet create_Sprite_Sheet(Image* image, int rows, int columns);
 
 void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int rows, int columns);
+
+void draw_Layer(SDL_Texture* texture);
+

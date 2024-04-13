@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <stb_image.h>
 
 #include "Utility.h"
 #include "Globals.h"
@@ -27,3 +28,5 @@ struct Image {
 	SDL_Texture* texture;
 	unsigned char* pixel_Data;
 };
+
+Image create_Image(const char* file_name);
