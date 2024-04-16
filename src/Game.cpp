@@ -18,6 +18,35 @@ bool check_If_File_Exists(const char* file_Name) {
 	return true;
 };
 
+Archive create_Archive(std::string file_Name, GAME_DATA_OPERATION operation) {
+	Archive result = {};
+
+	result.file_Name = file_Name;
+	result.file = NULL;
+	result.operation = operation;
+
+	return result;
+}
+
+void open_Archive(Archive* archive) {
+	const char* file_Name_PTR = archive->file_Name.c_str();
+	errno_t err = {};
+	if (archive->operation == GDO_SAVE) {
+		err = fopen_s(&archive->file, file_Name_PTR, "wb");
+	}
+	else if (archive->operation == GDO_LOAD) {
+		err = fopen_s(&archive->file, file_Name_PTR, "rb");
+	}
+	if (err != 0 || !archive->file) {
+		SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name_PTR);
+		return;
+	}
+}
+
+void close_Archive(Archive* archive) {
+	fclose(archive->file);
+}
+
 // Process the primitive (float, int, double)
 void process_Float(float& my_Float, Archive* archive) {
 	if (archive->operation == GDO_SAVE) {
@@ -25,6 +54,24 @@ void process_Float(float& my_Float, Archive* archive) {
 	}
 	else if (archive->operation == GDO_LOAD) {
 		fread(&my_Float, sizeof(my_Float), 1, archive->file);
+	}
+}
+
+void process_Int(int& my_Int, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		fwrite(&my_Int, sizeof(my_Int), 1, archive->file);
+	}
+	else if (archive->operation == GDO_LOAD) {
+		fread(&my_Int, sizeof(my_Int), 1, archive->file);
+	}
+}
+
+void process_Castle(Castle& castle, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		fwrite(&castle, sizeof(castle), 1, archive->file);
+	}
+	else if (archive->operation == GDO_LOAD) {
+		fread(&castle, sizeof(castle), 1, archive->file);
 	}
 }
 
@@ -41,56 +88,22 @@ void process_Float(float& my_Float, Archive* archive) {
 // I will have a function that opens a archive for reading or writing
 //                                                          Archive param
 void process_Game_Data(Game_Data* game_Data, Saved_Games save_Game, GAME_DATA_OPERATION operation) {
-	FILE* file = NULL;
 	std::string file_Name_String = create_Save_Game_File_Name(save_Game).c_str();
-	const char* file_Name = file_Name_String.c_str();
-	REF(save_Game);
 	// Create archive
+	Archive archive = create_Archive(file_Name_String, operation);
+	open_Archive(&archive);
 
-	if (operation == GDO_SAVE) {
-		errno_t err = fopen_s(&file, file_Name, "wb");
-		if (err != 0) {
-			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
-			return;
-		}
-		if (!file) {
-			SDL_Log("ERROR: File pointer is NULL after opening file %s in save_Game", file_Name);
-			return;
-		}
-		DEFER{
-			fclose(file);
-		};
-		fwrite(&game_Data->timer, sizeof(game_Data->timer), 1, file);
-		fwrite(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
-		fwrite(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
-		// I could have a loop that processes each individual element at a time (Call a function)
-		// This would solve my vector inside of a vector problem. I could put the vectors back in.
-		write_Vector(game_Data->terrain_Height_Map, file);
-		write_Vector(game_Data->player_Arrows, file);
-		write_Vector(game_Data->enemy_Skeletons, file);
-		write_Vector(game_Data->player_Skeletons, file);
-		write_Vector(game_Data->player_Archers, file);
-		fwrite(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
-	}
-	else if (operation == GDO_LOAD) {
-		errno_t err = fopen_s(&file, file_Name, "rb");
-		if (err != 0 || !file) {
-			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name);
-			return;
-		}
-		DEFER{
-			fclose(file);
-		};
-		fread(&game_Data->timer, sizeof(game_Data->timer), 1, file);
-		fread(&game_Data->player_Castle, sizeof(game_Data->player_Castle), 1, file);
-		fread(&game_Data->enemy_Castle, sizeof(game_Data->enemy_Castle), 1, file);
-		read_Vector(game_Data->terrain_Height_Map, file);
-		read_Vector(game_Data->player_Arrows, file);
-		read_Vector(game_Data->enemy_Skeletons, file);
-		read_Vector(game_Data->player_Skeletons, file);
-		read_Vector(game_Data->player_Archers, file);
-		fread(&game_Data->next_Entity_ID, sizeof(game_Data->next_Entity_ID), 1, file);
-	}
+	process_Float(game_Data->timer, &archive);
+	process_Castle(game_Data->player_Castle, &archive);
+	process_Castle(game_Data->enemy_Castle, &archive);
+	process_Vector(game_Data->terrain_Height_Map, &archive);
+	process_Vector(game_Data->player_Arrows, &archive);
+	process_Vector(game_Data->enemy_Skeletons, &archive);
+	process_Vector(game_Data->player_Skeletons, &archive);
+	process_Vector(game_Data->player_Archers, &archive);
+	process_Int(game_Data->next_Entity_ID, &archive);
+
+	close_Archive(&archive);
 }
 
 void reset_Game(Game_Data* game_Data) {

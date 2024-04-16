@@ -31,6 +31,7 @@ struct Cache_Data {
 };
 
 struct Archive {
+	std::string file_Name;
 	FILE* file;
 	GAME_DATA_OPERATION operation;
 };
@@ -57,6 +58,16 @@ void read_Vector(std::vector<T>& vector, FILE* file) {
 	vector.clear();
 	vector.resize(vector_Size);
 	fread(vector.data(), sizeof(vector[0]), vector_Size, file);
+}
+
+template <typename T>
+void process_Vector(std::vector<T>& vector, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		write_Vector(vector, archive->file);
+	}
+	else if (archive->operation == GDO_LOAD) {
+		read_Vector(vector, archive->file);
+	}
 }
 
 void process_Game_Data(Game_Data* game_Data, Saved_Games save_Game, GAME_DATA_OPERATION operation);

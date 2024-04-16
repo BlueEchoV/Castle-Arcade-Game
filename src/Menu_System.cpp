@@ -151,7 +151,6 @@ void draw_String_With_Background(Font* font, const char* string, int position_X,
     draw_String(font, string, position_X, position_Y, size, center);
 }
 
-
 bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int string_Size) {
 	SDL_Rect button_Area = {};
 	int outline_Thickness = 5;

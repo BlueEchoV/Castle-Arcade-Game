@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-    Game_State current_Game_State = GS_MENU;
+    Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
