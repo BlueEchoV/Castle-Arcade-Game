@@ -2,9 +2,9 @@
 #include <string>
 #include "Game.h"
 
-static bool mouse_Down_This_Frame = false;
-static std::string current_frame_Hot_Name;
-static std::string next_Frame_Hot_Name;
+extern bool mouse_Down_This_Frame;
+extern std::string current_frame_Hot_Name;
+extern std::string next_Frame_Hot_Name;
 static bool draw_Rect = false;
 
 enum Button_State {

@@ -2,6 +2,10 @@
 
 std::unordered_map<SDL_Keycode, Key_State> key_States;
 
+bool mouse_Down_This_Frame = false;
+std::string current_frame_Hot_Name = "";
+std::string next_Frame_Hot_Name = "";
+
 void reset_Pressed_This_Frame() {
 	for (auto& key_State : key_States) {
 		key_States[key_State.first].pressed_This_Frame = false;
