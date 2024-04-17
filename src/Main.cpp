@@ -5,9 +5,23 @@
 #include "Game.h"
 #include "Menu_System.h"
 
+#include "soloud.h"
+#include "soloud_wav.h"
+
+#define WITH_MINIAUDIO
+
+// Engine core
+SoLoud::Soloud soloud;
+
 int main(int argc, char** argv) {
     REF(argc);
     REF(argv);
+    
+    soloud.init(); // Initialize SoLoud
+
+    // One wave file per sound
+    SoLoud::Wav wav_Electronic_Song;
+    wav_Electronic_Song.load("audio/electronic_Song.wav");
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         return 1;
@@ -92,6 +106,7 @@ int main(int argc, char** argv) {
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
     Game_State current_Game_State = GS_GAMELOOP;
+    soloud.play(wav_Electronic_Song);
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -225,17 +240,17 @@ int main(int argc, char** argv) {
             button_Pos.y += offset;
 
             if (load_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
-                process_Game_Data(&game_Data, SG_SAVE_GAME_1, GDO_LOAD);
+                load_Game(&game_Data, SG_SAVE_GAME_1);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
 			if (load_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
-				process_Game_Data(&game_Data, SG_SAVE_GAME_2, GDO_LOAD);
+                load_Game(&game_Data, SG_SAVE_GAME_2);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
 			if (load_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
-				process_Game_Data(&game_Data, SG_SAVE_GAME_3, GDO_LOAD);
+                load_Game(&game_Data, SG_SAVE_GAME_3);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
@@ -865,5 +880,6 @@ int main(int argc, char** argv) {
         SDL_RenderPresent(Globals::renderer);
     }
 
+    soloud.deinit();
     return 0;
 }

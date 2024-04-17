@@ -116,7 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>contrib/stb;src/;contrib/sdl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>soloud_lib/src;soloud_lib/include;contrib/stb;src/;contrib/sdl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
@@ -135,7 +135,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>contrib/stb;src/;contrib/sdl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>soloud_lib/src;soloud_lib/include;contrib/stb;src/;contrib/sdl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
@@ -149,10 +149,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Globals.cpp" />
     <ClCompile Include="src\Image.cpp" />
+    <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Menu_System.cpp" />
     <ClCompile Include="src\Particle_System.cpp" />
     <ClCompile Include="src\Sprite.cpp" />
@@ -168,6 +168,11 @@
     <ClInclude Include="src\Sprite.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\Utility.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="soloud_lib\soloud_lib.vcxproj">
+      <Project>{29ad2813-a1ee-480c-98b7-5b6524666cb0}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

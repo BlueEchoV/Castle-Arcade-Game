@@ -25,22 +25,19 @@ Archive create_Archive(std::string file_Name, GAME_DATA_OPERATION operation) {
 	result.file = NULL;
 	result.operation = operation;
 
-	return result;
-}
-
-void open_Archive(Archive* archive) {
-	const char* file_Name_PTR = archive->file_Name.c_str();
+	const char* file_Name_PTR = file_Name.c_str();
 	errno_t err = {};
-	if (archive->operation == GDO_SAVE) {
-		err = fopen_s(&archive->file, file_Name_PTR, "wb");
+	if (operation == GDO_SAVE) {
+		err = fopen_s(&result.file, file_Name_PTR, "wb");
 	}
-	else if (archive->operation == GDO_LOAD) {
-		err = fopen_s(&archive->file, file_Name_PTR, "rb");
+	else if (operation == GDO_LOAD) {
+		err = fopen_s(&result.file, file_Name_PTR, "rb");
 	}
-	if (err != 0 || !archive->file) {
+	if (err != 0 || !result.file) {
 		SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name_PTR);
-		return;
 	}
+
+	return result;
 }
 
 void close_Archive(Archive* archive) {
@@ -75,35 +72,35 @@ void process_Castle(Castle& castle, Archive* archive) {
 	}
 }
 
-// void process_Int
-// void process_etc..
+void process_Game_Data(Game_Data* game_Data, Archive* archive) {
+	process_Float(game_Data->timer, archive);
+	process_Castle(game_Data->player_Castle, archive);
+	process_Castle(game_Data->enemy_Castle, archive);
+	process_Vector(game_Data->terrain_Height_Map, archive);
+	process_Vector(game_Data->player_Arrows, archive);
+	process_Vector(game_Data->enemy_Skeletons, archive);
+	process_Vector(game_Data->player_Skeletons, archive);
+	process_Vector(game_Data->player_Archers, archive);
+	process_Int(game_Data->next_Entity_ID, archive);
+}
 
-// function that opens archive
-// Close archive function as well
+// Call load game function and save game function that calls process game data
+void load_Game(Game_Data* game_Data, Saved_Games save_Game) {
+	std::string file_Name = create_Save_Game_File_Name(save_Game);
+	Archive archive = create_Archive(file_Name, GDO_LOAD);
+	if (archive.file != NULL) {
+		process_Game_Data(game_Data, &archive);
+		close_Archive(&archive);
+	}
+}
 
-// Save game function creates write archive
-// Load game will call read archive (process game_Data)
-
-// Should be given a file handle and not be responsible for opening the file
-// I will have a function that opens a archive for reading or writing
-//                                                          Archive param
-void process_Game_Data(Game_Data* game_Data, Saved_Games save_Game, GAME_DATA_OPERATION operation) {
-	std::string file_Name_String = create_Save_Game_File_Name(save_Game).c_str();
-	// Create archive
-	Archive archive = create_Archive(file_Name_String, operation);
-	open_Archive(&archive);
-
-	process_Float(game_Data->timer, &archive);
-	process_Castle(game_Data->player_Castle, &archive);
-	process_Castle(game_Data->enemy_Castle, &archive);
-	process_Vector(game_Data->terrain_Height_Map, &archive);
-	process_Vector(game_Data->player_Arrows, &archive);
-	process_Vector(game_Data->enemy_Skeletons, &archive);
-	process_Vector(game_Data->player_Skeletons, &archive);
-	process_Vector(game_Data->player_Archers, &archive);
-	process_Int(game_Data->next_Entity_ID, &archive);
-
-	close_Archive(&archive);
+void save_Game(Game_Data* game_Data, Saved_Games save_Game) {
+	std::string file_Name = create_Save_Game_File_Name(save_Game);
+	Archive archive = create_Archive(file_Name, GDO_SAVE);
+	if (archive.file != NULL) {
+		process_Game_Data(game_Data, &archive);
+		close_Archive(&archive);
+	}
 }
 
 void reset_Game(Game_Data* game_Data) {
@@ -137,7 +134,7 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 			if (check_If_File_Exists(ptr)) {
 				Game_Data game_Data = {};
 				// Casting to the enum seems to work like a charm
-				process_Game_Data(&game_Data, (Saved_Games)i, GDO_LOAD);
+				load_Game(&game_Data, (Saved_Games)(i));
 				cache_Data.cache[current_Save_Game] = game_Data;
 			}
 		}
@@ -145,8 +142,8 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 	}
 }
 
-void save_Game_To_Cache(Saved_Games save_Game, Game_Data& game_Data, Cache_Data& cache_Data) {
-	process_Game_Data(&game_Data, save_Game, GDO_SAVE);
-	std::string save_Game_File_Name = create_Save_Game_File_Name(save_Game);
+void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_Data& cache_Data) {
+	save_Game(&game_Data, save_Game_enum);
+	std::string save_Game_File_Name = create_Save_Game_File_Name(save_Game_enum);
 	cache_Data.cache[save_Game_File_Name] = game_Data;
 }

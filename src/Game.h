@@ -70,7 +70,11 @@ void process_Vector(std::vector<T>& vector, Archive* archive) {
 	}
 }
 
-void process_Game_Data(Game_Data* game_Data, Saved_Games save_Game, GAME_DATA_OPERATION operation);
+void process_Game_Data(Game_Data* game_Data, Archive* archive);
+
+void load_Game(Game_Data* game_Data, Saved_Games save_Game);
+
+void save_Game(Game_Data* game_Data, Saved_Games save_Game);
 
 void reset_Game(Game_Data* game_Data);
 
