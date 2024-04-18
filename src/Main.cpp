@@ -4,6 +4,7 @@
 
 #include "Game.h"
 #include "Menu_System.h"
+#include "Particle_System.h"
 
 #include "soloud.h"
 #include "soloud_wav.h"
@@ -106,7 +107,6 @@ int main(int argc, char** argv) {
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
     Game_State current_Game_State = GS_GAMELOOP;
-    soloud.play(wav_Electronic_Song);
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -852,6 +852,13 @@ int main(int argc, char** argv) {
                 */
 
             }
+
+			if (button_Text(&font_1, "Play", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 150, 100, 3)) {
+				soloud.play(wav_Electronic_Song);
+			}
+			if (button_Text(&font_1, "Stop", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 100 }, 150, 100, 3)) {
+				soloud.stopAll();
+			}
 
             // Erase destroyed arrows
             std::erase_if(game_Data.player_Arrows, [](Arrow& arrow) {
