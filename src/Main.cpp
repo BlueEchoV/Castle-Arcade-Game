@@ -17,7 +17,7 @@ SoLoud::Soloud soloud;
 int main(int argc, char** argv) {
     REF(argc);
     REF(argv);
-    
+
     soloud.init(); // Initialize SoLoud
 
     // One wave file per sound
@@ -57,12 +57,12 @@ int main(int argc, char** argv) {
     // Image archer_Image_Stop = create_Image("images/unit_Archer.png");
     Image archer_Image_Stop = create_Image("images/unit_Archer_Short.png");
 
-	add_Sprite_Sheet_To_Array(SSS_BKG_GAMELOOP_1, &gameloop_BKG_Image, 1, 1);
-	add_Sprite_Sheet_To_Array(SSS_BKG_MENU_1, &menu_BKG_Image, 1, 1);
+    add_Sprite_Sheet_To_Array(SSS_BKG_GAMELOOP_1, &gameloop_BKG_Image, 1, 1);
+    add_Sprite_Sheet_To_Array(SSS_BKG_MENU_1, &menu_BKG_Image, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_TERRAIN_1, &terrain_Image, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_CASTLE_1, &castle_Image, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_BKG_GAMEOVER, &game_Over_Image, 1, 1);
-                            
+
     add_Sprite_Sheet_To_Array(SSS_SKELETON_WALKING, &warrior_Image_Walking, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_SKELETON_STOP, &warrior_Image_Walking, 1, 1);
     // add_Sprite_Sheet_To_Array(SSS_SKELETON_WALKING, &skeleton_Image_Walking, 1, 4);
@@ -70,8 +70,8 @@ int main(int argc, char** argv) {
 
     add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Stop, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_ARCHER_STOP, &archer_Image_Stop, 1, 1);
-	// add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Walking, 1, 2);
-	// add_Sprite_Sheet_To_Array(SSS_ARCHER_STOP, &archer_Image_Stop, 1, 1);
+    // add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Walking, 1, 2);
+    // add_Sprite_Sheet_To_Array(SSS_ARCHER_STOP, &archer_Image_Stop, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_ARROW_DEFAULT, &arrow_Image, 1, 1);
 
     Game_Data game_Data = {};
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     test.w = 200;
     test.h = 100;
     Color color = { 0, 0, 255, SDL_ALPHA_OPAQUE };
-   
+
     int mouse_X = 0;
     int mouse_Y = 0;
     SDL_GetMouseState(&mouse_X, &mouse_Y);
@@ -105,6 +105,8 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, Game_Data> saved_Games_Cache = {};
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
+
+    spawn_Particle_Systems(game_Data, PT_BLOOD, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, arrow_Image);
 
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {

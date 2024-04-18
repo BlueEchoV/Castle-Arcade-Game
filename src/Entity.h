@@ -2,6 +2,7 @@
 #include "Sprite.h"
 
 struct Particle_System;
+
 struct Health_Bar {
 	float max_HP;
 	float current_HP;

@@ -81,6 +81,7 @@ void process_Game_Data(Game_Data* game_Data, Archive* archive) {
 	process_Vector(game_Data->enemy_Skeletons, archive);
 	process_Vector(game_Data->player_Skeletons, archive);
 	process_Vector(game_Data->player_Archers, archive);
+	process_Vector(game_Data->particle_Systems, archive);
 	process_Int(game_Data->next_Entity_ID, archive);
 }
 

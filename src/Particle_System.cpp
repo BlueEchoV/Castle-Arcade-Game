@@ -25,7 +25,6 @@ V2 random_Vector_In_Range(V2 min, V2 max) {
 }
 
 void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, V2 pos, int w, int h, Image image) {
-	int max_Particles = 1000;
 	int particle_Size = 100;
 
 	Particle_System particle_System = {};
@@ -82,6 +81,7 @@ void update_Particle_Systems(Particle_System particle_System, float delta_Time) 
 
 			particle_System.time_Between_Spawns = particle_Data_Array[particle_System.type].time_Between_Spawns;
 		}
+		particle_System.time_Between_Spawns -= delta_Time;
 	}
 	{
 		// update lifetime and destroy particles
@@ -93,3 +93,15 @@ void update_Particle_Systems(Particle_System particle_System, float delta_Time) 
 }
 
 // Render
+void render_Particle_System(Game_Data& game_Data) {
+	for (Particle_System particle_System : game_Data.particle_Systems) {
+		for (Particle particle : particle_System.particles) {
+			SDL_Rect src_Rect = {};
+			src_Rect.w = particle.size;
+			src_Rect.h = particle.size;
+			src_Rect.x = (int)particle.position.x;
+			src_Rect.y = (int)particle.position.y;
+			SDL_RenderCopyEx(Globals::renderer, particle.image.texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
+		}
+	}
+}

@@ -51,3 +51,5 @@ V2 random_Vector_In_Range(V2 min, V2 max);
 void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, V2 pos, int w, int h, Image image);
 
 void update_Particle_Systems(Particle_System particle_System, float delta_Time);
+
+void render_Particle_System(Game_Data& game_Data);
