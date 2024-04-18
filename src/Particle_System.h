@@ -18,6 +18,7 @@ struct F_Color {
 
 struct Particle_Data {
 	int size;
+	float max_Fade_In;
 	float time_Between_Spawns;
 	float lifetime_Min;
 	float lifetime_Max;
@@ -26,13 +27,14 @@ struct Particle_Data {
 };
 
 const Particle_Data particle_Data_Array[PT_TOTAL] = {
-	//  size  |  time_Between_Spawns  |  lifetime_Min  |  lifetime_Max  |  velocity_Min  |  velocity_Max
-	{	10,		 0.001f,					 20.0f,            30.0f,		   {50.0f, 50.0f},  {100.0f, 100.0f}}
+	//  size  |  max_Fade_In  |  time_Between_Spawns  |  lifetime_Min  |  lifetime_Max  |  velocity_Min  |  velocity_Max
+	{	50,		 0.5f,		 0.001f,				 5.0f,            5.0f,		       {50.0f, 50.0f},  {100.0f, 100.0f}}
 };
 
 struct Particle {
 	int size;
 	float life_Time;
+	float fade_In;
 	V2 velocity;
 	V2 position;
 };
@@ -44,12 +46,6 @@ struct Particle_System {
 	float time_Between_Spawns;
 	std::vector<Particle> particles;
 };
-
-void swap_Floats(float& a, float& b);
-
-float random_Float_In_Range(float min, float max);
-
-V2 random_Vector_In_Range(V2 min, V2 max);
 
 void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, V2 pos, int w, int h, Image* image);
 

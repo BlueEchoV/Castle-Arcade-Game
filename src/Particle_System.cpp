@@ -2,29 +2,6 @@
 #include <algorithm> 
 #include "Entity.h"
 
-void swap_Floats(float& a, float& b) {
-	float temp = a;
-	a = b;
-	b = temp;
-}
-
-float random_Float_In_Range(float min, float max) {
-	if (min > max) {
-		swap_Floats(min, max);
-	}
-	float result = max - min;
-	// Random number between 0.0f - 1.0f
-	float temp = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-	result *= temp;
-	result += min;
-
-	return result;
-}
-
-V2 random_Vector_In_Range(V2 min, V2 max) {
-	return { random_Float_In_Range(min.x, max.x), random_Float_In_Range(min.y, max.y) };
-}
-
 void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, V2 pos, int w, int h, Image* image) {
 	Particle_System particle_System = {};
 
@@ -48,12 +25,16 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 
 			particle_System.particles[i].position.x += (particle_System.particles[i].velocity.x * delta_Time);
 			particle_System.particles[i].position.y += (particle_System.particles[i].velocity.y * delta_Time);
+
+			particle_System.particles[i].fade_In -= delta_Time;
 		}
 	}
 	{
 		particle_System.time_Between_Spawns -= delta_Time;
 		// Spawn new particles based off time
-		while (particle_System.time_Between_Spawns <= 0) {
+		int max_Spawn = 1000;
+		int current_Spawn = 0;
+		while (particle_System.time_Between_Spawns <= 0 && current_Spawn <= max_Spawn) {
 			Particle particle = {};
 			SDL_Rect* rect = &particle_System.rect;
 
@@ -83,10 +64,12 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 					}
 				);
 			particle.size = particle_Data_Array[particle_System.type].size;
+			particle.fade_In = particle_Data_Array[particle_System.type].max_Fade_In;
 			particle_System.particles.push_back(particle);
 
 			// Adding it binds it to the frames
 			particle_System.time_Between_Spawns += particle_Data_Array[particle_System.type].time_Between_Spawns;
+			current_Spawn++;
 		}
 	}
 	{
@@ -99,6 +82,13 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 	}
 }
 
+void clamp(float& a) {
+	if (a > 1.0)
+		a = 1.0;
+	if (a < 0.0) 
+		a = 0.0;
+}
+
 // Render
 void draw_Particle_Systems(Game_Data& game_Data) {
 	for (Particle_System particle_System : game_Data.particle_Systems) {
@@ -109,6 +99,15 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			src_Rect.h = particle_System.particles[i].size;
 			src_Rect.x = (int)particle_System.particles[i].position.x;
 			src_Rect.y = (int)particle_System.particles[i].position.y;
+
+			float fade_Percent = particle_System.particles[i].fade_In / particle_Data_Array[particle_System.type].max_Fade_In;
+			clamp(fade_Percent);
+
+			SDL_SetTextureAlphaMod(particle_System.image->texture, (Uint8)(255 * (1 - fade_Percent)));
+
+			float percent = particle_System.particles[i].life_Time / particle_Data_Array[particle_System.type].lifetime_Max;
+			
+			SDL_SetTextureColorMod(particle_System.image->texture, (Uint8)(255 * percent), 0, (Uint8)(255 * (1 - percent)));
 			SDL_RenderCopyEx(Globals::renderer, particle_System.image->texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
 	}

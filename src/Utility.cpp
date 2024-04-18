@@ -55,3 +55,26 @@ V2 calculate_Direction_V2(V2 target, V2 start) {
 
 	return result;
 }
+
+void swap_Floats(float& a, float& b) {
+	float temp = a;
+	a = b;
+	b = temp;
+}
+
+float random_Float_In_Range(float min, float max) {
+	if (min > max) {
+		swap_Floats(min, max);
+	}
+	float result = max - min;
+	// Random number between 0.0f - 1.0f
+	float temp = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	result *= temp;
+	result += min;
+
+	return result;
+}
+
+V2 random_Vector_In_Range(V2 min, V2 max) {
+	return { random_Float_In_Range(min.x, max.x), random_Float_In_Range(min.y, max.y) };
+}
