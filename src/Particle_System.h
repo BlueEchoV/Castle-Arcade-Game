@@ -1,5 +1,8 @@
 #pragma once
-#include "Entity.h"
+#include "Image.h"
+#include <vector>
+
+struct Game_Data;
 
 enum Particle_Type {
 	PT_BLOOD,
@@ -14,7 +17,7 @@ struct F_Color {
 };
 
 struct Particle_Data {
-	int spawn_Size;
+	int size;
 	float time_Between_Spawns;
 	float lifetime_Min;
 	float lifetime_Max;
@@ -23,21 +26,21 @@ struct Particle_Data {
 };
 
 const Particle_Data particle_Data_Array[PT_TOTAL] = {
-	//  spawn_Size  |  time_Between_Spawns  |  lifetime_Min  |  lifetime_Max  |  velocity_Min  |  velocity_Max
-	{	100,		   0.2f,				   3.0f,            10.0f,          {10.0f, 10.0f},  {80.0f, 80.0f}}
+	//  size  |  time_Between_Spawns  |  lifetime_Min  |  lifetime_Max  |  velocity_Min  |  velocity_Max
+	{	100,	 0.01f,					 20.0f,            30.0f,		   {0.0f, 0.0f},  {0.0f, 0.0f}}
 };
 
 struct Particle {
-	V2 position;
-	V2 velocity;
 	int size;
 	float life_Time;
-	Image image;
+	V2 velocity;
+	V2 position;
 };
 
 struct Particle_System {
+	Image* image;
+	SDL_Rect rect;
 	Particle_Type type;
-	Particle particle_Info;
 	float time_Between_Spawns;
 	std::vector<Particle> particles;
 };
@@ -48,8 +51,8 @@ float random_Float_In_Range(float min, float max);
 
 V2 random_Vector_In_Range(V2 min, V2 max);
 
-void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, V2 pos, int w, int h, Image image);
+void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, V2 pos, int w, int h, Image* image);
 
-void update_Particle_Systems(Particle_System particle_System, float delta_Time);
+void update_Particle_System(Particle_System& particle_System, float delta_Time);
 
-void render_Particle_System(Game_Data& game_Data);
+void draw_Particle_Systems(Game_Data& game_Data);

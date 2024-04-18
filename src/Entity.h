@@ -1,7 +1,6 @@
 #pragma once
 #include "Sprite.h"
-
-struct Particle_System;
+#include "Particle_System.h"
 
 struct Health_Bar {
 	float max_HP;

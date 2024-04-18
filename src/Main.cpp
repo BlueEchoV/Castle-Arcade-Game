@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-    spawn_Particle_Systems(game_Data, PT_BLOOD, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, arrow_Image);
+    spawn_Particle_Systems(game_Data, PT_BLOOD, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, &arrow_Image);
 
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
@@ -155,6 +155,10 @@ int main(int argc, char** argv) {
 		// Multiply by the scalar
 		delta_Time *= time_Scalar;
 		delta_Time /= 1000;
+
+        for (Particle_System& particle_System : game_Data.particle_Systems) {
+            update_Particle_System(particle_System, delta_Time);
+        }
 
 		if (current_Game_State == GS_GAMELOOP) {
 			game_Data.timer += delta_Time;
@@ -855,12 +859,16 @@ int main(int argc, char** argv) {
 
             }
 
+            draw_Particle_Systems(game_Data);
+
+#if 0
 			if (button_Text(&font_1, "Play", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 150, 100, 3)) {
 				soloud.play(wav_Electronic_Song);
 			}
 			if (button_Text(&font_1, "Stop", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 100 }, 150, 100, 3)) {
 				soloud.stopAll();
 			}
+#endif
 
             // Erase destroyed arrows
             std::erase_if(game_Data.player_Arrows, [](Arrow& arrow) {
