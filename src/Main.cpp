@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
     // Image archer_Image_Walking = create_Image("images/unit_Archer_Sprite_Sheet.png");
     // Image archer_Image_Stop = create_Image("images/unit_Archer.png");
     Image archer_Image_Stop = create_Image("images/unit_Archer_Short.png");
+    Image blood_Image = create_Image("images/blood_1.png");
 
     add_Sprite_Sheet_To_Array(SSS_BKG_GAMELOOP_1, &gameloop_BKG_Image, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_BKG_MENU_1, &menu_BKG_Image, 1, 1);
@@ -106,7 +107,7 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-    spawn_Particle_Systems(game_Data, PT_BLOOD, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, &arrow_Image);
+    spawn_Particle_Systems(game_Data, PT_BLOOD, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, &blood_Image);
 
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {

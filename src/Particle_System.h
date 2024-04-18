@@ -27,7 +27,7 @@ struct Particle_Data {
 
 const Particle_Data particle_Data_Array[PT_TOTAL] = {
 	//  size  |  time_Between_Spawns  |  lifetime_Min  |  lifetime_Max  |  velocity_Min  |  velocity_Max
-	{	100,	 0.01f,					 20.0f,            30.0f,		   {0.0f, 0.0f},  {0.0f, 0.0f}}
+	{	10,		 0.001f,					 20.0f,            30.0f,		   {50.0f, 50.0f},  {100.0f, 100.0f}}
 };
 
 struct Particle {

@@ -51,40 +51,43 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 		}
 	}
 	{
+		particle_System.time_Between_Spawns -= delta_Time;
 		// Spawn new particles based off time
-		if (particle_System.time_Between_Spawns <= 0) {
+		while (particle_System.time_Between_Spawns <= 0) {
 			Particle particle = {};
 			SDL_Rect* rect = &particle_System.rect;
 
-			// particle.life_Time = random_Float_In_Range(particle_Data_Array[type].lifetime_Min, particle_Data_Array[type].lifetime_Max);
-			particle.life_Time = 10000;
+			particle.life_Time = 
+				random_Float_In_Range(
+					particle_Data_Array[particle_System.type].lifetime_Min, 
+					particle_Data_Array[particle_System.type].lifetime_Max
+				);
 			particle.velocity =
 				random_Vector_In_Range(
 					{
 						particle_Data_Array[particle_System.type].velocity_Min
 					},
-			{
-				particle_Data_Array[particle_System.type].velocity_Max.y
-			}
-			);
+					{
+						particle_Data_Array[particle_System.type].velocity_Max.y
+					}
+				);
 			particle.position =
 				random_Vector_In_Range(
 					{
 						(float)rect->x - ((float)rect->w / 2),
 						(float)rect->y - ((float)rect->h / 2)
 					},
-				{
-					(float)rect->x + ((float)rect->w / 2),
-					(float)rect->y + ((float)rect->h / 2)
-				}
+					{
+						(float)rect->x + ((float)rect->w / 2),
+						(float)rect->y + ((float)rect->h / 2)
+					}
 				);
 			particle.size = particle_Data_Array[particle_System.type].size;
 			particle_System.particles.push_back(particle);
 
-			particle_System.time_Between_Spawns = particle_Data_Array[particle_System.type].time_Between_Spawns;
+			// Adding it binds it to the frames
+			particle_System.time_Between_Spawns += particle_Data_Array[particle_System.type].time_Between_Spawns;
 		}
-		// Decreases it right after setting (Bad)
-		particle_System.time_Between_Spawns -= delta_Time;
 	}
 	{
 		// update lifetime and destroy particles
@@ -99,12 +102,13 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 // Render
 void draw_Particle_Systems(Game_Data& game_Data) {
 	for (Particle_System particle_System : game_Data.particle_Systems) {
-		for (Particle particle : particle_System.particles) {
+		// Chris' trick for rendering backwards
+		for (size_t i = particle_System.particles.size(); i--;) {
 			SDL_Rect src_Rect = {};
-			src_Rect.w = particle.size;
-			src_Rect.h = particle.size;
-			src_Rect.x = (int)particle.position.x;
-			src_Rect.y = (int)particle.position.y;
+			src_Rect.w = particle_System.particles[i].size;
+			src_Rect.h = particle_System.particles[i].size;
+			src_Rect.x = (int)particle_System.particles[i].position.x;
+			src_Rect.y = (int)particle_System.particles[i].position.y;
 			SDL_RenderCopyEx(Globals::renderer, particle_System.image->texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
 	}
