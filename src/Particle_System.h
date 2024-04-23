@@ -21,7 +21,7 @@ struct Particle_Data {
 	int size;
 	float time_Between_Spawns;
 
-	float max_Fade_In;
+	float max_Fade;
 	float lifetime_Min;
 	float lifetime_Max;
 	V2 velocity_Min;
@@ -29,9 +29,9 @@ struct Particle_Data {
 };
 
 const Particle_Data particle_Data_Array[] = {
-	//  
-	{ 20, 0.01f, 0.5f, 2.0f, 3.0f, {0.0f, 0.0f}, {0.0f, 0.0f}},
-	{ 20, 0.01f, 0.5f, 2.0f, 3.0f, {0.0f, 0.0f}, {0.0f, 0.0f}}
+	// size  time_Between_Spawns  max_Fade_In lifetime_Min  lifetime_Max  velocity_Min  velocity_Max  
+	{ 20,	 0.01f,				  0.5f,		  3.0f,			3.0f,		 {0.0f, 0.0f}, {0.0f, 0.0f}},
+	{ 20,	 0.01f,				  0.5f,		  3.0f,			3.0f,		 {0.0f, 0.0f}, {0.0f, 0.0f}}
 };
 
 // Good habit to check if the array size matches the enum (Forces compilation error)

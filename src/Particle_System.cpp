@@ -69,7 +69,7 @@ void update_Particle_System(Particle_System& particle_System, V2 target_Position
 					}
 				);
 			particle.size = data->size;
-			particle.fade_In = data->max_Fade_In;
+			particle.fade_In = data->max_Fade;
 			particle_System.particles.push_back(particle);
 
 			// Adding it binds it to the frames
@@ -114,10 +114,23 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			src_Rect.x = (int)particle_System.particles[i].position.x;
 			src_Rect.y = (int)particle_System.particles[i].position.y;
 
+			const Particle* particle = &particle_System.particles[i];
 			const Particle_Data* data = &particle_Data_Array[particle_System.type];
+			F_Color color = {};
 
-			float fade_Percent = particle_System.particles[i].fade_In / data->max_Fade_In;
-			SDL_SetTextureAlphaMod(particle_System.image->texture, (Uint8)(255 * (1 - clamp(fade_Percent))));
+			float lifetime_Delta = data->lifetime_Max - particle->lifetime;
+			float fade_Percent = 0.0f;
+			if (lifetime_Delta <= data->max_Fade) {
+				fade_Percent = lifetime_Delta / data->max_Fade;
+				color.a = linear_Interpolation(0, 1.0, fade_Percent);
+
+			} else if (lifetime_Delta >= (data->lifetime_Max - data->max_Fade)) {
+				fade_Percent = (data->lifetime_Max - lifetime_Delta) / data->max_Fade;
+				color.a = linear_Interpolation(0, 1.0, fade_Percent);
+			} else {
+				color.a = 1.0f;
+			}
+			SDL_SetTextureAlphaMod(particle_System.image->texture, (Uint8)(255 * (color.a)));
 
 			float percent_Life_time = particle_System.particles[i].lifetime / data->lifetime_Max;
 			SDL_SetTextureColorMod(particle_System.image->texture, (Uint8)(255 * percent_Life_time), 0, (Uint8)(255 * (1 - percent_Life_time)));
