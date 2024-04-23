@@ -4,7 +4,9 @@
 #include <fstream>
 #include <sstream>
 
-void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, V2 pos, float lifetime, int w, int h, Image* image) {
+std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
+
+void spawn_Particle_System(Game_Data& game_Data, std::string type, V2 pos, float lifetime, int w, int h, Image* image) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
@@ -21,7 +23,7 @@ void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, V2 pos, flo
 	game_Data.particle_Systems.push_back(particle_System);
 }
 
-void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, V2 pos, int target_ID, float lifetime, int w, int h, Image* image) {
+void spawn_Particle_System_Target(Game_Data& game_Data, std::string type, V2 pos, int target_ID, float lifetime, int w, int h, Image* image) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
@@ -60,7 +62,7 @@ void update_Particle_System(Particle_System& particle_System, V2 spawn_Position,
 		int max_Spawn = 1000;
 		int current_Spawn = 0;
 		
-		const Particle_Data* data = &particle_Data_Array[particle_System.type];
+		const Particle_Data* data = &particle_Data_Map[particle_System.type];
 
 		while (particle_System.time_Between_Spawns <= 0 
 			&& current_Spawn <= max_Spawn
@@ -138,7 +140,7 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			src_Rect.y = (int)particle_System.particles[i].position.y;
 
 			const Particle* particle = &particle_System.particles[i];
-			const Particle_Data* data = &particle_Data_Array[particle_System.type];
+			const Particle_Data* data = &particle_Data_Map[particle_System.type];
 			F_Color color = {};
 
 			float lifetime_Delta = data->lifetime_Max - particle->lifetime;
@@ -175,7 +177,7 @@ std::vector<std::string> split(const std::string& my_String, char delimiter) {
 	return tokens;
 }
 
-void load_CSV_File(std::unordered_map<std::string, Particle_Data>& particle_Data_Map, std::string file_Name) {
+void load_Particle_Data_CSV(std::string file_Name) {
 	std::string filename = file_Name;
 	std::ifstream file(filename);
 	std::vector<Particle_Data> particles;
@@ -189,8 +191,9 @@ void load_CSV_File(std::unordered_map<std::string, Particle_Data>& particle_Data
 	};
 
 	std::string line;
-	// Skip the first line containing the headers
+	// Skip the first line containing the headers and the count
 	// NOTE: getline reads characters from an input stream and places them into a string: 
+	std::getline(file, line);
 	std::getline(file, line);
 
 	Particle_Data particle_data = {};
@@ -199,27 +202,21 @@ void load_CSV_File(std::unordered_map<std::string, Particle_Data>& particle_Data
 		std::vector<std::string> tokens = split(line, ',');
 		std::string row_Name = tokens[0];
 
-		if (tokens.size() == 8) {
+		if (tokens.size() == 10) {
 			particle_data.size = std::stoi(tokens[1]);
 			particle_data.time_Between_Spawns = std::stof(tokens[2]);
 			particle_data.max_Fade = std::stof(tokens[3]);
 			particle_data.lifetime_Min = std::stof(tokens[4]);
 			particle_data.lifetime_Max = std::stof(tokens[5]);
 
-			std::vector<std::string> velocityMinTokens = split(tokens[6], ' ');
-			std::vector<std::string> velocityMaxTokens = split(tokens[7], ' ');
+			// std::vector<std::string> velocityMinTokens = split(tokens[6], ' ');
+			// std::vector<std::string> velocityMaxTokens = split(tokens[7], ' ');
 
-			if (velocityMinTokens.size() == 2) {
-				particle_data.velocity_Min.x = std::stof(velocityMinTokens[0]);
-				particle_data.velocity_Min.y = std::stof(velocityMinTokens[1]);
-			}
+			particle_data.velocity_Min.x = std::stof(tokens[6]);
+			particle_data.velocity_Min.y = std::stof(tokens[7]);
+			particle_data.velocity_Max.x = std::stof(tokens[8]);
+			particle_data.velocity_Max.y = std::stof(tokens[9]);
 
-			if (velocityMaxTokens.size() == 2) {
-				particle_data.velocity_Max.x = std::stof(velocityMaxTokens[0]);
-				particle_data.velocity_Max.y = std::stof(velocityMaxTokens[1]);
-			}
-
-			// Add the populated struct to the vector
 			particles.push_back(particle_data);
 		}
 		else {
