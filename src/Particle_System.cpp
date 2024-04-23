@@ -2,9 +2,11 @@
 #include <algorithm> 
 #include "Entity.h"
 
-void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, float lifetime, int w, int h, Image* image) {
+void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, V2 pos, float lifetime, int w, int h, Image* image) {
 	Particle_System particle_System = {};
 
+	particle_System.rect.x = (int)pos.x;
+	particle_System.rect.y = (int)pos.y;
 	particle_System.rect.w = w;
 	particle_System.rect.h = h;
 	particle_System.type = type;
@@ -17,9 +19,11 @@ void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, float lifet
 	game_Data.particle_Systems.push_back(particle_System);
 }
 
-void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, float lifetime, int target_ID, int w, int h, Image* image) {
+void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, V2 pos, int target_ID, float lifetime, int w, int h, Image* image) {
 	Particle_System particle_System = {};
 
+	particle_System.rect.x = (int)pos.x;
+	particle_System.rect.y = (int)pos.y;
 	particle_System.rect.w = w;
 	particle_System.rect.h = h;
 	particle_System.type = type;
@@ -34,6 +38,9 @@ void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, floa
 
 // Update 
 void update_Particle_System(Particle_System& particle_System, V2 spawn_Position, float delta_Time) {
+	particle_System.rect.x = (int)spawn_Position.x;
+	particle_System.rect.y = (int)spawn_Position.y;
+	// Store the current position
 	{
 		// Update current particles
 		for (int i = 0; i < particle_System.particles.size(); i++) {

@@ -157,18 +157,22 @@ int main(int argc, char** argv) {
 		delta_Time *= time_Scalar;
 		delta_Time /= 1000;
 
-        for (Particle_System& particle_System : game_Data.particle_Systems) {
-            if (particle_System.target_ID >= 0) {
-                bool target_Exists = false;
-                for (Skeleton& skeleton : game_Data.enemy_Skeletons) {
-                    if (particle_System.target_ID == skeleton.ID) {
-                        target_Exists = true;
-                        update_Particle_System(particle_System, skeleton.rigid_Body.position_WS, delta_Time);
-                    }
-                }
-                if (!target_Exists) {
 
+        for (Particle_System& particle_System : game_Data.particle_Systems) {
+            int current_ID = -1;
+            bool target_Exists = false;
+            V2 target_Position = {};
+            for (Skeleton& skeleton : game_Data.enemy_Skeletons) {
+                if (particle_System.target_ID == skeleton.ID) {
+                    target_Position = skeleton.rigid_Body.position_WS;
                 }
+            }
+            if (current_ID >= 0 && target_Exists) {
+                update_Particle_System(particle_System, target_Position, delta_Time);
+            } else {
+                // Have it use the stored position
+                V2 temp_Pos = { (float)particle_System.rect.x, (float)particle_System.rect.y };
+                update_Particle_System(particle_System, temp_Pos, delta_Time);
             }
         }
 
@@ -478,7 +482,15 @@ int main(int argc, char** argv) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
-                                    spawn_Particle_System_Target(game_Data, PT_BLOOD, 2, enemy_Skeleton->ID, 100, 100, &blood_Image);
+                                    spawn_Particle_System_Target(
+                                        game_Data, PT_BLOOD, 
+                                        enemy_Skeleton->rigid_Body.position_WS, 
+                                        enemy_Skeleton->ID, 
+                                        2, 
+                                        100, 
+                                        100, 
+                                        &blood_Image
+                                    );
                                     enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
                                     arrow->target_ID = enemy_Skeleton->ID;
                                 }

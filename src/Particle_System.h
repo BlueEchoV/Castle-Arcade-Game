@@ -57,9 +57,9 @@ struct Particle_System {
 	int target_ID = -1;
 };
 
-void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, float lifetime, int w, int h, Image* image);
+void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, V2 pos, float lifetime, int w, int h, Image* image);
 // Overload for targeting units
-void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, float lifetime, int target_ID, int w, int h, Image* image);
+void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, V2 pos, int target_ID, float lifetime, int w, int h, Image* image);
 
 void update_Particle_System(Particle_System& particle_System, V2 target_Position, float delta_Time);
 
