@@ -30,6 +30,13 @@ struct V2{
 	float y;
 };
 
+template<typename T>
+void my_Swap(T& a, T& b) {
+	T temp = a;
+	a = b;
+	b = temp;
+}
+
 V2 operator+(const V2& a, const V2& b);
 V2 operator-(V2& a, V2& b);
 V2 operator/(const V2& V2, float scalar);
@@ -43,8 +50,6 @@ float linear_Interpolation(float left_Point, float right_Point, float percent);
 V2 calculate_Center(float w, float h);
 
 V2 calculate_Direction_V2(V2 target, V2 start);
-
-void swap_Floats(float& a, float& b);
 
 float random_Float_In_Range(float min, float max);
 

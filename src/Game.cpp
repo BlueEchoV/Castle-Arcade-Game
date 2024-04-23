@@ -81,7 +81,7 @@ void process_Game_Data(Game_Data* game_Data, Archive* archive) {
 	process_Vector(game_Data->enemy_Skeletons, archive);
 	process_Vector(game_Data->player_Skeletons, archive);
 	process_Vector(game_Data->player_Archers, archive);
-	process_Vector(game_Data->particle_Systems, archive);
+	// process_Vector(game_Data->particle_Systems, archive);
 	process_Int(game_Data->next_Entity_ID, archive);
 }
 
@@ -104,7 +104,7 @@ void save_Game(Game_Data* game_Data, Saved_Games save_Game) {
 	}
 }
 
-void reset_Game(Game_Data* game_Data) {
+void start_Game(Game_Data* game_Data) {
 	*game_Data = {};
 	game_Data->terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 	spawn_Player_Castle(

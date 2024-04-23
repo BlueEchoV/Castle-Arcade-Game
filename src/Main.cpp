@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
 
     Game_Data game_Data = {};
 
-    reset_Game(&game_Data);
+    start_Game(&game_Data);
 
     // Buttons
     SDL_Rect test = {};
@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-    spawn_Particle_Systems(game_Data, PT_BLOOD, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, &blood_Image);
+	// spawn_Particle_Systems(game_Data, PT_WATER, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, &blood_Image);
 
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
@@ -157,8 +157,12 @@ int main(int argc, char** argv) {
 		delta_Time *= time_Scalar;
 		delta_Time /= 1000;
 
+
         for (Particle_System& particle_System : game_Data.particle_Systems) {
-            update_Particle_System(particle_System, delta_Time);
+            update_Particle_System(particle_System, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, delta_Time);
+            //if (game_Data.enemy_Skeletons.size() > 0) {
+            //    update_Particle_System(particle_System, game_Data.enemy_Skeletons[0].rigid_Body.position_WS, delta_Time);
+            //}
         }
 
 		if (current_Game_State == GS_GAMELOOP) {
@@ -218,7 +222,7 @@ int main(int argc, char** argv) {
 
 			if (button_Text(&font_1, "Play", button_Pos, button_Width, button_Height, string_Size)) {
                 current_Game_State = GS_GAMELOOP;
-                reset_Game(&game_Data);
+                start_Game(&game_Data);
 			}
 			button_Pos.y += 100;
 			if (button_Text(&font_1, "Load Game", button_Pos, button_Width, button_Height, string_Size)) {
@@ -467,6 +471,7 @@ int main(int argc, char** argv) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
+                                    spawn_Particle_Systems(game_Data, PT_BLOOD, 2, enemy_Skeleton->rigid_Body.position_WS, 100, 100, &blood_Image);
                                     enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
                                     arrow->target_ID = enemy_Skeleton->ID;
                                 }
@@ -893,6 +898,12 @@ int main(int argc, char** argv) {
 			std::erase_if(game_Data.player_Archers, [](Archer& archer) {
 				// Return if we want the value to be destroyed
 				return archer.destroyed || archer.health_Bar.current_HP <= 0;
+				});
+
+			// Erase destroy units
+			std::erase_if(game_Data.particle_Systems, [](Particle_System& particle_System) {
+				// Return if we want the value to be destroyed
+				return particle_System.destroyed && particle_System.particles.size() == 0;
 				});
         }
         SDL_RenderPresent(Globals::renderer);

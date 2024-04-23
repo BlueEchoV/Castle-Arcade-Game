@@ -56,15 +56,9 @@ V2 calculate_Direction_V2(V2 target, V2 start) {
 	return result;
 }
 
-void swap_Floats(float& a, float& b) {
-	float temp = a;
-	a = b;
-	b = temp;
-}
-
 float random_Float_In_Range(float min, float max) {
 	if (min > max) {
-		swap_Floats(min, max);
+		my_Swap(min, max);
 	}
 	float result = max - min;
 	// Random number between 0.0f - 1.0f
