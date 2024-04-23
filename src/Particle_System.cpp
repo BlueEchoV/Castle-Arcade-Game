@@ -77,6 +77,7 @@ void update_Particle_System(Particle_System& particle_System, V2 spawn_Position,
 					data->lifetime_Min, 
 					data->lifetime_Max
 				);
+			particle.lifetime_Max = particle.lifetime;
 			particle.velocity =
 				random_Vector_In_Range(
 					data->velocity_Min,
@@ -143,13 +144,13 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			const Particle_Data* data = &particle_Data_Map[particle_System.type];
 			F_Color color = {};
 
-			float lifetime_Delta = data->lifetime_Max - particle->lifetime;
+			float lifetime_Delta = particle->lifetime_Max - particle->lifetime;
 			float fade_Percent = 0.0f;
 			if (lifetime_Delta <= data->max_Fade) {
 				fade_Percent = lifetime_Delta / data->max_Fade;
 				color.a = linear_Interpolation(0, 1.0, fade_Percent);
 
-			} else if (lifetime_Delta >= (data->lifetime_Max - data->max_Fade)) {
+			} else if (lifetime_Delta >= (particle->lifetime_Max - data->max_Fade)) {
 				fade_Percent = (data->lifetime_Max - lifetime_Delta) / data->max_Fade;
 				color.a = linear_Interpolation(0, 1.0, fade_Percent);
 			} else {
@@ -157,8 +158,36 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			}
 			SDL_SetTextureAlphaMod(particle_System.image->texture, (Uint8)(255 * (color.a)));
 
-			float percent_Life_time = particle_System.particles[i].lifetime / data->lifetime_Max;
-			SDL_SetTextureColorMod(particle_System.image->texture, (Uint8)(255 * percent_Life_time), 0, (Uint8)(255 * (1 - percent_Life_time)));
+			float percent_Life_time = particle_System.particles[i].lifetime / particle->lifetime_Max;
+
+
+			float treshhold_1 = 0.75f;
+			float treshhold_2 = 0.50f;
+			float treshhold_3 = 0.25f;
+
+			if (percent_Life_time >= treshhold_1) {
+				float temp_Difference = percent_Life_time - treshhold_1;
+				float temp_Percent = temp_Difference / ( 1.0f - treshhold_1);
+				color.r = linear_Interpolation(0, 1.0, temp_Percent);
+				color.g = linear_Interpolation(0, 1.0, (1 - temp_Percent));
+			}
+			else if (percent_Life_time < treshhold_1 && percent_Life_time >= treshhold_2) {
+				float temp_Difference = percent_Life_time - treshhold_2;
+				float temp_Percent = temp_Difference / (treshhold_1 - treshhold_2);
+				color.g = linear_Interpolation(0, 1.0, temp_Percent);
+				color.b = linear_Interpolation(0, 1.0, (1 - temp_Percent));
+			}
+			else if (percent_Life_time >= treshhold_3) {
+				float temp_Difference = percent_Life_time - treshhold_3;
+				float temp_Percent = temp_Difference / treshhold_3;
+				color.b = linear_Interpolation(0, 1.0, temp_Percent);
+				color.r = linear_Interpolation(0, 1.0, (1 - temp_Percent));
+			}
+			else {
+				color.r = 1.0f;
+			}
+
+			SDL_SetTextureColorMod(particle_System.image->texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
 
 			SDL_RenderCopyEx(Globals::renderer, particle_System.image->texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}

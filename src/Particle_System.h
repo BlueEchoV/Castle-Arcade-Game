@@ -42,6 +42,7 @@ static_assert(ARRAY_SIZE(particle_Data_Array) == PT_TOTAL);
 
 struct Particle {
 	int size;
+	float lifetime_Max;
 	float lifetime;
 	float fade_In;
 	V2 velocity;
