@@ -2,11 +2,9 @@
 #include <algorithm> 
 #include "Entity.h"
 
-void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, float lifetime, V2 pos, int w, int h, Image* image) {
+void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, float lifetime, int w, int h, Image* image) {
 	Particle_System particle_System = {};
 
-	particle_System.rect.x = (int)pos.x;
-	particle_System.rect.y = (int)pos.y;
 	particle_System.rect.w = w;
 	particle_System.rect.h = h;
 	particle_System.type = type;
@@ -14,12 +12,28 @@ void spawn_Particle_Systems(Game_Data& game_Data, Particle_Type type, float life
 	particle_System.image = image;
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
+	particle_System.target_ID = -1;
+
+	game_Data.particle_Systems.push_back(particle_System);
+}
+
+void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, float lifetime, int target_ID, int w, int h, Image* image) {
+	Particle_System particle_System = {};
+
+	particle_System.rect.w = w;
+	particle_System.rect.h = h;
+	particle_System.type = type;
+	particle_System.time_Between_Spawns = 0.0f;
+	particle_System.image = image;
+	particle_System.destroyed = false;
+	particle_System.lifetime = lifetime;
+	particle_System.target_ID = target_ID;
 
 	game_Data.particle_Systems.push_back(particle_System);
 }
 
 // Update 
-void update_Particle_System(Particle_System& particle_System, V2 target_Position, float delta_Time) {
+void update_Particle_System(Particle_System& particle_System, V2 spawn_Position, float delta_Time) {
 	{
 		// Update current particles
 		for (int i = 0; i < particle_System.particles.size(); i++) {
@@ -44,8 +58,8 @@ void update_Particle_System(Particle_System& particle_System, V2 target_Position
 			&& particle_System.destroyed == false) {
 			Particle particle = {};
 			SDL_Rect* rect = &particle_System.rect;
-			rect->x = (int)target_Position.x;
-			rect->y = (int)target_Position.y;
+			rect->x = (int)spawn_Position.x;
+			rect->y = (int)spawn_Position.y;
 
 			particle.lifetime = 
 				random_Float_In_Range(

@@ -157,12 +157,19 @@ int main(int argc, char** argv) {
 		delta_Time *= time_Scalar;
 		delta_Time /= 1000;
 
-
         for (Particle_System& particle_System : game_Data.particle_Systems) {
-            update_Particle_System(particle_System, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, delta_Time);
-            //if (game_Data.enemy_Skeletons.size() > 0) {
-            //    update_Particle_System(particle_System, game_Data.enemy_Skeletons[0].rigid_Body.position_WS, delta_Time);
-            //}
+            if (particle_System.target_ID >= 0) {
+                bool target_Exists = false;
+                for (Skeleton& skeleton : game_Data.enemy_Skeletons) {
+                    if (particle_System.target_ID == skeleton.ID) {
+                        target_Exists = true;
+                        update_Particle_System(particle_System, skeleton.rigid_Body.position_WS, delta_Time);
+                    }
+                }
+                if (!target_Exists) {
+
+                }
+            }
         }
 
 		if (current_Game_State == GS_GAMELOOP) {
@@ -471,7 +478,7 @@ int main(int argc, char** argv) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
-                                    spawn_Particle_Systems(game_Data, PT_BLOOD, 2, enemy_Skeleton->rigid_Body.position_WS, 100, 100, &blood_Image);
+                                    spawn_Particle_System_Target(game_Data, PT_BLOOD, 2, enemy_Skeleton->ID, 100, 100, &blood_Image);
                                     enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
                                     arrow->target_ID = enemy_Skeleton->ID;
                                 }
