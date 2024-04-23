@@ -1,6 +1,8 @@
 #include "Particle_System.h"
 #include <algorithm> 
 #include "Entity.h"
+#include <fstream>
+#include <sstream>
 
 void spawn_Particle_System(Game_Data& game_Data, Particle_Type type, V2 pos, float lifetime, int w, int h, Image* image) {
 	Particle_System particle_System = {};
@@ -158,5 +160,71 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 
 			SDL_RenderCopyEx(Globals::renderer, particle_System.image->texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
+	}
+}
+
+// Splits a string using a delimiter and returns a vector of strings
+std::vector<std::string> split(const std::string& my_String, char delimiter) {
+	std::vector<std::string> tokens;
+	std::string token;
+	// Input stream class to operate on strings
+	std::istringstream my_Stream(my_String);
+	while (std::getline(my_Stream, token, delimiter)) {
+		tokens.push_back(token);
+	}
+	return tokens;
+}
+
+void load_CSV_File(std::unordered_map<std::string, Particle_Data>& particle_Data_Map, std::string file_Name) {
+	std::string filename = file_Name;
+	std::ifstream file(filename);
+	std::vector<Particle_Data> particles;
+
+	if (!file.is_open()) {
+		SDL_Log("Error loading .csv file");
+	}
+
+	DEFER{
+		file.close();
+	};
+
+	std::string line;
+	// Skip the first line containing the headers
+	// NOTE: getline reads characters from an input stream and places them into a string: 
+	std::getline(file, line);
+
+	Particle_Data particle_data = {};
+	while (std::getline(file, line)) {
+		// Types,size,max_Particles,time_Between Spawns,max_Fade,lifetime_Min,lifetime_Max
+		std::vector<std::string> tokens = split(line, ',');
+		std::string row_Name = tokens[0];
+
+		if (tokens.size() == 8) {
+			particle_data.size = std::stoi(tokens[1]);
+			particle_data.time_Between_Spawns = std::stof(tokens[2]);
+			particle_data.max_Fade = std::stof(tokens[3]);
+			particle_data.lifetime_Min = std::stof(tokens[4]);
+			particle_data.lifetime_Max = std::stof(tokens[5]);
+
+			std::vector<std::string> velocityMinTokens = split(tokens[6], ' ');
+			std::vector<std::string> velocityMaxTokens = split(tokens[7], ' ');
+
+			if (velocityMinTokens.size() == 2) {
+				particle_data.velocity_Min.x = std::stof(velocityMinTokens[0]);
+				particle_data.velocity_Min.y = std::stof(velocityMinTokens[1]);
+			}
+
+			if (velocityMaxTokens.size() == 2) {
+				particle_data.velocity_Max.x = std::stof(velocityMaxTokens[0]);
+				particle_data.velocity_Max.y = std::stof(velocityMaxTokens[1]);
+			}
+
+			// Add the populated struct to the vector
+			particles.push_back(particle_data);
+		}
+		else {
+			SDL_Log("Error: Line does not have enough data");
+		}
+		particle_Data_Map[row_Name] = particle_data;
 	}
 }

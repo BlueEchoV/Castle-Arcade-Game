@@ -1,6 +1,8 @@
 #pragma once
 #include "Image.h"
+#include <string>
 #include <vector>
+#include <unordered_map>
 
 struct Game_Data;
 
@@ -64,3 +66,5 @@ void spawn_Particle_System_Target(Game_Data& game_Data, Particle_Type type, V2 p
 void update_Particle_System(Particle_System& particle_System, V2 target_Position, float delta_Time);
 
 void draw_Particle_Systems(Game_Data& game_Data);
+
+void load_CSV_File(std::unordered_map<std::string, Particle_Data>& particle_Data_Map, std::string file_Name);

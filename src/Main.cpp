@@ -109,6 +109,9 @@ int main(int argc, char** argv) {
 
 	// spawn_Particle_Systems(game_Data, PT_WATER, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, &blood_Image);
 
+    std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
+    load_CSV_File(particle_Data_Map, "Particle_Data.csv");
+
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
