@@ -4,26 +4,11 @@
 #include <fstream>
 #include <sstream>
 
-std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
-
-void spawn_Particle_System(Game_Data& game_Data, std::string type, V2 pos, float lifetime, int w, int h, Image* image) {
-	Particle_System particle_System = {};
-
-	particle_System.rect.x = (int)pos.x;
-	particle_System.rect.y = (int)pos.y;
-	particle_System.rect.w = w;
-	particle_System.rect.h = h;
-	particle_System.type = type;
-	particle_System.time_Between_Spawns = 0.0f;
-	particle_System.image = image;
-	particle_System.destroyed = false;
-	particle_System.lifetime = lifetime;
-	particle_System.target_ID = -1;
-
-	game_Data.particle_Systems.push_back(particle_System);
+namespace Globals {
+	std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 }
 
-void spawn_Particle_System_Target(Game_Data& game_Data, std::string type, V2 pos, int target_ID, float lifetime, int w, int h, Image* image) {
+void spawn_Particle_System(Game_Data& game_Data, std::string type, V2 pos, float lifetime, int w, int h, Image* image, int target_ID) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
@@ -41,9 +26,7 @@ void spawn_Particle_System_Target(Game_Data& game_Data, std::string type, V2 pos
 }
 
 // Update 
-void update_Particle_System(Particle_System& particle_System, V2 spawn_Position, float delta_Time) {
-	particle_System.rect.x = (int)spawn_Position.x;
-	particle_System.rect.y = (int)spawn_Position.y;
+void update_Particle_System(Particle_System& particle_System, float delta_Time) {
 	// Store the current position
 	{
 		// Update current particles
@@ -62,15 +45,13 @@ void update_Particle_System(Particle_System& particle_System, V2 spawn_Position,
 		int max_Spawn = 1000;
 		int current_Spawn = 0;
 		
-		const Particle_Data* data = &particle_Data_Map[particle_System.type];
+		const Particle_Data* data = &Globals::particle_Data_Map[particle_System.type];
 
 		while (particle_System.time_Between_Spawns <= 0 
 			&& current_Spawn <= max_Spawn
 			&& particle_System.destroyed == false) {
 			Particle particle = {};
 			SDL_Rect* rect = &particle_System.rect;
-			rect->x = (int)spawn_Position.x;
-			rect->y = (int)spawn_Position.y;
 
 			particle.lifetime = 
 				random_Float_In_Range(
@@ -129,6 +110,49 @@ float clamp(float& a) {
 	}
 }
 
+//				   Color type	Vividness		Light/Darkness
+//			       Hue			Saturation		Value
+F_Color HSV_To_RGB(float h,		float s,		float v) {
+	// NOTE: V is the max
+	float max = v;
+	// Intensity of the color
+	// Chroma is the difference between max 
+	// and min values of the RGB model
+	float chroma = s * max;
+	float min = v - chroma;
+	// Transitioning from different hues								  
+	float x = (float)(chroma * (1 - fabs(fmod(h / 60.0, 2) - 1)));
+	float r, g, b;
+
+	if (h < 60) {
+		r = chroma;
+		g = x; 
+		b = 0;
+	} else if (h < 120) { 
+		r = x;
+		g = chroma;
+		b = 0;
+	} else if (h < 180) { 
+		r = 0; 
+		g = chroma;
+		b = x;
+	} else if (h < 240) { 
+		r = 0; 
+		g = x;
+		b = chroma;
+	} else if (h < 300) { 
+		r = x;
+		g = 0;
+		b = chroma;
+	} else { 
+		r = chroma;
+		g = 0;
+		b = x;
+	}
+
+	return { r + min, g + min, b + min };
+}
+
 // Render
 void draw_Particle_Systems(Game_Data& game_Data) {
 	for (const Particle_System& particle_System : game_Data.particle_Systems) {
@@ -141,7 +165,7 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			src_Rect.y = (int)particle_System.particles[i].position.y;
 
 			const Particle* particle = &particle_System.particles[i];
-			const Particle_Data* data = &particle_Data_Map[particle_System.type];
+			const Particle_Data* data = &Globals::particle_Data_Map[particle_System.type];
 			F_Color color = {};
 
 			float lifetime_Delta = particle->lifetime_Max - particle->lifetime;
@@ -160,35 +184,17 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 
 			float percent_Life_time = particle_System.particles[i].lifetime / particle->lifetime_Max;
 
+			if (particle_System.type == "PT_RAINBOW") {
+				float hue = 360.0f * (1.0f - percent_Life_time);
+				float saturation = 1.0f;
+				float value = 1.0f;
 
-			float treshhold_1 = 0.75f;
-			float treshhold_2 = 0.50f;
-			float treshhold_3 = 0.25f;
-
-			if (percent_Life_time >= treshhold_1) {
-				float temp_Difference = percent_Life_time - treshhold_1;
-				float temp_Percent = temp_Difference / ( 1.0f - treshhold_1);
-				color.r = linear_Interpolation(0, 1.0, temp_Percent);
-				color.g = linear_Interpolation(0, 1.0, (1 - temp_Percent));
-			}
-			else if (percent_Life_time < treshhold_1 && percent_Life_time >= treshhold_2) {
-				float temp_Difference = percent_Life_time - treshhold_2;
-				float temp_Percent = temp_Difference / (treshhold_1 - treshhold_2);
-				color.g = linear_Interpolation(0, 1.0, temp_Percent);
-				color.b = linear_Interpolation(0, 1.0, (1 - temp_Percent));
-			}
-			else if (percent_Life_time >= treshhold_3) {
-				float temp_Difference = percent_Life_time - treshhold_3;
-				float temp_Percent = temp_Difference / treshhold_3;
-				color.b = linear_Interpolation(0, 1.0, temp_Percent);
-				color.r = linear_Interpolation(0, 1.0, (1 - temp_Percent));
-			}
-			else {
+				color = HSV_To_RGB(hue, saturation, value);
+			} else if (particle_System.type == "PT_BLOOD") {
 				color.r = 1.0f;
 			}
-
 			SDL_SetTextureColorMod(particle_System.image->texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
-
+			
 			SDL_RenderCopyEx(Globals::renderer, particle_System.image->texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
 	}
@@ -207,9 +213,7 @@ std::vector<std::string> split(const std::string& my_String, char delimiter) {
 }
 
 void load_Particle_Data_CSV(std::string file_Name) {
-	std::string filename = file_Name;
-	std::ifstream file(filename);
-	std::vector<Particle_Data> particles;
+	std::ifstream file(file_Name);
 
 	if (!file.is_open()) {
 		SDL_Log("Error loading .csv file");
@@ -223,6 +227,7 @@ void load_Particle_Data_CSV(std::string file_Name) {
 	// Skip the first line containing the headers and the count
 	// NOTE: getline reads characters from an input stream and places them into a string: 
 	std::getline(file, line);
+	// I could parse out this row to know what each value is
 	std::getline(file, line);
 
 	Particle_Data particle_data = {};
@@ -237,20 +242,14 @@ void load_Particle_Data_CSV(std::string file_Name) {
 			particle_data.max_Fade = std::stof(tokens[3]);
 			particle_data.lifetime_Min = std::stof(tokens[4]);
 			particle_data.lifetime_Max = std::stof(tokens[5]);
-
-			// std::vector<std::string> velocityMinTokens = split(tokens[6], ' ');
-			// std::vector<std::string> velocityMaxTokens = split(tokens[7], ' ');
-
 			particle_data.velocity_Min.x = std::stof(tokens[6]);
 			particle_data.velocity_Min.y = std::stof(tokens[7]);
 			particle_data.velocity_Max.x = std::stof(tokens[8]);
 			particle_data.velocity_Max.y = std::stof(tokens[9]);
-
-			particles.push_back(particle_data);
 		}
 		else {
 			SDL_Log("Error: Line does not have enough data");
 		}
-		particle_Data_Map[row_Name] = particle_data;
+		Globals::particle_Data_Map[row_Name] = particle_data;
 	}
 }

@@ -1,4 +1,4 @@
 1,2,3,4,5,6,7,8,9,10
 Types,size,time_Between Spawns,max_Fade,lifetime_Min,lifetime_Max,velocity_Min.x,velocity_Min.y,velocity_Max.x,velocity_Max.y
-PT_BLOOD,15,0.001,0.5,3,3,-300,-300,300,300
-PT_WATER,20,0.01,0.5,3,3,0,0,0,0
+PT_RAINBOW,15,0.001,0.5,3,3,-500,-500,500,500
+PT_BLOOD,3,0.001,0.5,3,3,0,-150,100,0

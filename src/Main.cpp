@@ -57,6 +57,7 @@ int main(int argc, char** argv) {
     // Image archer_Image_Stop = create_Image("images/unit_Archer.png");
     Image archer_Image_Stop = create_Image("images/unit_Archer_Short.png");
     Image blood_Image = create_Image("images/blood_1.png");
+    Image basic_Particle_Image = create_Image("images/basic_Particle_1.png");
 
     add_Sprite_Sheet_To_Array(SSS_BKG_GAMELOOP_1, &gameloop_BKG_Image, 1, 1);
     add_Sprite_Sheet_To_Array(SSS_BKG_MENU_1, &menu_BKG_Image, 1, 1);
@@ -107,11 +108,19 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-	// spawn_Particle_Systems(game_Data, PT_WATER, { RESOLUTION_WIDTH / 4, RESOLUTION_HEIGHT / 4 }, 400, 400, &blood_Image);
-
-    std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
     load_Particle_Data_CSV("Particle_Data.csv");
 
+    /*
+	spawn_Particle_System(
+		game_Data,
+		"PT_RAINBOW",
+        { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 4 },
+		10,
+		400,
+		400,
+		&basic_Particle_Image
+	);
+    */
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
@@ -162,21 +171,14 @@ int main(int argc, char** argv) {
 
 
         for (Particle_System& particle_System : game_Data.particle_Systems) {
-            int current_ID = -1;
-            bool target_Exists = false;
-            V2 target_Position = {};
             for (Skeleton& skeleton : game_Data.enemy_Skeletons) {
                 if (particle_System.target_ID == skeleton.ID) {
-                    target_Position = skeleton.rigid_Body.position_WS;
+                    particle_System.rect.x = (int)skeleton.rigid_Body.position_WS.x;
+                    particle_System.rect.y = (int)skeleton.rigid_Body.position_WS.y;
+                    break;
                 }
             }
-            if (current_ID >= 0 && target_Exists) {
-                update_Particle_System(particle_System, target_Position, delta_Time);
-            } else {
-                // Have it use the stored position
-                V2 temp_Pos = { (float)particle_System.rect.x, (float)particle_System.rect.y };
-                update_Particle_System(particle_System, temp_Pos, delta_Time);
-            }
+            update_Particle_System(particle_System, delta_Time);
         }
 
 		if (current_Game_State == GS_GAMELOOP) {
@@ -485,15 +487,31 @@ int main(int argc, char** argv) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
-                                    spawn_Particle_System_Target(
-                                        game_Data, "PT_BLOOD", 
-                                        enemy_Skeleton->rigid_Body.position_WS, 
-                                        enemy_Skeleton->ID, 
-                                        2, 
-                                        100, 
-                                        100, 
-                                        &blood_Image
-                                    );
+                                    std::string selected = "PT_RAINBOW";
+                                    if (selected == "PT_BLOOD") {
+										spawn_Particle_System(
+											game_Data,
+                                            selected,
+											enemy_Skeleton->rigid_Body.position_WS,
+											2,
+											15,
+											15,
+											&basic_Particle_Image,
+                                            enemy_Skeleton->ID
+										);
+                                    }
+                                    else if (selected == "PT_RAINBOW") {
+                                        spawn_Particle_System(
+                                            game_Data,
+                                            selected,
+                                            enemy_Skeleton->rigid_Body.position_WS,
+                                            2,
+                                            100,
+                                            100,
+                                            &basic_Particle_Image,
+											enemy_Skeleton->ID
+                                        );
+                                    }
                                     enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
                                     arrow->target_ID = enemy_Skeleton->ID;
                                 }

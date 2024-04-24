@@ -61,11 +61,11 @@ struct Particle_System {
 	int target_ID = -1;
 };
 
-void spawn_Particle_System(Game_Data& game_Data, std::string type, V2 pos, float lifetime, int w, int h, Image* image);
-// Overload for targeting units
-void spawn_Particle_System_Target(Game_Data& game_Data, std::string type, V2 pos, int target_ID, float lifetime, int w, int h, Image* image);
+void spawn_Particle_System(Game_Data& game_Data, std::string type, V2 pos, float lifetime, int w, int h, Image* image, int target_ID = -1);
 
-void update_Particle_System(Particle_System& particle_System, V2 target_Position, float delta_Time);
+void update_Particle_System(Particle_System& particle_System, float delta_Time);
+
+F_Color HSV_To_RGB(float h, float s, float v);
 
 void draw_Particle_Systems(Game_Data& game_Data);
 
