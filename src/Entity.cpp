@@ -294,72 +294,72 @@ void spawn_Arrow(Arrow_Type type, Game_Data* game_Data, V2 spawn_Position, V2 ta
 	game_Data->player_Arrows.push_back(arrow);
 }
 
-void spawn_Player_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
-	Skeleton skeleton = {};
+void spawn_Player_Warrior(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
+	Warrior Warrior = {};
 
-	skeleton.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_SKELETON_WALKING);
+	Warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_Warrior_WALKING);
 
-	skeleton.rigid_Body = create_Rigid_Body(spawn_Position, false);
+	Warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton_Stats_Array[level].max_HP);
+	Warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Warrior_Stats_Array[level].max_HP);
 
-	skeleton.speed = skeleton_Stats_Array[level].speed;
-	skeleton.damage = skeleton_Stats_Array[level].damage;
-	skeleton.attack_Cooldown = skeleton_Stats_Array[level].attack_Cooldown;
-	skeleton.current_Attack_Cooldown = 0.0f;
-	skeleton.attack_Range = skeleton_Stats_Array[level].attack_Range;
+	Warrior.speed = Warrior_Stats_Array[level].speed;
+	Warrior.damage = Warrior_Stats_Array[level].damage;
+	Warrior.attack_Cooldown = Warrior_Stats_Array[level].attack_Cooldown;
+	Warrior.current_Attack_Cooldown = 0.0f;
+	Warrior.attack_Range = Warrior_Stats_Array[level].attack_Range;
 
-	skeleton.destroyed = false;
-	skeleton.stop = false;
+	Warrior.destroyed = false;
+	Warrior.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton_Stats_Array[level].speed;
-	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton_Stats_Array[level].speed;
+	Warrior.rigid_Body.velocity.x = direction_V2.x * Warrior_Stats_Array[level].speed;
+	Warrior.rigid_Body.velocity.y = direction_V2.y * Warrior_Stats_Array[level].speed;
 
-	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
+	float radius = get_Sprite_Radius(&Warrior.sprite_Sheet_Tracker);
 
-	add_Collider(&skeleton.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
+	add_Collider(&Warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&Warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&Warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
-	skeleton.ID = game_Data->next_Entity_ID++;
-	game_Data->player_Skeletons.push_back(skeleton);
+	Warrior.ID = game_Data->next_Entity_ID++;
+	game_Data->player_Warriors.push_back(Warrior);
 }
 
-void spawn_Enemy_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
-	Skeleton skeleton = {};
+void spawn_Enemy_Warrior(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
+	Warrior Warrior = {};
 
-	skeleton.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_SKELETON_WALKING);
+	Warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_Warrior_WALKING);
 
-	skeleton.rigid_Body = create_Rigid_Body(spawn_Position, false);
+	Warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	skeleton.health_Bar = create_Health_Bar(50, 13, 60, 2, skeleton_Stats_Array[level].max_HP);
+	Warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Warrior_Stats_Array[level].max_HP);
 
-	skeleton.speed = skeleton_Stats_Array[level].speed;
-	skeleton.damage = skeleton_Stats_Array[level].damage;
-	skeleton.attack_Cooldown = skeleton_Stats_Array[level].attack_Cooldown;
-	skeleton.current_Attack_Cooldown = 0.0f;
-	skeleton.attack_Range = skeleton_Stats_Array[level].attack_Range;
+	Warrior.speed = Warrior_Stats_Array[level].speed;
+	Warrior.damage = Warrior_Stats_Array[level].damage;
+	Warrior.attack_Cooldown = Warrior_Stats_Array[level].attack_Cooldown;
+	Warrior.current_Attack_Cooldown = 0.0f;
+	Warrior.attack_Range = Warrior_Stats_Array[level].attack_Range;
 
-	skeleton.destroyed = false;
-	skeleton.stop = false;
+	Warrior.destroyed = false;
+	Warrior.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	skeleton.rigid_Body.velocity.x = direction_V2.x * skeleton_Stats_Array[level].speed;
-	skeleton.rigid_Body.velocity.y = direction_V2.y * skeleton_Stats_Array[level].speed;
+	Warrior.rigid_Body.velocity.x = direction_V2.x * Warrior_Stats_Array[level].speed;
+	Warrior.rigid_Body.velocity.y = direction_V2.y * Warrior_Stats_Array[level].speed;
 
-	float radius = get_Sprite_Radius(&skeleton.sprite_Sheet_Tracker);
+	float radius = get_Sprite_Radius(&Warrior.sprite_Sheet_Tracker);
 
-	add_Collider(&skeleton.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&skeleton.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
+	add_Collider(&Warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&Warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&Warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
-	skeleton.ID = game_Data->next_Entity_ID++;
-	game_Data->enemy_Skeletons.push_back(skeleton);
+	Warrior.ID = game_Data->next_Entity_ID++;
+	game_Data->enemy_Warriors.push_back(Warrior);
 }
 
 void spawn_Archer(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {

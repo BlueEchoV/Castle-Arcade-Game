@@ -101,10 +101,10 @@ void load_Images() {
 	load_Image("images/player_Castle.png", SSS_CASTLE_1, 1, 1);
 	load_Image("images/game_Over.png", SSS_BKG_GAMEOVER, 1, 1);
 	load_Image("images/arrow.png", SSS_ARROW_DEFAULT, 1, 1);
-	// images/unit_Skeleton_Sprite_Sheet.png
+	// images/unit_Warrior_Sprite_Sheet.png
 	load_Image("images/arrow.png", SSS_ARROW_DEFAULT, 1, 1);
-	load_Image("images/unit_Warrior_Short.png", SSS_SKELETON_WALKING, 1, 1);
-	load_Image("images/unit_Warrior_Short.png", SSS_SKELETON_STOP, 1, 1);
+	load_Image("images/unit_Warrior_Short.png", SSS_Warrior_WALKING, 1, 1);
+	load_Image("images/unit_Warrior_Short.png", SSS_Warrior_STOP, 1, 1);
 	load_Image("images/unit_Archer_Short.png", SSS_ARCHER_WALKING, 1, 1);
 	load_Image("images/unit_Archer_Short.png", SSS_ARCHER_STOP, 1, 1);
 	load_Image("images/basic_Particle_1.png", SSS_BASIC_PARTICLE, 1, 1);

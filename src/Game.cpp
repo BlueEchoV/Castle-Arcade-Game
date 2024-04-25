@@ -78,8 +78,8 @@ void process_Game_Data(Game_Data* game_Data, Archive* archive) {
 	process_Castle(game_Data->enemy_Castle, archive);
 	process_Vector(game_Data->terrain_Height_Map, archive);
 	process_Vector(game_Data->player_Arrows, archive);
-	process_Vector(game_Data->enemy_Skeletons, archive);
-	process_Vector(game_Data->player_Skeletons, archive);
+	process_Vector(game_Data->enemy_Warriors, archive);
+	process_Vector(game_Data->player_Warriors, archive);
 	process_Vector(game_Data->player_Archers, archive);
 	// process_Vector(game_Data->particle_Systems, archive);
 	process_Int(game_Data->next_Entity_ID, archive);

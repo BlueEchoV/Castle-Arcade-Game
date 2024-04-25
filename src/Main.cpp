@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
     // 0 - 1
     float time_Scalar = 1.0f;
 
-    bool spawn_Skeleton_Pressed = false;
+    bool spawn_Warrior_Pressed = false;
     bool spawn_Archer_Pressed = false;
 
     bool running = true;
@@ -76,7 +76,9 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-    load_Particle_Data_CSV("Particle_Data.csv");
+    std::string particle_Data_File_Path = "Particle_Data.csv";
+    size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
+    load_Particle_Data_CSV(particle_Data_File_Path);
 
     /*
 	spawn_Particle_System(
@@ -137,12 +139,16 @@ int main(int argc, char** argv) {
 		delta_Time *= time_Scalar;
 		delta_Time /= 1000;
 
+        // Hot loading
+        if (file_Last_Modified(particle_Data_File_Path) != particle_Data_CSV_Last_Modified) {
+            load_Particle_Data_CSV(particle_Data_File_Path);
+        }
 
         for (Particle_System& particle_System : game_Data.particle_Systems) {
-            for (Skeleton& skeleton : game_Data.enemy_Skeletons) {
-                if (particle_System.target_ID == skeleton.ID) {
-                    particle_System.rect.x = (int)skeleton.rigid_Body.position_WS.x;
-                    particle_System.rect.y = (int)skeleton.rigid_Body.position_WS.y;
+            for (Warrior& Warrior : game_Data.enemy_Warriors) {
+                if (particle_System.target_ID == Warrior.ID) {
+                    particle_System.rect.x = (int)Warrior.rigid_Body.position_WS.x;
+                    particle_System.rect.y = (int)Warrior.rigid_Body.position_WS.y;
                     break;
                 }
             }
@@ -326,11 +332,11 @@ int main(int argc, char** argv) {
                 }
                 game_Data.player_Castle.arrow_Ammo_Cooldown.remaining -= delta_Time;
 
-                // Spawn Player Skeletons
-                if (spawn_Skeleton_Pressed) {
+                // Spawn Player Warriors
+                if (spawn_Warrior_Pressed) {
                     Castle* player_Castle = &game_Data.player_Castle;
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
-                    spawn_Player_Skeleton(
+                    spawn_Player_Warrior(
                         &game_Data,
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
@@ -339,7 +345,7 @@ int main(int argc, char** argv) {
                         enemy_Castle->rigid_Body.position_WS,
                         LEVEL_1
                     );
-                    spawn_Skeleton_Pressed = false;
+                    spawn_Warrior_Pressed = false;
                 }
                 if (spawn_Archer_Pressed) {
 					Castle* player_Castle = &game_Data.player_Castle;
@@ -356,7 +362,7 @@ int main(int argc, char** argv) {
                     spawn_Archer_Pressed = false;
                 }
 
-                // Spawn enemy skeletons
+                // Spawn enemy Warriors
                 if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
 					Castle* player_Castle = &game_Data.player_Castle;
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
@@ -365,7 +371,7 @@ int main(int argc, char** argv) {
 					float terrain_height = (float)game_Data.terrain_Height_Map[(int)x_Pos];
 					float radius = get_Sprite_Radius(&enemy_Castle->sprite_Sheet_Tracker);
 					float y_Pos = terrain_height + radius;
-                    spawn_Enemy_Skeleton(
+                    spawn_Enemy_Warrior(
 						&game_Data,
                         { x_Pos, y_Pos },
 						player_Castle->rigid_Body.position_WS,
@@ -388,11 +394,11 @@ int main(int argc, char** argv) {
 #if 0
 				if (arrow->stuck_To_Unit.is_Sticking) {
 					bool arrow_Currently_Stuck = false;
-					for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-						Skeleton* skeleton = &game_Data.enemy_Skeletons[j];
-						if (arrow->stuck_To_Unit.ID == skeleton->ID) {
-							arrow->rigid_Body.position_WS.x = skeleton->rigid_Body.position_WS.x + arrow->stuck_To_Unit.offset.x;
-							arrow->rigid_Body.position_WS.y = skeleton->rigid_Body.position_WS.y + arrow->stuck_To_Unit.offset.y;
+					for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
+						Warrior* Warrior = &game_Data.enemy_Warriors[j];
+						if (arrow->stuck_To_Unit.ID == Warrior->ID) {
+							arrow->rigid_Body.position_WS.x = Warrior->rigid_Body.position_WS.x + arrow->stuck_To_Unit.offset.x;
+							arrow->rigid_Body.position_WS.y = Warrior->rigid_Body.position_WS.y + arrow->stuck_To_Unit.offset.y;
 
 							arrow_Currently_Stuck = true;
 						}
@@ -403,22 +409,22 @@ int main(int argc, char** argv) {
 				}
 #endif
 
-                // Update player skeleton positions
-                for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                    if (game_Data.player_Skeletons[i].destroyed == false) {
+                // Update player Warrior positions
+                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
+                    if (game_Data.player_Warriors[i].destroyed == false) {
                         update_Unit_Position(
-                            &game_Data.player_Skeletons[i].rigid_Body,
-                            game_Data.player_Skeletons[i].stop,
+                            &game_Data.player_Warriors[i].rigid_Body,
+                            game_Data.player_Warriors[i].stop,
                             delta_Time
                         );
                     }
                 }
 
-                // Update enemy skeleton positions
-                for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-                    if (game_Data.enemy_Skeletons[i].destroyed == false) {
-                        update_Unit_Position(&game_Data.enemy_Skeletons[i].rigid_Body,
-                            game_Data.enemy_Skeletons[i].stop,
+                // Update enemy Warrior positions
+                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
+                    if (game_Data.enemy_Warriors[i].destroyed == false) {
+                        update_Unit_Position(&game_Data.enemy_Warriors[i].rigid_Body,
+                            game_Data.enemy_Warriors[i].stop,
                             delta_Time
                         );
                     }
@@ -448,30 +454,30 @@ int main(int argc, char** argv) {
                     {
                         arrow->stop= true;
                     }
-                    // Collision with skeletons and arrows
-                    for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-                        Skeleton* enemy_Skeleton = &game_Data.enemy_Skeletons[j];
-                        if (check_RB_Collision(&arrow->rigid_Body, &enemy_Skeleton->rigid_Body)) {
+                    // Collision with Warriors and arrows
+                    for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
+                        Warrior* enemy_Warrior = &game_Data.enemy_Warriors[j];
+                        if (check_RB_Collision(&arrow->rigid_Body, &enemy_Warrior->rigid_Body)) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
 									spawn_Particle_System(
 										game_Data,
 										"PT_RAINBOW",
-										enemy_Skeleton->rigid_Body.position_WS,
+										enemy_Warrior->rigid_Body.position_WS,
 										2,
 										15,
 										15,
 										sprite_Sheet_Array[SSS_BASIC_PARTICLE].sprites[0].image,
-										enemy_Skeleton->ID
+										enemy_Warrior->ID
 									);
 
-                                    enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
-                                    arrow->target_ID = enemy_Skeleton->ID;
+                                    enemy_Warrior->health_Bar.current_HP -= arrow->damage;
+                                    arrow->target_ID = enemy_Warrior->ID;
                                 }
                                 bool targeted_Unit_Still_Alive = false;
-                                for (int e = 0; e < game_Data.enemy_Skeletons.size(); e++) {
-                                    if (arrow->target_ID == game_Data.enemy_Skeletons[e].ID) {
+                                for (int e = 0; e < game_Data.enemy_Warriors.size(); e++) {
+                                    if (arrow->target_ID == game_Data.enemy_Warriors[e].ID) {
                                         targeted_Unit_Still_Alive = true;
                                     }
                                 }
@@ -483,13 +489,13 @@ int main(int argc, char** argv) {
                                         arrow->collision_Delay.remaining -= delta_Time;
                                     }
                                     else {
-                                        V2 offset = arrow->rigid_Body.position_WS - enemy_Skeleton->rigid_Body.position_WS;
+                                        V2 offset = arrow->rigid_Body.position_WS - enemy_Warrior->rigid_Body.position_WS;
                                         Attached_Entity attached_Entity = return_Attached_Entity(
                                             SSS_ARROW_DEFAULT,
                                             arrow->rigid_Body.angle,
                                             offset
                                         );
-                                        enemy_Skeleton->attached_Entities[enemy_Skeleton->attached_Entities_Size++] = attached_Entity;
+                                        enemy_Warrior->attached_Entities[enemy_Warrior->attached_Entities_Size++] = attached_Entity;
                                         arrow->destroyed = true;
                                     }
                                 }
@@ -501,25 +507,25 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Collision enemy skeleton with map
-                for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.enemy_Skeletons[i];
-                    if (check_Height_Map_Collision(&skeleton->rigid_Body, game_Data.terrain_Height_Map)) {
-                        float radius = get_Sprite_Radius(&skeleton->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)skeleton->rigid_Body.position_WS.x];
+                // Collision enemy Warrior with map
+                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
+                    if (check_Height_Map_Collision(&Warrior->rigid_Body, game_Data.terrain_Height_Map)) {
+                        float radius = get_Sprite_Radius(&Warrior->sprite_Sheet_Tracker);
+                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)Warrior->rigid_Body.position_WS.x];
 
-                        skeleton->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+                        Warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
                     }
                 }
 
-                // Collision player skeletons with map
-                for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.player_Skeletons[i];
-                    if (check_Height_Map_Collision(&game_Data.player_Skeletons[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                        float radius = get_Sprite_Radius(&skeleton->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)skeleton->rigid_Body.position_WS.x];
+                // Collision player Warriors with map
+                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.player_Warriors[i];
+                    if (check_Height_Map_Collision(&game_Data.player_Warriors[i].rigid_Body, game_Data.terrain_Height_Map)) {
+                        float radius = get_Sprite_Radius(&Warrior->sprite_Sheet_Tracker);
+                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)Warrior->rigid_Body.position_WS.x];
 
-                        skeleton->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+                        Warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
                     }
                 }
 
@@ -537,15 +543,15 @@ int main(int argc, char** argv) {
                 }
 
                 // Initialize default values before collision check
-                for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.player_Skeletons[i];
-                    skeleton->stop = false;
-                    skeleton->current_Attack_Cooldown -= delta_Time;
+                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.player_Warriors[i];
+                    Warrior->stop = false;
+                    Warrior->current_Attack_Cooldown -= delta_Time;
                 }
-                for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.enemy_Skeletons[i];
-                    skeleton->stop = false;
-                    skeleton->current_Attack_Cooldown -= delta_Time;
+                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
+                    Warrior->stop = false;
+                    Warrior->current_Attack_Cooldown -= delta_Time;
                 }
                 for (int i = 0; i < game_Data.player_Archers.size(); i++) {
                     Archer* archer = &game_Data.player_Archers[i];
@@ -553,62 +559,62 @@ int main(int argc, char** argv) {
                     archer->current_Attack_Cooldown -= delta_Time;
                 }
 
-                // Collision player skeleton with enemy castle
-                for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.player_Skeletons[i];
+                // Collision player Warrior with enemy castle
+                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.player_Warriors[i];
                     Castle* castle = &game_Data.enemy_Castle;
-                    if (check_RB_Collision(&skeleton->rigid_Body, &castle->rigid_Body)) {
-                        skeleton->stop = true;
-                        if (skeleton->current_Attack_Cooldown < 0) {
-                            skeleton->current_Attack_Cooldown = skeleton->attack_Cooldown;
-                            castle->health_Bar.current_HP -= skeleton->damage;
+                    if (check_RB_Collision(&Warrior->rigid_Body, &castle->rigid_Body)) {
+                        Warrior->stop = true;
+                        if (Warrior->current_Attack_Cooldown < 0) {
+                            Warrior->current_Attack_Cooldown = Warrior->attack_Cooldown;
+                            castle->health_Bar.current_HP -= Warrior->damage;
                         }
                     }
                 }
 
-                // Collision enemy skeleton with player castle
-                for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.enemy_Skeletons[i];
+                // Collision enemy Warrior with player castle
+                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
                     Castle* castle = &game_Data.player_Castle;
-                    if (check_RB_Collision(&skeleton->rigid_Body, &castle->rigid_Body)) {
-                        skeleton->stop = true;
-                        if (skeleton->current_Attack_Cooldown < 0) {
-                            skeleton->current_Attack_Cooldown = skeleton->attack_Cooldown;
-                            castle->health_Bar.current_HP -= skeleton->damage;
+                    if (check_RB_Collision(&Warrior->rigid_Body, &castle->rigid_Body)) {
+                        Warrior->stop = true;
+                        if (Warrior->current_Attack_Cooldown < 0) {
+                            Warrior->current_Attack_Cooldown = Warrior->attack_Cooldown;
+                            castle->health_Bar.current_HP -= Warrior->damage;
                         }
                     }
                 }
 
-                // Skeletons colliding with each other
-                for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                    Skeleton* player_Skeleton = &game_Data.player_Skeletons[i];
-                    for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-                        Skeleton* enemy_Skeleton = &game_Data.enemy_Skeletons[j];
-                        if (check_RB_Collision(&player_Skeleton->rigid_Body, &enemy_Skeleton->rigid_Body)) {
-                            player_Skeleton->stop = true;
-                            enemy_Skeleton->stop = true;
-                            if (player_Skeleton->current_Attack_Cooldown <= 0) {
-                                player_Skeleton->current_Attack_Cooldown = player_Skeleton->attack_Cooldown;
-                                enemy_Skeleton->health_Bar.current_HP -= player_Skeleton->damage;
+                // Warriors colliding with each other
+                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
+                    Warrior* player_Warrior = &game_Data.player_Warriors[i];
+                    for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
+                        Warrior* enemy_Warrior = &game_Data.enemy_Warriors[j];
+                        if (check_RB_Collision(&player_Warrior->rigid_Body, &enemy_Warrior->rigid_Body)) {
+                            player_Warrior->stop = true;
+                            enemy_Warrior->stop = true;
+                            if (player_Warrior->current_Attack_Cooldown <= 0) {
+                                player_Warrior->current_Attack_Cooldown = player_Warrior->attack_Cooldown;
+                                enemy_Warrior->health_Bar.current_HP -= player_Warrior->damage;
                             }
-                            if (enemy_Skeleton->current_Attack_Cooldown <= 0) {
-                                enemy_Skeleton->current_Attack_Cooldown = enemy_Skeleton->attack_Cooldown;
-                                player_Skeleton->health_Bar.current_HP -= enemy_Skeleton->damage;
+                            if (enemy_Warrior->current_Attack_Cooldown <= 0) {
+                                enemy_Warrior->current_Attack_Cooldown = enemy_Warrior->attack_Cooldown;
+                                player_Warrior->health_Bar.current_HP -= enemy_Warrior->damage;
                             }
                         }
                     }
                 }
 
-                // Player archers and enemy skeletons colliding with each other
+                // Player archers and enemy Warriors colliding with each other
                 for (int i = 0; i < game_Data.player_Archers.size(); i++) {
                     Archer* archer = &game_Data.player_Archers[i];
-                    for (int j = 0; j < game_Data.enemy_Skeletons.size(); j++) {
-                        Skeleton* skeleton = &game_Data.enemy_Skeletons[j];
+                    for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
+                        Warrior* Warrior = &game_Data.enemy_Warriors[j];
                         float distance_Between = calculate_Distance(
                             archer->rigid_Body.position_WS.x,
                             archer->rigid_Body.position_WS.y,
-                            skeleton->rigid_Body.position_WS.x,
-                            skeleton->rigid_Body.position_WS.y
+                            Warrior->rigid_Body.position_WS.x,
+                            Warrior->rigid_Body.position_WS.y
                         );
                         float range_Sum = archer->attack_Range;
                         if (distance_Between <= range_Sum) {
@@ -616,9 +622,9 @@ int main(int argc, char** argv) {
                             archer->stop = true;
                             if (archer->current_Attack_Cooldown <= 0) {
                                 archer->current_Attack_Cooldown = archer->attack_Cooldown;
-                                V2 aim_Head = skeleton->rigid_Body.position_WS;
-                                Sprite_Sheet_Selector skeleton_Selected = game_Data.enemy_Skeletons[0].sprite_Sheet_Tracker.selected;
-                                aim_Head.x += sprite_Sheet_Array[skeleton_Selected].sprites[0].radius;
+                                V2 aim_Head = Warrior->rigid_Body.position_WS;
+                                Sprite_Sheet_Selector Warrior_Selected = game_Data.enemy_Warriors[0].sprite_Sheet_Tracker.selected;
+                                aim_Head.x += sprite_Sheet_Array[Warrior_Selected].sprites[0].radius;
                                 V2 arrow_Spawn_Location = archer->rigid_Body.position_WS;
                                 arrow_Spawn_Location.y -= sprite_Sheet_Array[archer->sprite_Sheet_Tracker.selected].sprites[0].radius / 2;
                                 spawn_Arrow(
@@ -630,29 +636,29 @@ int main(int argc, char** argv) {
                                 );
                             }
                         }
-                        if (check_RB_Collision(&archer->rigid_Body, &skeleton->rigid_Body)) {
-                            game_Data.enemy_Skeletons[j].stop = true;
-                            if (skeleton->current_Attack_Cooldown <= 0) {
-                                skeleton->current_Attack_Cooldown = skeleton->attack_Cooldown;
-                                archer->health_Bar.current_HP -= skeleton->damage;
+                        if (check_RB_Collision(&archer->rigid_Body, &Warrior->rigid_Body)) {
+                            game_Data.enemy_Warriors[j].stop = true;
+                            if (Warrior->current_Attack_Cooldown <= 0) {
+                                Warrior->current_Attack_Cooldown = Warrior->attack_Cooldown;
+                                archer->health_Bar.current_HP -= Warrior->damage;
                             }
                         }
                     }
                 }
 
-                for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.enemy_Skeletons[i];
-                    float speed = skeleton->speed;
-                    if (!skeleton->stop) {
-                        update_Animation(&skeleton->sprite_Sheet_Tracker, speed, delta_Time);
+                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
+                    float speed = Warrior->speed;
+                    if (!Warrior->stop) {
+                        update_Animation(&Warrior->sprite_Sheet_Tracker, speed, delta_Time);
                     }
                 }
 
-                for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                    Skeleton* skeleton = &game_Data.player_Skeletons[i];
-                    float speed = skeleton->speed;
-                    if (!skeleton->stop) {
-                        update_Animation(&skeleton->sprite_Sheet_Tracker, speed, delta_Time);
+                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
+                    Warrior* Warrior = &game_Data.player_Warriors[i];
+                    float speed = Warrior->speed;
+                    if (!Warrior->stop) {
+                        update_Animation(&Warrior->sprite_Sheet_Tracker, speed, delta_Time);
                     }
                 }
 
@@ -704,46 +710,46 @@ int main(int argc, char** argv) {
                 }
             }
 
-            // Draw enemy skeletons
-            for (int i = 0; i < game_Data.enemy_Skeletons.size(); i++) {
-                Skeleton* skeleton = &game_Data.enemy_Skeletons[i];
-                // draw_Circle(skeleton->rigid_Body.position_WS.x, skeleton->rigid_Body.position_WS.y, 5, CI_RED);
-                // draw_Circle(skeleton->rigid_Body.position_WS.x, skeleton->rigid_Body.position_WS.y, 6, CI_RED);
-                // draw_Circle(skeleton->rigid_Body.position_WS.x, skeleton->rigid_Body.position_WS.y, 7, CI_RED);
-                // draw_RigidBody_Colliders(&skeleton->rigid_Body, CI_GREEN);
+            // Draw enemy Warriors
+            for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
+                Warrior* Warrior = &game_Data.enemy_Warriors[i];
+                // draw_Circle(Warrior->rigid_Body.position_WS.x, Warrior->rigid_Body.position_WS.y, 5, CI_RED);
+                // draw_Circle(Warrior->rigid_Body.position_WS.x, Warrior->rigid_Body.position_WS.y, 6, CI_RED);
+                // draw_Circle(Warrior->rigid_Body.position_WS.x, Warrior->rigid_Body.position_WS.y, 7, CI_RED);
+                // draw_RigidBody_Colliders(&Warrior->rigid_Body, CI_GREEN);
                 draw_Unit_Animated(
-                    &skeleton->rigid_Body,
-                    &skeleton->sprite_Sheet_Tracker,
+                    &Warrior->rigid_Body,
+                    &Warrior->sprite_Sheet_Tracker,
                     true
                 );
-                draw_HP_Bar(&skeleton->rigid_Body.position_WS, &skeleton->health_Bar);
-                for (int j = 0; j < skeleton->attached_Entities_Size; j++) {
-                    draw_Attached_Entity(&skeleton->attached_Entities[j], skeleton->rigid_Body.position_WS, false);
+                draw_HP_Bar(&Warrior->rigid_Body.position_WS, &Warrior->health_Bar);
+                for (int j = 0; j < Warrior->attached_Entities_Size; j++) {
+                    draw_Attached_Entity(&Warrior->attached_Entities[j], Warrior->rigid_Body.position_WS, false);
 				}
 			}
 
-            // Draw player skeletons
-            for (int i = 0; i < game_Data.player_Skeletons.size(); i++) {
-                Skeleton* player_Skeleton = &game_Data.player_Skeletons[i];
+            // Draw player Warriors
+            for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
+                Warrior* player_Warrior = &game_Data.player_Warriors[i];
                 /*
                 // Debugging circles for colliders 
-                for (int j = 0; j < player_Skeleton->animation_Tracker.animations_Array[game_Data.player_Skeletons[i].animation_Tracker.type].sprite_Sheet.sprites.size(); j++) {
-                    Animation_Type type = game_Data.player_Skeletons[i].animation_Tracker.type;
+                for (int j = 0; j < player_Warrior->animation_Tracker.animations_Array[game_Data.player_Warriors[i].animation_Tracker.type].sprite_Sheet.sprites.size(); j++) {
+                    Animation_Type type = game_Data.player_Warriors[i].animation_Tracker.type;
                     draw_Circle(
-                        game_Data.player_Skeletons[i].rigid_Body.position_WS.x,
-                        game_Data.player_Skeletons[i].rigid_Body.position_WS.y,
-                        game_Data.player_Skeletons[i].animation_Tracker.animations_Array[type].sprite_Sheet.sprites[j].radius,
+                        game_Data.player_Warriors[i].rigid_Body.position_WS.x,
+                        game_Data.player_Warriors[i].rigid_Body.position_WS.y,
+                        game_Data.player_Warriors[i].animation_Tracker.animations_Array[type].sprite_Sheet.sprites[j].radius,
                         CI_Color_Index::RED
                     );
                 }
                 */
-                draw_RigidBody_Colliders(&player_Skeleton->rigid_Body, CI_GREEN);
+                draw_RigidBody_Colliders(&player_Warrior->rigid_Body, CI_GREEN);
                 draw_Unit_Animated(
-                    &player_Skeleton->rigid_Body,
-                    &player_Skeleton->sprite_Sheet_Tracker,
+                    &player_Warrior->rigid_Body,
+                    &player_Warrior->sprite_Sheet_Tracker,
                     false
                 );
-                draw_HP_Bar(&player_Skeleton->rigid_Body.position_WS, &player_Skeleton->health_Bar);
+                draw_HP_Bar(&player_Warrior->rigid_Body.position_WS, &player_Warrior->health_Bar);
             }
 
             // Draw player archers
@@ -791,8 +797,8 @@ int main(int argc, char** argv) {
             V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
 			int button_Height_Unit_Spawn = 150;
             // int x_Offset = button_Width;
-            if (button_Image(sprite_Sheet_Array[SSS_SKELETON_STOP].sprites[0].image->texture, "Spawn Skeleton", button_Pos, button_Height_Unit_Spawn)) {
-                spawn_Skeleton_Pressed = true;
+            if (button_Image(sprite_Sheet_Array[SSS_Warrior_STOP].sprites[0].image->texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
+                spawn_Warrior_Pressed = true;
             } 
             button_Pos.x += button_Height_Unit_Spawn;
             if (button_Image(sprite_Sheet_Array[SSS_ARCHER_STOP].sprites[0].image->texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
@@ -877,15 +883,15 @@ int main(int argc, char** argv) {
                 });
 
             // Erase destroy units
-            std::erase_if(game_Data.enemy_Skeletons, [](Skeleton& skeletons) {
+            std::erase_if(game_Data.enemy_Warriors, [](Warrior& Warriors) {
                 // Return if we want the value to be destroyed
-                return skeletons.destroyed || skeletons.health_Bar.current_HP <= 0;
+                return Warriors.destroyed || Warriors.health_Bar.current_HP <= 0;
                 });
 
             // Erase destroy units
-            std::erase_if(game_Data.player_Skeletons, [](Skeleton& skeletons) {
+            std::erase_if(game_Data.player_Warriors, [](Warrior& Warriors) {
                 // Return if we want the value to be destroyed
-                return skeletons.destroyed || skeletons.health_Bar.current_HP <= 0;
+                return Warriors.destroyed || Warriors.health_Bar.current_HP <= 0;
                 });
 
 			// Erase destroy units

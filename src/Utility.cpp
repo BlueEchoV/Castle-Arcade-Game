@@ -1,4 +1,6 @@
 #include "Utility.h"
+#include "SDL.h"
+#include <string>
 
 V2 operator+(const V2& a, const V2& b) {
 	V2 result = {};
@@ -71,4 +73,17 @@ float random_Float_In_Range(float min, float max) {
 
 V2 random_Vector_In_Range(V2 min, V2 max) {
 	return { random_Float_In_Range(min.x, max.x), random_Float_In_Range(min.y, max.y) };
+}
+
+size_t file_Last_Modified(std::string file_Name) {
+	const char* ptr = file_Name.c_str();
+	struct stat file_Buffer = {};
+
+	if (stat(ptr, &file_Buffer) != 0) {
+		char errorMessage[256];
+		strerror_s(errorMessage, sizeof(errorMessage), errno);
+		SDL_Log("ERROR: stat failed for %s, Error: %s", ptr, errorMessage);
+	}
+
+	return file_Buffer.st_mtime;
 }

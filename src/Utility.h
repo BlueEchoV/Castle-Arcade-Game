@@ -1,5 +1,7 @@
 #pragma once
 #include <cmath>
+#include <stdlib.h>
+#include <string>
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 // Suppress compiler warnings
@@ -54,3 +56,5 @@ V2 calculate_Direction_V2(V2 target, V2 start);
 float random_Float_In_Range(float min, float max);
 
 V2 random_Vector_In_Range(V2 min, V2 max);
+
+size_t file_Last_Modified(std::string file_Name);

@@ -109,7 +109,7 @@ struct Arrow {
 	bool destroyed;
 };
 
-struct Skeleton_Stats {
+struct Warrior_Stats {
 	float speed;
 	float damage;
 	float max_HP;
@@ -118,7 +118,7 @@ struct Skeleton_Stats {
 	float attack_Range;
 };
 
-const Skeleton_Stats skeleton_Stats_Array[TOTAL_LEVELS] = {
+const Warrior_Stats Warrior_Stats_Array[TOTAL_LEVELS] = {
 	// speed    |   damage  |   max_HP  |   attack_Cooldown  |  attack_Range
 	{  100,         20,         100,        1,                  150        },
 	{  200,         25,         125,        1,                  150        }
@@ -130,7 +130,7 @@ struct Attached_Entity {
 	V2 offset;
 };
 
-struct Skeleton {
+struct Warrior {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 
 	Rigid_Body rigid_Body;
@@ -189,8 +189,8 @@ struct Game_Data {
 	Castle									enemy_Castle;
 	std::vector<int>						terrain_Height_Map;
 	std::vector<Arrow>						player_Arrows;
-	std::vector<Skeleton>					enemy_Skeletons;
-	std::vector<Skeleton>					player_Skeletons;
+	std::vector<Warrior>					enemy_Warriors;
+	std::vector<Warrior>					player_Warriors;
 	std::vector<Archer>						player_Archers;
 	std::vector<Particle_System>			particle_Systems;
 	int										next_Entity_ID;
@@ -233,9 +233,9 @@ void spawn_Enemy_Castle(Sprite_Sheet_Selector selector, Game_Data* game_Data, V2
 
 void spawn_Arrow(Arrow_Type type, Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level);
 
-void spawn_Player_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Player_Warrior(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level);
 
-void spawn_Enemy_Skeleton(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Enemy_Warrior(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level);
 
 void spawn_Archer(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level);
 
