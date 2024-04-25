@@ -56,6 +56,7 @@ Sprite create_Sprite(Image* image, SDL_Rect* source_Rect) {
 	return result;
 }
 
+// Obsolete
 Sprite_Sheet create_Sprite_Sheet(Image* image, int rows, int columns) {
 	Sprite_Sheet result = {};
 	for (int c = 0; c < columns; ++c)
@@ -73,7 +74,8 @@ Sprite_Sheet create_Sprite_Sheet(Image* image, int rows, int columns) {
 	return result;
 }
 
-void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int rows, int columns) {
+void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, const char* file_Name, int rows, int columns) {
+	Image* image = new Image(create_Image(file_Name));
 	for (int c = 0; c < columns; ++c)
 	{
 		for (int r = 0; r < rows; ++r)
@@ -88,8 +90,27 @@ void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int
 	}
 }
 
+void load_Image(const char* file_Name, Sprite_Sheet_Selector selected, int rows, int columns) {
+	add_Sprite_Sheet_To_Array(selected, file_Name, rows, columns);
+}
+
+void load_Images() {
+	load_Image("images/background.jpg", SSS_BKG_GAMELOOP_1, 1, 1);
+	load_Image("images/background_2.png", SSS_BKG_MENU_1, 1, 1);
+	load_Image("images/collision_Terrain_1.png", SSS_TERRAIN_1, 1, 1);
+	load_Image("images/player_Castle.png", SSS_CASTLE_1, 1, 1);
+	load_Image("images/game_Over.png", SSS_BKG_GAMEOVER, 1, 1);
+	load_Image("images/arrow.png", SSS_ARROW_DEFAULT, 1, 1);
+	// images/unit_Skeleton_Sprite_Sheet.png
+	load_Image("images/arrow.png", SSS_ARROW_DEFAULT, 1, 1);
+	load_Image("images/unit_Warrior_Short.png", SSS_SKELETON_WALKING, 1, 1);
+	load_Image("images/unit_Warrior_Short.png", SSS_SKELETON_STOP, 1, 1);
+	load_Image("images/unit_Archer_Short.png", SSS_ARCHER_WALKING, 1, 1);
+	load_Image("images/unit_Archer_Short.png", SSS_ARCHER_STOP, 1, 1);
+	load_Image("images/basic_Particle_1.png", SSS_BASIC_PARTICLE, 1, 1);
+	load_Image("images/droplet_Particle_1.png", SSS_DROPLET_PARTICLE, 1, 1);
+}
+
 void draw_Layer(SDL_Texture* texture) {
 	SDL_RenderCopyEx(Globals::renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
 }
-
-

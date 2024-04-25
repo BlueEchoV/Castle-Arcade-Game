@@ -24,6 +24,9 @@ enum Sprite_Sheet_Selector {
 
 	SSS_TERRAIN_1,
 
+	SSS_BASIC_PARTICLE,
+	SSS_DROPLET_PARTICLE,
+
 	SSS_TOTAL_SPRITE_SHEETS
 };
 
@@ -54,9 +57,14 @@ float get_Sprite_Radius(Sprite_Sheet_Tracker* tracker);
 
 Sprite create_Sprite(Image* image, SDL_Rect* source_Rect);
 
+// Obsolete
 Sprite_Sheet create_Sprite_Sheet(Image* image, int rows, int columns);
 
-void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, Image* image, int rows, int columns);
+void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, const char* file_Name, int rows, int columns);
+
+void load_Image(const char* file_Name, Sprite_Sheet_Selector selected, int rows, int columns);
+
+void load_Images();
 
 void draw_Layer(SDL_Texture* texture);
 

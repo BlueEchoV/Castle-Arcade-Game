@@ -1,5 +1,16 @@
 #include "Entity.h"
 
+void add_Image(Game_Data& game_Data, std::string name, const char* file_Path) {
+	if (game_Data.images.find(name) == game_Data.images.end()) {
+		game_Data.images[name] = create_Image(file_Path);
+	}
+}
+
+void load_Images(Game_Data& game_Data) {
+
+	add_Image(game_Data, "Background", "images/background.jpg");
+}
+
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
 	// assert(rigid_Body->num_Colliders < Globals::MAX_COLLIDERS);
 

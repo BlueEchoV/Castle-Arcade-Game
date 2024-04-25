@@ -184,17 +184,22 @@ struct Archer {
 };
 
 struct Game_Data {
-	float							timer;
-	Castle							player_Castle;
-	Castle							enemy_Castle;
-	std::vector<int>				terrain_Height_Map;
-	std::vector<Arrow>				player_Arrows;
-	std::vector<Skeleton>			enemy_Skeletons;
-	std::vector<Skeleton>			player_Skeletons;
-	std::vector<Archer>				player_Archers;
-	std::vector<Particle_System>	particle_Systems;
-	int								next_Entity_ID;
+	float									timer;
+	Castle									player_Castle;
+	Castle									enemy_Castle;
+	std::vector<int>						terrain_Height_Map;
+	std::vector<Arrow>						player_Arrows;
+	std::vector<Skeleton>					enemy_Skeletons;
+	std::vector<Skeleton>					player_Skeletons;
+	std::vector<Archer>						player_Archers;
+	std::vector<Particle_System>			particle_Systems;
+	int										next_Entity_ID;
+	std::unordered_map<std::string, Image>	images;
 };
+
+void add_Image(Game_Data& game_Data, std::string name, const char* file_Path);
+
+void load_Images(Game_Data& game_Data);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 

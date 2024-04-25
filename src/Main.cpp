@@ -42,39 +42,7 @@ int main(int argc, char** argv) {
 
     Font font_1 = load_Font_Bitmap("images/font_1.png");
 
-    Image gameloop_BKG_Image = create_Image("images/background.jpg");
-    Image menu_BKG_Image = create_Image("images/background_2.png");
-    // Image menu_BKG_Image = create_Image("images/background_3.png");
-    Image terrain_Image = create_Image("images/collision_Terrain_1.png");
-    Image castle_Image = create_Image("images/player_Castle.png");
-    Image game_Over_Image = create_Image("images/game_Over.png");
-    Image arrow_Image = create_Image("images/arrow.png");
-    Image skeleton_Image_Walking = create_Image("images/unit_Skeleton_Sprite_Sheet.png");
-    // Image warrior_Image_Walking = create_Image("images/unit_Warrior.png");
-    Image warrior_Image_Walking = create_Image("images/unit_Warrior_Short.png");
-    Image skeleton_Image_Stop = create_Image("images/unit_Skeleton.png");
-    // Image archer_Image_Walking = create_Image("images/unit_Archer_Sprite_Sheet.png");
-    // Image archer_Image_Stop = create_Image("images/unit_Archer.png");
-    Image archer_Image_Stop = create_Image("images/unit_Archer_Short.png");
-    Image blood_Image = create_Image("images/blood_1.png");
-    Image basic_Particle_Image = create_Image("images/basic_Particle_1.png");
-
-    add_Sprite_Sheet_To_Array(SSS_BKG_GAMELOOP_1, &gameloop_BKG_Image, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_BKG_MENU_1, &menu_BKG_Image, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_TERRAIN_1, &terrain_Image, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_CASTLE_1, &castle_Image, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_BKG_GAMEOVER, &game_Over_Image, 1, 1);
-
-    add_Sprite_Sheet_To_Array(SSS_SKELETON_WALKING, &warrior_Image_Walking, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_SKELETON_STOP, &warrior_Image_Walking, 1, 1);
-    // add_Sprite_Sheet_To_Array(SSS_SKELETON_WALKING, &skeleton_Image_Walking, 1, 4);
-    // add_Sprite_Sheet_To_Array(SSS_SKELETON_STOP, &skeleton_Image_Stop, 1, 1);
-
-    add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Stop, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_ARCHER_STOP, &archer_Image_Stop, 1, 1);
-    // add_Sprite_Sheet_To_Array(SSS_ARCHER_WALKING, &archer_Image_Walking, 1, 2);
-    // add_Sprite_Sheet_To_Array(SSS_ARCHER_STOP, &archer_Image_Stop, 1, 1);
-    add_Sprite_Sheet_To_Array(SSS_ARROW_DEFAULT, &arrow_Image, 1, 1);
+    load_Images();
 
     Game_Data game_Data = {};
 
@@ -487,31 +455,17 @@ int main(int argc, char** argv) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
-                                    std::string selected = "PT_RAINBOW";
-                                    if (selected == "PT_BLOOD") {
-										spawn_Particle_System(
-											game_Data,
-                                            selected,
-											enemy_Skeleton->rigid_Body.position_WS,
-											2,
-											15,
-											15,
-											&basic_Particle_Image,
-                                            enemy_Skeleton->ID
-										);
-                                    }
-                                    else if (selected == "PT_RAINBOW") {
-                                        spawn_Particle_System(
-                                            game_Data,
-                                            selected,
-                                            enemy_Skeleton->rigid_Body.position_WS,
-                                            2,
-                                            100,
-                                            100,
-                                            &basic_Particle_Image,
-											enemy_Skeleton->ID
-                                        );
-                                    }
+									spawn_Particle_System(
+										game_Data,
+										"PT_RAINBOW",
+										enemy_Skeleton->rigid_Body.position_WS,
+										2,
+										15,
+										15,
+										sprite_Sheet_Array[SSS_BASIC_PARTICLE].sprites[0].image,
+										enemy_Skeleton->ID
+									);
+
                                     enemy_Skeleton->health_Bar.current_HP -= arrow->damage;
                                     arrow->target_ID = enemy_Skeleton->ID;
                                 }
@@ -948,6 +902,13 @@ int main(int argc, char** argv) {
         }
         SDL_RenderPresent(Globals::renderer);
     }
+
+	for (int i = 0; i < SSS_TOTAL_SPRITE_SHEETS; i++) {
+		for (int j = 0; j < sprite_Sheet_Array[i].sprites.size(); j++) {
+			delete sprite_Sheet_Array[i].sprites[j].image;
+		}
+		sprite_Sheet_Array[i].sprites.clear();
+	}
 
     soloud.deinit();
     return 0;
