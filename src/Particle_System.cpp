@@ -1,23 +1,20 @@
 #include "Particle_System.h"
 #include <algorithm> 
 #include "Entity.h"
-#include <fstream>
-#include <sstream>
 
 namespace Globals {
 	std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 }
 
-void spawn_Particle_System(Game_Data& game_Data, std::string type, V2 pos, float lifetime, int w, int h, Image* image, int target_ID) {
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
 	particle_System.rect.y = (int)pos.y;
 	particle_System.rect.w = w;
 	particle_System.rect.h = h;
-	particle_System.type = type;
+	particle_System.particle_Type = particle_Type;
 	particle_System.time_Between_Spawns = 0.0f;
-	particle_System.image = image;
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
 	particle_System.target_ID = target_ID;
@@ -45,7 +42,7 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 		int max_Spawn = 1000;
 		int current_Spawn = 0;
 		
-		const Particle_Data* data = &Globals::particle_Data_Map[particle_System.type];
+		const Particle_Data* data = &Globals::particle_Data_Map[particle_System.particle_Type];
 
 		while (particle_System.time_Between_Spawns <= 0 
 			&& current_Spawn <= max_Spawn
@@ -165,51 +162,42 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			src_Rect.y = (int)particle_System.particles[i].position.y;
 
 			const Particle* particle = &particle_System.particles[i];
-			const Particle_Data* data = &Globals::particle_Data_Map[particle_System.type];
-			F_Color color = {};
+			const Particle_Data* particle_Data = &Globals::particle_Data_Map[particle_System.particle_Type];
+			const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Data_Map[particle_Data->sprite_Sheet_Name];
+			SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
 
+			F_Color color = {};
 			float lifetime_Delta = particle->lifetime_Max - particle->lifetime;
 			float fade_Percent = 0.0f;
-			if (lifetime_Delta <= data->max_Fade) {
-				fade_Percent = lifetime_Delta / data->max_Fade;
+			if (lifetime_Delta <= particle_Data->max_Fade) {
+				fade_Percent = lifetime_Delta / particle_Data->max_Fade;
 				color.a = linear_Interpolation(0, 1.0, fade_Percent);
 
-			} else if (lifetime_Delta >= (particle->lifetime_Max - data->max_Fade)) {
-				fade_Percent = (data->lifetime_Max - lifetime_Delta) / data->max_Fade;
+			} else if (lifetime_Delta >= (particle->lifetime_Max - particle_Data->max_Fade)) {
+				fade_Percent = (particle_Data->lifetime_Max - lifetime_Delta) / particle_Data->max_Fade;
 				color.a = linear_Interpolation(0, 1.0, fade_Percent);
 			} else {
 				color.a = 1.0f;
 			}
-			SDL_SetTextureAlphaMod(particle_System.image->texture, (Uint8)(255 * (color.a)));
+
+			SDL_SetTextureAlphaMod(texture, (Uint8)(255 * (color.a)));
 
 			float percent_Life_time = particle_System.particles[i].lifetime / particle->lifetime_Max;
 
-			if (particle_System.type == "PT_RAINBOW") {
+			if (particle_System.particle_Type == "PT_RAINBOW") {
 				float hue = 360.0f * (1.0f - percent_Life_time);
 				float saturation = 1.0f;
 				float value = 1.0f;
 
 				color = HSV_To_RGB(hue, saturation, value);
-			} else if (particle_System.type == "PT_BLOOD") {
+			} else if (particle_System.particle_Type == "PT_BLOOD") {
 				color.r = 1.0f;
 			}
-			SDL_SetTextureColorMod(particle_System.image->texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
+			SDL_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
 			
-			SDL_RenderCopyEx(Globals::renderer, particle_System.image->texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
+			SDL_RenderCopyEx(Globals::renderer, texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
 	}
-}
-
-// Splits a string using a delimiter and returns a vector of strings
-std::vector<std::string> split(const std::string& my_String, char delimiter) {
-	std::vector<std::string> tokens;
-	std::string token;
-	// Input stream class to operate on strings
-	std::istringstream my_Stream(my_String);
-	while (std::getline(my_Stream, token, delimiter)) {
-		tokens.push_back(token);
-	}
-	return tokens;
 }
 
 void load_Particle_Data_CSV(std::string file_Name) {
@@ -230,26 +218,28 @@ void load_Particle_Data_CSV(std::string file_Name) {
 	// I could parse out this row to know what each value is
 	std::getline(file, line);
 
-	Particle_Data particle_data = {};
+	Particle_Data particle_Data = {};
 	while (std::getline(file, line)) {
 		// Types,size,max_Particles,time_Between Spawns,max_Fade,lifetime_Min,lifetime_Max
 		std::vector<std::string> tokens = split(line, ',');
-		std::string row_Name = tokens[0];
+		int row_Count = 0;
+		std::string row_Name = tokens[row_Count++];
 
-		if (tokens.size() == 10) {
-			particle_data.size = std::stoi(tokens[1]);
-			particle_data.time_Between_Spawns = std::stof(tokens[2]);
-			particle_data.max_Fade = std::stof(tokens[3]);
-			particle_data.lifetime_Min = std::stof(tokens[4]);
-			particle_data.lifetime_Max = std::stof(tokens[5]);
-			particle_data.velocity_Min.x = std::stof(tokens[6]);
-			particle_data.velocity_Min.y = std::stof(tokens[7]);
-			particle_data.velocity_Max.x = std::stof(tokens[8]);
-			particle_data.velocity_Max.y = std::stof(tokens[9]);
+		if (tokens.size() == 11) {
+			particle_Data.sprite_Sheet_Name = tokens[1];
+			particle_Data.size = std::stoi(tokens[2]);
+			particle_Data.time_Between_Spawns = std::stof(tokens[3]);
+			particle_Data.max_Fade = std::stof(tokens[3]);
+			particle_Data.lifetime_Min = std::stof(tokens[4]);
+			particle_Data.lifetime_Max = std::stof(tokens[5]);
+			particle_Data.velocity_Min.x = std::stof(tokens[6]);
+			particle_Data.velocity_Min.y = std::stof(tokens[7]);
+			particle_Data.velocity_Max.x = std::stof(tokens[8]);
+			particle_Data.velocity_Max.y = std::stof(tokens[9]);
+			Globals::particle_Data_Map[row_Name] = particle_Data;
 		}
 		else {
 			SDL_Log("Error: Line does not have enough data");
 		}
-		Globals::particle_Data_Map[row_Name] = particle_data;
 	}
 }

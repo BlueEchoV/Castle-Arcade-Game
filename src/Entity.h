@@ -118,7 +118,7 @@ struct Warrior_Stats {
 	float attack_Range;
 };
 
-const Warrior_Stats Warrior_Stats_Array[TOTAL_LEVELS] = {
+const Warrior_Stats warrior_Stats_Array[TOTAL_LEVELS] = {
 	// speed    |   damage  |   max_HP  |   attack_Cooldown  |  attack_Range
 	{  100,         20,         100,        1,                  150        },
 	{  200,         25,         125,        1,                  150        }
@@ -194,12 +194,7 @@ struct Game_Data {
 	std::vector<Archer>						player_Archers;
 	std::vector<Particle_System>			particle_Systems;
 	int										next_Entity_ID;
-	std::unordered_map<std::string, Image>	images;
 };
-
-void add_Image(Game_Data& game_Data, std::string name, const char* file_Path);
-
-void load_Images(Game_Data& game_Data);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 

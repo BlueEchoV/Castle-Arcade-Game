@@ -80,6 +80,8 @@ int main(int argc, char** argv) {
     size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
     load_Particle_Data_CSV(particle_Data_File_Path);
 
+    load_Image_Data_CSV("Sprite_Sheet_Data.csv");
+
     /*
 	spawn_Particle_System(
 		game_Data,
@@ -140,7 +142,9 @@ int main(int argc, char** argv) {
 		delta_Time /= 1000;
 
         // Hot loading
-        if (file_Last_Modified(particle_Data_File_Path) != particle_Data_CSV_Last_Modified) {
+        size_t current_File_Time = file_Last_Modified(particle_Data_File_Path);
+        if (current_File_Time != particle_Data_CSV_Last_Modified) {
+            particle_Data_CSV_Last_Modified = current_File_Time;
             load_Particle_Data_CSV(particle_Data_File_Path);
         }
 
@@ -192,7 +196,7 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_MENU) {
 			// No game logic
-			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image.texture, NULL, NULL);
         
             draw_String_With_Background(
                 &font_1, 
@@ -229,7 +233,7 @@ int main(int argc, char** argv) {
             button_Pos.y += 100;
         }
         else if (current_Game_State == GS_LOADGAME) {
-            SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image->texture, NULL, NULL);
+            SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image.texture, NULL, NULL);
 
             int button_Width = 325;
             int button_Height = 90;
@@ -260,7 +264,7 @@ int main(int argc, char** argv) {
 			}
         }
 		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
-			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_GAMEOVER].sprites[0].image->texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_GAMEOVER].sprites[0].image.texture, NULL, NULL);
 			if (current_Game_State == GS_VICTORY) {
 				draw_String_With_Background(
 					&font_1,
@@ -468,10 +472,8 @@ int main(int argc, char** argv) {
 										2,
 										15,
 										15,
-										sprite_Sheet_Array[SSS_BASIC_PARTICLE].sprites[0].image,
 										enemy_Warrior->ID
 									);
-
                                     enemy_Warrior->health_Bar.current_HP -= arrow->damage;
                                     arrow->target_ID = enemy_Warrior->ID;
                                 }
@@ -679,8 +681,8 @@ int main(int argc, char** argv) {
 
 
             // ***Renderering happens here***
-            draw_Layer(sprite_Sheet_Array[SSS_BKG_GAMELOOP_1].sprites[0].image->texture);
-            draw_Layer(sprite_Sheet_Array[SSS_TERRAIN_1].sprites[0].image->texture);
+            draw_Layer(sprite_Sheet_Array[SSS_BKG_GAMELOOP_1].sprites[0].image.texture);
+            draw_Layer(sprite_Sheet_Array[SSS_TERRAIN_1].sprites[0].image.texture);
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
 
@@ -797,11 +799,11 @@ int main(int argc, char** argv) {
             V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
 			int button_Height_Unit_Spawn = 150;
             // int x_Offset = button_Width;
-            if (button_Image(sprite_Sheet_Array[SSS_Warrior_STOP].sprites[0].image->texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(sprite_Sheet_Array[SSS_Warrior_STOP].sprites[0].image.texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
                 spawn_Warrior_Pressed = true;
             } 
             button_Pos.x += button_Height_Unit_Spawn;
-            if (button_Image(sprite_Sheet_Array[SSS_ARCHER_STOP].sprites[0].image->texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(sprite_Sheet_Array[SSS_ARCHER_STOP].sprites[0].image.texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
 				spawn_Archer_Pressed = true;
 			}
             button_Pos.x += button_Height_Unit_Spawn;
@@ -910,10 +912,7 @@ int main(int argc, char** argv) {
     }
 
 	for (int i = 0; i < SSS_TOTAL_SPRITE_SHEETS; i++) {
-		for (int j = 0; j < sprite_Sheet_Array[i].sprites.size(); j++) {
-			delete sprite_Sheet_Array[i].sprites[j].image;
-		}
-		sprite_Sheet_Array[i].sprites.clear();
+        stbi_image_free(sprite_Sheet_Array[i].sprites[0].image.pixel_Data);
 	}
 
     soloud.deinit();

@@ -72,6 +72,56 @@ void process_Castle(Castle& castle, Archive* archive) {
 	}
 }
 
+void process_Image(Image& image, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		// NOTE: std::string is a complex object
+		std::string file_Path_String = image.file_Path;
+		size_t length = file_Path_String.size();
+		// add the null terminator
+		length++;
+		fwrite(&length, sizeof(size_t), 1, archive->file);
+		//								      +1 Null terminator
+		fwrite(file_Path_String.c_str(), sizeof(char), length, archive->file);
+	}
+	else if (archive->operation == GDO_LOAD) {
+		size_t length;
+		fread(&length, sizeof(size_t), 1, archive->file);
+		// Create buffer to store the memory
+		char* buffer = new char[length];
+		// Read the string data
+		fread(buffer, sizeof(char), length, archive->file);
+
+		image = create_Image(buffer);
+		
+		delete[] buffer;
+	}
+} 
+
+void process_Particle_System(Image& image, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		// NOTE: std::string is a complex object
+		std::string file_Path_String = image.file_Path;
+		size_t length = file_Path_String.size();
+		// add the null terminator
+		length++;
+		fwrite(&length, sizeof(size_t), 1, archive->file);
+		//								      +1 Null terminator
+		fwrite(file_Path_String.c_str(), sizeof(char), length, archive->file);
+	}
+	else if (archive->operation == GDO_LOAD) {
+		size_t length;
+		fread(&length, sizeof(size_t), 1, archive->file);
+		// Create buffer to store the memory
+		char* buffer = new char[length];
+		// Read the string data
+		fread(buffer, sizeof(char), length, archive->file);
+
+		image = create_Image(buffer);
+
+		delete[] buffer;
+	}
+}
+
 void process_Game_Data(Game_Data* game_Data, Archive* archive) {
 	process_Float(game_Data->timer, archive);
 	process_Castle(game_Data->player_Castle, archive);

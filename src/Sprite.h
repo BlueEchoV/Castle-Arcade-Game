@@ -33,7 +33,7 @@ enum Sprite_Sheet_Selector {
 struct Sprite {
 	SDL_Rect source_Rect;
 	float radius;
-	Image* image;
+	Image image;
 };
 
 struct Sprite_Sheet {
@@ -55,16 +55,19 @@ float return_Sprite_Radius(Sprite sprite);
 
 float get_Sprite_Radius(Sprite_Sheet_Tracker* tracker);
 
-Sprite create_Sprite(Image* image, SDL_Rect* source_Rect);
+Sprite create_Sprite(Image image, SDL_Rect source_Rect);
 
-// Obsolete
-Sprite_Sheet create_Sprite_Sheet(Image* image, int rows, int columns);
+Sprite_Sheet create_Sprite_Sheet(const char* file_Path, int rows, int columns);
 
-void add_Sprite_Sheet_To_Array(Sprite_Sheet_Selector selected, const char* file_Name, int rows, int columns);
+void add_Sprite_Sheet_To_Array(const char* file_Name, Sprite_Sheet_Selector selected, int rows, int columns);
 
 void load_Image(const char* file_Name, Sprite_Sheet_Selector selected, int rows, int columns);
 
 void load_Images();
 
 void draw_Layer(SDL_Texture* texture);
+
+std::vector<std::string> split(const std::string& my_String, char delimiter);
+
+void load_Image_Data_CSV(const char* file_Path_CSV);
 

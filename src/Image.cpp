@@ -2,11 +2,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-Image create_Image(const char* file_name) {
+Image create_Image(const char* file_Path) {
 	Image result = {};
+	result.file_Path = file_Path;
 
 	int width, height, channels;
-	unsigned char* data = stbi_load(file_name, &width, &height, &channels, 4);
+	unsigned char* data = stbi_load(file_Path, &width, &height, &channels, 4);
 
 	if (data == NULL) {
 		SDL_Log("ERROR: stbi_load returned NULL");

@@ -13,6 +13,7 @@ struct F_Color {
 };
 
 struct Particle_Data {
+	std::string sprite_Sheet_Name;
 	int size;
 	float time_Between_Spawns;
 
@@ -23,13 +24,15 @@ struct Particle_Data {
 	V2 velocity_Max;
 };
 
-/*
 enum Particle_Type {
 	PT_BLOOD,
 	PT_WATER,
+	PT_RAINBOW,
+
 	PT_TOTAL
 };
 
+/*
 const Particle_Data particle_Data_Array[] = {
 	// size  time_Between_Spawns  max_Fade_In lifetime_Min  lifetime_Max  velocity_Min  velocity_Max  
 	{ 20,	 0.01f,				  0.5f,		  3.0f,			3.0f,		 {0.0f, 0.0f}, {0.0f, 0.0f}},
@@ -50,9 +53,8 @@ struct Particle {
 };
 
 struct Particle_System {
-	Image* image;
 	SDL_Rect rect;
-	std::string type;
+	std::string particle_Type;
 	float time_Between_Spawns;
 	std::vector<Particle> particles;
 	// The particle system lifetime
@@ -61,7 +63,7 @@ struct Particle_System {
 	int target_ID = -1;
 };
 
-void spawn_Particle_System(Game_Data& game_Data, std::string type, V2 pos, float lifetime, int w, int h, Image* image, int target_ID = -1);
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID = -1);
 
 void update_Particle_System(Particle_System& particle_System, float delta_Time);
 

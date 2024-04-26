@@ -2,4 +2,4 @@ Castle_Arcade_Game.vcxproj.user
 .vs/
 x64
 !contrib/sdl/lib/x64/
-*.txt
+*.dat

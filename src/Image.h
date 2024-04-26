@@ -1,6 +1,8 @@
 #pragma once
 #include <SDL.h>
 #include <stb_image.h>
+#include <fstream>
+#include <sstream>
 
 #include "Utility.h"
 #include "Globals.h"
@@ -10,6 +12,12 @@ enum Color_Index {
 	CI_RED,
 	CI_GREEN,
 	CI_BLUE
+};
+
+enum Image_Type {
+	IT_BASIC_PARTICLE,
+
+	IT_TOTAL
 };
 
 struct Color {
@@ -25,6 +33,7 @@ const Color BLACK = { 0, 0, 0, 0 };
 struct Image {
 	int width;
 	int height;
+	const char* file_Path;
 	SDL_Texture* texture;
 	unsigned char* pixel_Data;
 };

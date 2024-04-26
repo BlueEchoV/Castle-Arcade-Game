@@ -1,16 +1,4 @@
 #include "Entity.h"
-
-void add_Image(Game_Data& game_Data, std::string name, const char* file_Path) {
-	if (game_Data.images.find(name) == game_Data.images.end()) {
-		game_Data.images[name] = create_Image(file_Path);
-	}
-}
-
-void load_Images(Game_Data& game_Data) {
-
-	add_Image(game_Data, "Background", "images/background.jpg");
-}
-
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
 	// assert(rigid_Body->num_Colliders < Globals::MAX_COLLIDERS);
 
@@ -30,7 +18,7 @@ void draw_Castle(Castle* castle, bool flip) {
 		sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect.w,
 		sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].source_Rect.h
 	};
-	SDL_RenderCopyEx(Globals::renderer, sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].image->texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	SDL_RenderCopyEx(Globals::renderer, sprite_Sheet_Array[castle->sprite_Sheet_Tracker.selected].sprites[0].image.texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 void draw_Arrow(Arrow* arrow, bool flip) {
@@ -45,7 +33,7 @@ void draw_Arrow(Arrow* arrow, bool flip) {
 		sprite->source_Rect.w,
 		sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(Globals::renderer, sprite->image->texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 Attached_Entity return_Attached_Entity(Sprite_Sheet_Selector selected, float angle, V2 offset) {
@@ -72,7 +60,7 @@ void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool
 		sprite->source_Rect.w,
 		sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(Globals::renderer, sprite->image->texture, NULL, &temp, attached_Entity->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, attached_Entity->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time) {
@@ -133,7 +121,7 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 	// Render the current frame of the animation
 	SDL_RenderCopyEx(
 		Globals::renderer,
-		sprite_Sheet->sprites[sprite_Frame].image->texture,
+		sprite_Sheet->sprites[sprite_Frame].image.texture,
 		&current_Frame_Rect,
 		&destination_Rect,
 		rigid_Body->angle,
@@ -295,71 +283,71 @@ void spawn_Arrow(Arrow_Type type, Game_Data* game_Data, V2 spawn_Position, V2 ta
 }
 
 void spawn_Player_Warrior(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
-	Warrior Warrior = {};
+	Warrior warrior = {};
 
-	Warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_Warrior_WALKING);
+	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_Warrior_WALKING);
 
-	Warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
+	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	Warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Warrior_Stats_Array[level].max_HP);
+	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, warrior_Stats_Array[level].max_HP);
 
-	Warrior.speed = Warrior_Stats_Array[level].speed;
-	Warrior.damage = Warrior_Stats_Array[level].damage;
-	Warrior.attack_Cooldown = Warrior_Stats_Array[level].attack_Cooldown;
-	Warrior.current_Attack_Cooldown = 0.0f;
-	Warrior.attack_Range = Warrior_Stats_Array[level].attack_Range;
+	warrior.speed = warrior_Stats_Array[level].speed;
+	warrior.damage = warrior_Stats_Array[level].damage;
+	warrior.attack_Cooldown = warrior_Stats_Array[level].attack_Cooldown;
+	warrior.current_Attack_Cooldown = 0.0f;
+	warrior.attack_Range = warrior_Stats_Array[level].attack_Range;
 
-	Warrior.destroyed = false;
-	Warrior.stop = false;
+	warrior.destroyed = false;
+	warrior.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	Warrior.rigid_Body.velocity.x = direction_V2.x * Warrior_Stats_Array[level].speed;
-	Warrior.rigid_Body.velocity.y = direction_V2.y * Warrior_Stats_Array[level].speed;
+	warrior.rigid_Body.velocity.x = direction_V2.x * warrior_Stats_Array[level].speed;
+	warrior.rigid_Body.velocity.y = direction_V2.y * warrior_Stats_Array[level].speed;
 
-	float radius = get_Sprite_Radius(&Warrior.sprite_Sheet_Tracker);
+	float radius = get_Sprite_Radius(&warrior.sprite_Sheet_Tracker);
 
-	add_Collider(&Warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&Warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&Warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
+	add_Collider(&warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
-	Warrior.ID = game_Data->next_Entity_ID++;
-	game_Data->player_Warriors.push_back(Warrior);
+	warrior.ID = game_Data->next_Entity_ID++;
+	game_Data->player_Warriors.push_back(warrior);
 }
 
 void spawn_Enemy_Warrior(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
-	Warrior Warrior = {};
+	Warrior warrior = {};
 
-	Warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_Warrior_WALKING);
+	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(SSS_Warrior_WALKING);
 
-	Warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
+	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	Warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Warrior_Stats_Array[level].max_HP);
+	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, warrior_Stats_Array[level].max_HP);
 
-	Warrior.speed = Warrior_Stats_Array[level].speed;
-	Warrior.damage = Warrior_Stats_Array[level].damage;
-	Warrior.attack_Cooldown = Warrior_Stats_Array[level].attack_Cooldown;
-	Warrior.current_Attack_Cooldown = 0.0f;
-	Warrior.attack_Range = Warrior_Stats_Array[level].attack_Range;
+	warrior.speed = warrior_Stats_Array[level].speed;
+	warrior.damage = warrior_Stats_Array[level].damage;
+	warrior.attack_Cooldown = warrior_Stats_Array[level].attack_Cooldown;
+	warrior.current_Attack_Cooldown = 0.0f;
+	warrior.attack_Range = warrior_Stats_Array[level].attack_Range;
 
-	Warrior.destroyed = false;
-	Warrior.stop = false;
+	warrior.destroyed = false;
+	warrior.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	Warrior.rigid_Body.velocity.x = direction_V2.x * Warrior_Stats_Array[level].speed;
-	Warrior.rigid_Body.velocity.y = direction_V2.y * Warrior_Stats_Array[level].speed;
+	warrior.rigid_Body.velocity.x = direction_V2.x * warrior_Stats_Array[level].speed;
+	warrior.rigid_Body.velocity.y = direction_V2.y * warrior_Stats_Array[level].speed;
 
-	float radius = get_Sprite_Radius(&Warrior.sprite_Sheet_Tracker);
+	float radius = get_Sprite_Radius(&warrior.sprite_Sheet_Tracker);
 
-	add_Collider(&Warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&Warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&Warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
+	add_Collider(&warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
-	Warrior.ID = game_Data->next_Entity_ID++;
-	game_Data->enemy_Warriors.push_back(Warrior);
+	warrior.ID = game_Data->next_Entity_ID++;
+	game_Data->enemy_Warriors.push_back(warrior);
 }
 
 void spawn_Archer(Game_Data* game_Data, V2 spawn_Position, V2 target_Position, Level level) {
