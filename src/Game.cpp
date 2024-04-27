@@ -158,13 +158,13 @@ void start_Game(Game_Data* game_Data) {
 	*game_Data = {};
 	game_Data->terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 	spawn_Player_Castle(
-		SSS_CASTLE_1,
+		"castle",
 		game_Data,
 		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) + 25.0f },
 		LEVEL_1
 	);
 	spawn_Enemy_Castle(
-		SSS_CASTLE_1,
+		"castle",
 		game_Data,
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
 		LEVEL_1

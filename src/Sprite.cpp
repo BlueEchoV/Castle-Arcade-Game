@@ -1,15 +1,13 @@
 #include "Sprite.h"
 
-Sprite_Sheet sprite_Sheet_Array[SSS_TOTAL_SPRITE_SHEETS] = {};
-
 namespace Globals {
 	std::unordered_map<std::string, Sprite_Sheet> sprite_Sheet_Data_Map = {};
 }
 
-Sprite_Sheet_Tracker create_Sprite_Sheet_Tracker(Sprite_Sheet_Selector selected) {
+Sprite_Sheet_Tracker create_Sprite_Sheet_Tracker(std::string sprite_Sheet_Name) {
 	Sprite_Sheet_Tracker result;
 
-	result.selected = selected;
+	result.sprite_Sheet_Name = sprite_Sheet_Name;
 	result.animation_Time = 0.0f;
 	result.current_Frame = 0;
 
@@ -42,9 +40,7 @@ float return_Sprite_Radius(Sprite sprite) {
 // Returns the radius of the first sprite in the sprite sheet
 // get_Radius_Of_First_Sprite_In_Selected_Sheet???? Way too long
 float get_Sprite_Radius(Sprite_Sheet_Tracker* tracker) {
-	const Sprite_Sheet* arr = sprite_Sheet_Array;
-	Sprite_Sheet_Selector selected = tracker->selected;
-	Sprite sprite = arr[selected].sprites[0];
+	Sprite sprite = Globals::sprite_Sheet_Data_Map[tracker->sprite_Sheet_Name].sprites[0];
 	float radius = sprite.radius;
 	return radius;
 }
@@ -78,42 +74,6 @@ Sprite_Sheet create_Sprite_Sheet(const char* file_Path, int rows, int columns) {
 	return result;
 }
 
-void add_Sprite_Sheet_To_Array(const char* file_Path, Sprite_Sheet_Selector selected, int rows, int columns) {
-	Image image = create_Image(file_Path);
-	for (int c = 0; c < columns; ++c)
-	{
-		for (int r = 0; r < rows; ++r)
-		{
-			SDL_Rect source;
-			source.x = (c * (image.width / columns));
-			source.y = (r * (image.height / rows));
-			source.w = (image.width / columns);
-			source.h = (image.height / rows);
-			sprite_Sheet_Array[selected].sprites.push_back(create_Sprite(image, source));
-		}
-	}
-}
-
-void load_Image(const char* file_Path, Sprite_Sheet_Selector selected, int rows, int columns) {
-	add_Sprite_Sheet_To_Array(file_Path, selected, rows, columns);
-}
-
-void load_Images() {
-	load_Image("images/background.jpg", SSS_BKG_GAMELOOP_1, 1, 1);
-	load_Image("images/background_2.png", SSS_BKG_MENU_1, 1, 1);
-	load_Image("images/collision_Terrain_1.png", SSS_TERRAIN_1, 1, 1);
-	load_Image("images/player_Castle.png", SSS_CASTLE_1, 1, 1);
-	load_Image("images/game_Over.png", SSS_BKG_GAMEOVER, 1, 1);
-	// images/unit_Warrior_Sprite_Sheet.png
-	load_Image("images/arrow.png", SSS_ARROW_DEFAULT, 1, 1);
-	load_Image("images/unit_Warrior_Short.png", SSS_Warrior_WALKING, 1, 1);
-	load_Image("images/unit_Warrior_Short.png", SSS_Warrior_STOP, 1, 1);
-	load_Image("images/unit_Archer_Short.png", SSS_ARCHER_WALKING, 1, 1);
-	load_Image("images/unit_Archer_Short.png", SSS_ARCHER_STOP, 1, 1);
-	load_Image("images/basic_Particle_1.png", SSS_BASIC_PARTICLE, 1, 1);
-	load_Image("images/droplet_Particle_1.png", SSS_DROPLET_PARTICLE, 1, 1);
-}
-
 void draw_Layer(SDL_Texture* texture) {
 	SDL_RenderCopyEx(Globals::renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
 }
@@ -130,7 +90,7 @@ std::vector<std::string> split(const std::string& my_String, char delimiter) {
 	return tokens;
 }
 
-void load_Image_Data_CSV(const char* file_Path_CSV) {
+void load_Sprite_Sheet_Data_CSV(const char* file_Path_CSV) {
 	std::string my_String = std::string(file_Path_CSV);
 	std::ifstream file(my_String);
 

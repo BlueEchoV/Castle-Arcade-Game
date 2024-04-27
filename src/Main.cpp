@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
     Font font_1 = load_Font_Bitmap("images/font_1.png");
 
-    load_Images();
+	load_Sprite_Sheet_Data_CSV("Sprite_Sheet_Data.csv");
 
     Game_Data game_Data = {};
 
@@ -79,8 +79,6 @@ int main(int argc, char** argv) {
     std::string particle_Data_File_Path = "Particle_Data.csv";
     size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
     load_Particle_Data_CSV(particle_Data_File_Path);
-
-    load_Image_Data_CSV("Sprite_Sheet_Data.csv");
 
     /*
 	spawn_Particle_System(
@@ -149,10 +147,10 @@ int main(int argc, char** argv) {
         }
 
         for (Particle_System& particle_System : game_Data.particle_Systems) {
-            for (Warrior& Warrior : game_Data.enemy_Warriors) {
-                if (particle_System.target_ID == Warrior.ID) {
-                    particle_System.rect.x = (int)Warrior.rigid_Body.position_WS.x;
-                    particle_System.rect.y = (int)Warrior.rigid_Body.position_WS.y;
+            for (Warrior& warrior : game_Data.enemy_Warriors) {
+                if (particle_System.target_ID == warrior.ID) {
+                    particle_System.rect.x = (int)warrior.rigid_Body.position_WS.x;
+                    particle_System.rect.y = (int)warrior.rigid_Body.position_WS.y;
                     break;
                 }
             }
@@ -196,7 +194,7 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_MENU) {
 			// No game logic
-			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image.texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Data_Map["bkg_Menu"].sprites[0].image.texture, NULL, NULL);
         
             draw_String_With_Background(
                 &font_1, 
@@ -233,7 +231,7 @@ int main(int argc, char** argv) {
             button_Pos.y += 100;
         }
         else if (current_Game_State == GS_LOADGAME) {
-            SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_MENU_1].sprites[0].image.texture, NULL, NULL);
+            SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Data_Map["bkg_Menu"].sprites[0].image.texture, NULL, NULL);
 
             int button_Width = 325;
             int button_Height = 90;
@@ -264,7 +262,7 @@ int main(int argc, char** argv) {
 			}
         }
 		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
-			SDL_RenderCopy(Globals::renderer, sprite_Sheet_Array[SSS_BKG_GAMEOVER].sprites[0].image.texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Data_Map["bkg_Game_Over"].sprites[0].image.texture, NULL, NULL);
 			if (current_Game_State == GS_VICTORY) {
 				draw_String_With_Background(
 					&font_1,
@@ -311,13 +309,7 @@ int main(int argc, char** argv) {
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
-                        spawn_Arrow(
-                            AT_PLAYER_ARROW,
-                            &game_Data,
-                            game_Data.player_Castle.rigid_Body.position_WS,
-                            target_Mouse,
-                            LEVEL_1
-                        );
+                        spawn_Arrow(&game_Data, AT_PLAYER_ARROW, "arrow", game_Data.player_Castle.rigid_Body.position_WS, target_Mouse, LEVEL_1);
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
                         if (game_Data.player_Castle.arrow_Ammo > 0) {
                             game_Data.player_Castle.arrow_Ammo--;
@@ -342,6 +334,7 @@ int main(int argc, char** argv) {
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Player_Warrior(
                         &game_Data,
+                        "warrior_Stop",
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
@@ -356,6 +349,7 @@ int main(int argc, char** argv) {
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Archer(
                         &game_Data,
+                        "archer_Stop",
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
@@ -377,6 +371,7 @@ int main(int argc, char** argv) {
 					float y_Pos = terrain_height + radius;
                     spawn_Enemy_Warrior(
 						&game_Data,
+                        "warrior_Stop",
                         { x_Pos, y_Pos },
 						player_Castle->rigid_Body.position_WS,
 						LEVEL_1
@@ -399,10 +394,10 @@ int main(int argc, char** argv) {
 				if (arrow->stuck_To_Unit.is_Sticking) {
 					bool arrow_Currently_Stuck = false;
 					for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
-						Warrior* Warrior = &game_Data.enemy_Warriors[j];
-						if (arrow->stuck_To_Unit.ID == Warrior->ID) {
-							arrow->rigid_Body.position_WS.x = Warrior->rigid_Body.position_WS.x + arrow->stuck_To_Unit.offset.x;
-							arrow->rigid_Body.position_WS.y = Warrior->rigid_Body.position_WS.y + arrow->stuck_To_Unit.offset.y;
+						Warrior* warrior = &game_Data.enemy_Warriors[j];
+						if (arrow->stuck_To_Unit.ID == warrior->ID) {
+							arrow->rigid_Body.position_WS.x = warrior->rigid_Body.position_WS.x + arrow->stuck_To_Unit.offset.x;
+							arrow->rigid_Body.position_WS.y = warrior->rigid_Body.position_WS.y + arrow->stuck_To_Unit.offset.y;
 
 							arrow_Currently_Stuck = true;
 						}
@@ -493,7 +488,7 @@ int main(int argc, char** argv) {
                                     else {
                                         V2 offset = arrow->rigid_Body.position_WS - enemy_Warrior->rigid_Body.position_WS;
                                         Attached_Entity attached_Entity = return_Attached_Entity(
-                                            SSS_ARROW_DEFAULT,
+                                            "arrow",
                                             arrow->rigid_Body.angle,
                                             offset
                                         );
@@ -511,23 +506,23 @@ int main(int argc, char** argv) {
 
                 // Collision enemy Warrior with map
                 for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
-                    if (check_Height_Map_Collision(&Warrior->rigid_Body, game_Data.terrain_Height_Map)) {
-                        float radius = get_Sprite_Radius(&Warrior->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)Warrior->rigid_Body.position_WS.x];
+                    Warrior* warrior = &game_Data.enemy_Warriors[i];
+                    if (check_Height_Map_Collision(&warrior->rigid_Body, game_Data.terrain_Height_Map)) {
+                        float radius = get_Sprite_Radius(&warrior->sprite_Sheet_Tracker);
+                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)warrior->rigid_Body.position_WS.x];
 
-                        Warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+                        warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
                     }
                 }
 
                 // Collision player Warriors with map
                 for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.player_Warriors[i];
+                    Warrior* warrior = &game_Data.player_Warriors[i];
                     if (check_Height_Map_Collision(&game_Data.player_Warriors[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                        float radius = get_Sprite_Radius(&Warrior->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)Warrior->rigid_Body.position_WS.x];
+                        float radius = get_Sprite_Radius(&warrior->sprite_Sheet_Tracker);
+                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)warrior->rigid_Body.position_WS.x];
 
-                        Warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+                        warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
                     }
                 }
 
@@ -546,14 +541,14 @@ int main(int argc, char** argv) {
 
                 // Initialize default values before collision check
                 for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.player_Warriors[i];
-                    Warrior->stop = false;
-                    Warrior->current_Attack_Cooldown -= delta_Time;
+                    Warrior* warrior = &game_Data.player_Warriors[i];
+                    warrior->stop = false;
+                    warrior->current_Attack_Cooldown -= delta_Time;
                 }
                 for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
-                    Warrior->stop = false;
-                    Warrior->current_Attack_Cooldown -= delta_Time;
+                    Warrior* warrior = &game_Data.enemy_Warriors[i];
+                    warrior->stop = false;
+                    warrior->current_Attack_Cooldown -= delta_Time;
                 }
                 for (int i = 0; i < game_Data.player_Archers.size(); i++) {
                     Archer* archer = &game_Data.player_Archers[i];
@@ -563,26 +558,26 @@ int main(int argc, char** argv) {
 
                 // Collision player Warrior with enemy castle
                 for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.player_Warriors[i];
+                    Warrior* warrior = &game_Data.player_Warriors[i];
                     Castle* castle = &game_Data.enemy_Castle;
-                    if (check_RB_Collision(&Warrior->rigid_Body, &castle->rigid_Body)) {
-                        Warrior->stop = true;
-                        if (Warrior->current_Attack_Cooldown < 0) {
-                            Warrior->current_Attack_Cooldown = Warrior->attack_Cooldown;
-                            castle->health_Bar.current_HP -= Warrior->damage;
+                    if (check_RB_Collision(&warrior->rigid_Body, &castle->rigid_Body)) {
+                        warrior->stop = true;
+                        if (warrior->current_Attack_Cooldown < 0) {
+                            warrior->current_Attack_Cooldown = warrior->attack_Cooldown;
+                            castle->health_Bar.current_HP -= warrior->damage;
                         }
                     }
                 }
 
                 // Collision enemy Warrior with player castle
                 for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
+                    Warrior* warrior = &game_Data.enemy_Warriors[i];
                     Castle* castle = &game_Data.player_Castle;
-                    if (check_RB_Collision(&Warrior->rigid_Body, &castle->rigid_Body)) {
-                        Warrior->stop = true;
-                        if (Warrior->current_Attack_Cooldown < 0) {
-                            Warrior->current_Attack_Cooldown = Warrior->attack_Cooldown;
-                            castle->health_Bar.current_HP -= Warrior->damage;
+                    if (check_RB_Collision(&warrior->rigid_Body, &castle->rigid_Body)) {
+                        warrior->stop = true;
+                        if (warrior->current_Attack_Cooldown < 0) {
+                            warrior->current_Attack_Cooldown = warrior->attack_Cooldown;
+                            castle->health_Bar.current_HP -= warrior->damage;
                         }
                     }
                 }
@@ -611,56 +606,50 @@ int main(int argc, char** argv) {
                 for (int i = 0; i < game_Data.player_Archers.size(); i++) {
                     Archer* archer = &game_Data.player_Archers[i];
                     for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
-                        Warrior* Warrior = &game_Data.enemy_Warriors[j];
+                        Warrior* warrior = &game_Data.enemy_Warriors[j];
                         float distance_Between = calculate_Distance(
                             archer->rigid_Body.position_WS.x,
                             archer->rigid_Body.position_WS.y,
-                            Warrior->rigid_Body.position_WS.x,
-                            Warrior->rigid_Body.position_WS.y
+                            warrior->rigid_Body.position_WS.x,
+                            warrior->rigid_Body.position_WS.y
                         );
                         float range_Sum = archer->attack_Range;
                         if (distance_Between <= range_Sum) {
-                            change_Animation(&archer->sprite_Sheet_Tracker, SSS_ARCHER_STOP);
+                            change_Animation(&archer->sprite_Sheet_Tracker, "archer_Stop");
                             archer->stop = true;
                             if (archer->current_Attack_Cooldown <= 0) {
                                 archer->current_Attack_Cooldown = archer->attack_Cooldown;
-                                V2 aim_Head = Warrior->rigid_Body.position_WS;
-                                Sprite_Sheet_Selector Warrior_Selected = game_Data.enemy_Warriors[0].sprite_Sheet_Tracker.selected;
-                                aim_Head.x += sprite_Sheet_Array[Warrior_Selected].sprites[0].radius;
+                                V2 aim_Head = warrior->rigid_Body.position_WS;
+                                std::string sprite_Sheet_Name = game_Data.enemy_Warriors[0].sprite_Sheet_Tracker.sprite_Sheet_Name;
+                                aim_Head.x += Globals::sprite_Sheet_Data_Map[sprite_Sheet_Name].sprites[0].radius;
                                 V2 arrow_Spawn_Location = archer->rigid_Body.position_WS;
-                                arrow_Spawn_Location.y -= sprite_Sheet_Array[archer->sprite_Sheet_Tracker.selected].sprites[0].radius / 2;
-                                spawn_Arrow(
-                                    AT_ARCHER_ARROW,
-                                    &game_Data,
-                                    arrow_Spawn_Location,
-                                    aim_Head,
-                                    LEVEL_1
-                                );
+                                arrow_Spawn_Location.y -= Globals::sprite_Sheet_Data_Map[sprite_Sheet_Name].sprites[0].radius / 2;
+                                spawn_Arrow(&game_Data, AT_ARCHER_ARROW, "arrow", arrow_Spawn_Location, aim_Head, LEVEL_1);
                             }
                         }
-                        if (check_RB_Collision(&archer->rigid_Body, &Warrior->rigid_Body)) {
+                        if (check_RB_Collision(&archer->rigid_Body, &warrior->rigid_Body)) {
                             game_Data.enemy_Warriors[j].stop = true;
-                            if (Warrior->current_Attack_Cooldown <= 0) {
-                                Warrior->current_Attack_Cooldown = Warrior->attack_Cooldown;
-                                archer->health_Bar.current_HP -= Warrior->damage;
+                            if (warrior->current_Attack_Cooldown <= 0) {
+                                warrior->current_Attack_Cooldown = warrior->attack_Cooldown;
+                                archer->health_Bar.current_HP -= warrior->damage;
                             }
                         }
                     }
                 }
 
                 for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.enemy_Warriors[i];
-                    float speed = Warrior->speed;
-                    if (!Warrior->stop) {
-                        update_Animation(&Warrior->sprite_Sheet_Tracker, speed, delta_Time);
+                    Warrior* warrior = &game_Data.enemy_Warriors[i];
+                    float speed = warrior->speed;
+                    if (!warrior->stop) {
+                        update_Animation(&warrior->sprite_Sheet_Tracker, speed, delta_Time);
                     }
                 }
 
                 for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* Warrior = &game_Data.player_Warriors[i];
-                    float speed = Warrior->speed;
-                    if (!Warrior->stop) {
-                        update_Animation(&Warrior->sprite_Sheet_Tracker, speed, delta_Time);
+                    Warrior* warrior = &game_Data.player_Warriors[i];
+                    float speed = warrior->speed;
+                    if (!warrior->stop) {
+                        update_Animation(&warrior->sprite_Sheet_Tracker, speed, delta_Time);
                     }
                 }
 
@@ -681,8 +670,8 @@ int main(int argc, char** argv) {
 
 
             // ***Renderering happens here***
-            draw_Layer(sprite_Sheet_Array[SSS_BKG_GAMELOOP_1].sprites[0].image.texture);
-            draw_Layer(sprite_Sheet_Array[SSS_TERRAIN_1].sprites[0].image.texture);
+            draw_Layer(Globals::sprite_Sheet_Data_Map["bkg_Gameloop"].sprites[0].image.texture);
+            draw_Layer(Globals::sprite_Sheet_Data_Map["collision_Terrain_1"].sprites[0].image.texture);
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
 
@@ -714,19 +703,19 @@ int main(int argc, char** argv) {
 
             // Draw enemy Warriors
             for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                Warrior* Warrior = &game_Data.enemy_Warriors[i];
-                // draw_Circle(Warrior->rigid_Body.position_WS.x, Warrior->rigid_Body.position_WS.y, 5, CI_RED);
-                // draw_Circle(Warrior->rigid_Body.position_WS.x, Warrior->rigid_Body.position_WS.y, 6, CI_RED);
-                // draw_Circle(Warrior->rigid_Body.position_WS.x, Warrior->rigid_Body.position_WS.y, 7, CI_RED);
-                // draw_RigidBody_Colliders(&Warrior->rigid_Body, CI_GREEN);
+                Warrior* warrior = &game_Data.enemy_Warriors[i];
+                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 5, CI_RED);
+                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 6, CI_RED);
+                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 7, CI_RED);
+                // draw_RigidBody_Colliders(&warrior->rigid_Body, CI_GREEN);
                 draw_Unit_Animated(
-                    &Warrior->rigid_Body,
-                    &Warrior->sprite_Sheet_Tracker,
+                    &warrior->rigid_Body,
+                    &warrior->sprite_Sheet_Tracker,
                     true
                 );
-                draw_HP_Bar(&Warrior->rigid_Body.position_WS, &Warrior->health_Bar);
-                for (int j = 0; j < Warrior->attached_Entities_Size; j++) {
-                    draw_Attached_Entity(&Warrior->attached_Entities[j], Warrior->rigid_Body.position_WS, false);
+                draw_HP_Bar(&warrior->rigid_Body.position_WS, &warrior->health_Bar);
+                for (int j = 0; j < warrior->attached_Entities_Size; j++) {
+                    draw_Attached_Entity(&warrior->attached_Entities[j], warrior->rigid_Body.position_WS, false);
 				}
 			}
 
@@ -799,11 +788,11 @@ int main(int argc, char** argv) {
             V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
 			int button_Height_Unit_Spawn = 150;
             // int x_Offset = button_Width;
-            if (button_Image(sprite_Sheet_Array[SSS_Warrior_STOP].sprites[0].image.texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(Globals::sprite_Sheet_Data_Map["warrior_Stop"].sprites[0].image.texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
                 spawn_Warrior_Pressed = true;
             } 
             button_Pos.x += button_Height_Unit_Spawn;
-            if (button_Image(sprite_Sheet_Array[SSS_ARCHER_STOP].sprites[0].image.texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(Globals::sprite_Sheet_Data_Map["archer_Stop"].sprites[0].image.texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
 				spawn_Archer_Pressed = true;
 			}
             button_Pos.x += button_Height_Unit_Spawn;
@@ -885,15 +874,15 @@ int main(int argc, char** argv) {
                 });
 
             // Erase destroy units
-            std::erase_if(game_Data.enemy_Warriors, [](Warrior& Warriors) {
+            std::erase_if(game_Data.enemy_Warriors, [](Warrior& warrior) {
                 // Return if we want the value to be destroyed
-                return Warriors.destroyed || Warriors.health_Bar.current_HP <= 0;
+                return warrior.destroyed || warrior.health_Bar.current_HP <= 0;
                 });
 
             // Erase destroy units
-            std::erase_if(game_Data.player_Warriors, [](Warrior& Warriors) {
+            std::erase_if(game_Data.player_Warriors, [](Warrior& warrior) {
                 // Return if we want the value to be destroyed
-                return Warriors.destroyed || Warriors.health_Bar.current_HP <= 0;
+                return warrior.destroyed || warrior.health_Bar.current_HP <= 0;
                 });
 
 			// Erase destroy units
@@ -911,8 +900,8 @@ int main(int argc, char** argv) {
         SDL_RenderPresent(Globals::renderer);
     }
 
-	for (int i = 0; i < SSS_TOTAL_SPRITE_SHEETS; i++) {
-        stbi_image_free(sprite_Sheet_Array[i].sprites[0].image.pixel_Data);
+	for (const auto& sprite_Sheet : Globals::sprite_Sheet_Data_Map) {
+        stbi_image_free(sprite_Sheet.second.sprites[0].image.pixel_Data);
 	}
 
     soloud.deinit();

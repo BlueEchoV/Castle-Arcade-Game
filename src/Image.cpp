@@ -20,6 +20,7 @@ Image create_Image(const char* file_Path) {
 	result.height = height;
 
 	DEFER{
+		// Freed at the end of main
 		// stbi_image_free(data);
 	};
 
