@@ -69,6 +69,16 @@ void process_Vector(std::vector<T>& vector, Archive* archive) {
 	}
 }
 
+void process_SDL_Rect(SDL_Rect& rect, Archive* archive);
+
+void process_Bool(bool& my_Bool, Archive* archive);
+
+void process_String(std::string& string, Archive* archive);
+
+void process_Particle_System(Particle_System& particle_System, Archive* archive);
+
+void process_Particle_Systems_Vector(std::vector<Particle_System>& particle_Systems, Archive* archive);
+
 void process_Game_Data(Game_Data* game_Data, Archive* archive);
 
 void load_Game(Game_Data* game_Data, Saved_Games save_Game);

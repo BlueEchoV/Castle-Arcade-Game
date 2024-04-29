@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
             }
             case SDL_KEYUP: {
                 key_States[event.key.keysym.sym].held_Down = false;
-				break;
+                break;
             }
             case SDL_MOUSEBUTTONDOWN: {
                 if (event.button.button == SDL_BUTTON_LEFT) {
@@ -124,20 +124,20 @@ int main(int argc, char** argv) {
             }
         }
 
-		current_frame_Hot_Name = next_Frame_Hot_Name;
-		next_Frame_Hot_Name = "";
-		SDL_GetMouseState(&mouse_X, &mouse_Y);
+        current_frame_Hot_Name = next_Frame_Hot_Name;
+        next_Frame_Hot_Name = "";
+        SDL_GetMouseState(&mouse_X, &mouse_Y);
 
-		last_Ticks = ticks;
-		ticks = (float)SDL_GetTicks64();
-		delta_Time = ticks - last_Ticks;
+        last_Ticks = ticks;
+        ticks = (float)SDL_GetTicks64();
+        delta_Time = ticks - last_Ticks;
         // Clamps the game time
         if (delta_Time > 250) {
             delta_Time = 250;
         }
-		// Multiply by the scalar
-		delta_Time *= time_Scalar;
-		delta_Time /= 1000;
+        // Multiply by the scalar
+        delta_Time *= time_Scalar;
+        delta_Time /= 1000;
 
         // Hot loading
         size_t current_File_Time = file_Last_Modified(particle_Data_File_Path);
@@ -146,15 +146,17 @@ int main(int argc, char** argv) {
             load_Particle_Data_CSV(particle_Data_File_Path);
         }
 
-        for (Particle_System& particle_System : game_Data.particle_Systems) {
-            for (Warrior& warrior : game_Data.enemy_Warriors) {
-                if (particle_System.target_ID == warrior.ID) {
-                    particle_System.rect.x = (int)warrior.rigid_Body.position_WS.x;
-                    particle_System.rect.y = (int)warrior.rigid_Body.position_WS.y;
-                    break;
-                }
-            }
-            update_Particle_System(particle_System, delta_Time);
+        if (current_Game_State == GS_GAMELOOP) {
+			for (Particle_System& particle_System : game_Data.particle_Systems) {
+				for (Warrior& warrior : game_Data.enemy_Warriors) {
+					if (particle_System.target_ID == warrior.ID) {
+						particle_System.rect.x = (int)warrior.rigid_Body.position_WS.x;
+						particle_System.rect.y = (int)warrior.rigid_Body.position_WS.y;
+						break;
+					}
+				}
+				update_Particle_System(particle_System, delta_Time);
+			}
         }
 
 		if (current_Game_State == GS_GAMELOOP) {
@@ -906,4 +908,5 @@ int main(int argc, char** argv) {
 
     soloud.deinit();
     return 0;
+
 }

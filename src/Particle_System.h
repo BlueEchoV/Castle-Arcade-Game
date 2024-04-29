@@ -56,11 +56,10 @@ struct Particle_System {
 	SDL_Rect rect;
 	std::string particle_Type;
 	float time_Between_Spawns;
-	std::vector<Particle> particles;
-	// The particle system lifetime
 	float lifetime;
 	bool destroyed;
 	int target_ID = -1;
+	std::vector<Particle> particles;
 };
 
 void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID = -1);

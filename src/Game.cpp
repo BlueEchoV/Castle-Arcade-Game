@@ -72,53 +72,66 @@ void process_Castle(Castle& castle, Archive* archive) {
 	}
 }
 
-void process_Image(Image& image, Archive* archive) {
+void process_SDL_Rect(SDL_Rect& rect, Archive* archive) {
 	if (archive->operation == GDO_SAVE) {
-		// NOTE: std::string is a complex object
-		std::string file_Path_String = image.file_Path;
-		size_t length = file_Path_String.size();
-		// add the null terminator
-		length++;
-		fwrite(&length, sizeof(size_t), 1, archive->file);
-		//								      +1 Null terminator
-		fwrite(file_Path_String.c_str(), sizeof(char), length, archive->file);
+		fwrite(&rect, sizeof(rect), 1, archive->file);
+	} else if (archive->operation == GDO_LOAD) {
+		fread(&rect, sizeof(rect), 1, archive->file);
+	}
+}
+
+void process_Bool(bool& my_Bool, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		fwrite(&my_Bool, sizeof(my_Bool), 1, archive->file);
+	}
+	else if (archive->operation == GDO_LOAD) {
+		fread(&my_Bool, sizeof(my_Bool), 1, archive->file);
+	}
+}
+
+void process_String(std::string& string, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		size_t length = string.size();
+		fwrite(&length, sizeof(length), 1, archive->file);
+		fwrite(string.data(), sizeof(char), length, archive->file);
 	}
 	else if (archive->operation == GDO_LOAD) {
 		size_t length;
-		fread(&length, sizeof(size_t), 1, archive->file);
-		// Create buffer to store the memory
-		char* buffer = new char[length];
-		// Read the string data
-		fread(buffer, sizeof(char), length, archive->file);
+		fread(&length, sizeof(length), 1, archive->file);
 
-		image = create_Image(buffer);
-		
-		delete[] buffer;
+		std::vector<char> buffer(length);
+		fread(buffer.data(), sizeof(char), length, archive->file);
+
+		// The whole vector
+		string.assign(buffer.begin(), buffer.end());
 	}
-} 
+}
 
-void process_Particle_System(Image& image, Archive* archive) {
+void process_Particle_System(Particle_System& particle_System, Archive* archive) {
+	process_SDL_Rect(particle_System.rect, archive);
+	process_String(particle_System.particle_Type, archive);
+	process_Float(particle_System.time_Between_Spawns, archive);
+	process_Float(particle_System.lifetime, archive);
+	process_Bool(particle_System.destroyed, archive);
+	process_Int(particle_System.target_ID, archive);
+	process_Vector(particle_System.particles, archive);
+}
+
+void process_Particle_Systems_Vector(std::vector<Particle_System>& particle_Systems, Archive* archive) {
 	if (archive->operation == GDO_SAVE) {
-		// NOTE: std::string is a complex object
-		std::string file_Path_String = image.file_Path;
-		size_t length = file_Path_String.size();
-		// add the null terminator
-		length++;
-		fwrite(&length, sizeof(size_t), 1, archive->file);
-		//								      +1 Null terminator
-		fwrite(file_Path_String.c_str(), sizeof(char), length, archive->file);
+		size_t length = particle_Systems.size();
+		fwrite(&length, sizeof(length), 1, archive->file);
+		for (Particle_System& particle_System : particle_Systems) {
+			process_Particle_System(particle_System, archive);
+		}
 	}
 	else if (archive->operation == GDO_LOAD) {
 		size_t length;
-		fread(&length, sizeof(size_t), 1, archive->file);
-		// Create buffer to store the memory
-		char* buffer = new char[length];
-		// Read the string data
-		fread(buffer, sizeof(char), length, archive->file);
-
-		image = create_Image(buffer);
-
-		delete[] buffer;
+		fread(&length, sizeof(length), 1, archive->file);
+		particle_Systems.resize(length);
+		for (Particle_System& particle_System : particle_Systems) {
+			process_Particle_System(particle_System, archive);
+		}
 	}
 }
 
@@ -131,7 +144,7 @@ void process_Game_Data(Game_Data* game_Data, Archive* archive) {
 	process_Vector(game_Data->enemy_Warriors, archive);
 	process_Vector(game_Data->player_Warriors, archive);
 	process_Vector(game_Data->player_Archers, archive);
-	// process_Vector(game_Data->particle_Systems, archive);
+	process_Particle_Systems_Vector(game_Data->particle_Systems, archive);
 	process_Int(game_Data->next_Entity_ID, archive);
 }
 
@@ -178,15 +191,17 @@ Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache) 
 }
 
 void load_Game_Data_Cache(Cache_Data& cache_Data) {
+	Game_Data game_Data;
 	if (cache_Data.loaded == false) {
 		for (int i = 0; i < SG_TOTAL; i++) {
 			std::string current_Save_Game = create_Save_Game_File_Name((Saved_Games)(i));
 			const char* ptr = current_Save_Game.c_str();
 			if (check_If_File_Exists(ptr)) {
-				Game_Data game_Data = {};
 				// Casting to the enum seems to work like a charm
 				load_Game(&game_Data, (Saved_Games)(i));
 				cache_Data.cache[current_Save_Game] = game_Data;
+				int j = 0;
+				j++;
 			}
 		}
 		cache_Data.loaded = true;

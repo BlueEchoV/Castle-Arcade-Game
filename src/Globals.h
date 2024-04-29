@@ -20,4 +20,6 @@ namespace Globals {
 
 	const int MAX_ATTACHED_ENTITIES = 100;
 	const int MAX_COLLIDERS = 100;
+
+	const int MAX_PARTICLES = 1000;
 }
