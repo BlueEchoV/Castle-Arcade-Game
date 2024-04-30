@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_MENU) {
 			// No game logic
-			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Data_Map["bkg_Menu"].sprites[0].image.texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Array[SSS_Bkg_Menu].sprites[0].image.texture, NULL, NULL);
         
             draw_String_With_Background(
                 &font_1, 
@@ -233,7 +233,7 @@ int main(int argc, char** argv) {
             button_Pos.y += 100;
         }
         else if (current_Game_State == GS_LOADGAME) {
-            SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Data_Map["bkg_Menu"].sprites[0].image.texture, NULL, NULL);
+            SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Array[SSS_Bkg_Menu].sprites[0].image.texture, NULL, NULL);
 
             int button_Width = 325;
             int button_Height = 90;
@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
 			}
         }
 		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
-			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Data_Map["bkg_Game_Over"].sprites[0].image.texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Array[SSS_Bkg_Gameloop].sprites[0].image.texture, NULL, NULL);
 			if (current_Game_State == GS_VICTORY) {
 				draw_String_With_Background(
 					&font_1,
@@ -311,7 +311,7 @@ int main(int argc, char** argv) {
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
-                        spawn_Arrow(&game_Data, AT_PLAYER_ARROW, "arrow", game_Data.player_Castle.rigid_Body.position_WS, target_Mouse, LEVEL_1);
+                        spawn_Arrow(&game_Data, AT_PLAYER_ARROW, SSS_Arrow, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse, LEVEL_1);
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
                         if (game_Data.player_Castle.arrow_Ammo > 0) {
                             game_Data.player_Castle.arrow_Ammo--;
@@ -336,7 +336,7 @@ int main(int argc, char** argv) {
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Player_Warrior(
                         &game_Data,
-                        "warrior_Stop",
+                        SSS_Warrior_Stop,
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
@@ -351,7 +351,7 @@ int main(int argc, char** argv) {
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Archer(
                         &game_Data,
-                        "archer_Stop",
+                        SSS_Archer_Stop,
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
@@ -373,7 +373,7 @@ int main(int argc, char** argv) {
 					float y_Pos = terrain_height + radius;
                     spawn_Enemy_Warrior(
 						&game_Data,
-                        "warrior_Stop",
+                        SSS_Warrior_Stop,
                         { x_Pos, y_Pos },
 						player_Castle->rigid_Body.position_WS,
 						LEVEL_1
@@ -490,7 +490,7 @@ int main(int argc, char** argv) {
                                     else {
                                         V2 offset = arrow->rigid_Body.position_WS - enemy_Warrior->rigid_Body.position_WS;
                                         Attached_Entity attached_Entity = return_Attached_Entity(
-                                            "arrow",
+                                            SSS_Arrow,
                                             arrow->rigid_Body.angle,
                                             offset
                                         );
@@ -617,16 +617,16 @@ int main(int argc, char** argv) {
                         );
                         float range_Sum = archer->attack_Range;
                         if (distance_Between <= range_Sum) {
-                            change_Animation(&archer->sprite_Sheet_Tracker, "archer_Stop");
+                            change_Animation(&archer->sprite_Sheet_Tracker, SSS_Archer_Stop);
                             archer->stop = true;
                             if (archer->current_Attack_Cooldown <= 0) {
                                 archer->current_Attack_Cooldown = archer->attack_Cooldown;
                                 V2 aim_Head = warrior->rigid_Body.position_WS;
-                                std::string sprite_Sheet_Name = game_Data.enemy_Warriors[0].sprite_Sheet_Tracker.sprite_Sheet_Name;
-                                aim_Head.x += Globals::sprite_Sheet_Data_Map[sprite_Sheet_Name].sprites[0].radius;
+                                Sprite_Sheet_Selector sprite_Sheet_Selector = game_Data.enemy_Warriors[0].sprite_Sheet_Tracker.sprite_Sheet_Selector;
+                                aim_Head.x += Globals::sprite_Sheet_Array[sprite_Sheet_Selector].sprites[0].radius;
                                 V2 arrow_Spawn_Location = archer->rigid_Body.position_WS;
-                                arrow_Spawn_Location.y -= Globals::sprite_Sheet_Data_Map[sprite_Sheet_Name].sprites[0].radius / 2;
-                                spawn_Arrow(&game_Data, AT_ARCHER_ARROW, "arrow", arrow_Spawn_Location, aim_Head, LEVEL_1);
+                                arrow_Spawn_Location.y -= Globals::sprite_Sheet_Array[sprite_Sheet_Selector].sprites[0].radius / 2;
+                                spawn_Arrow(&game_Data, AT_ARCHER_ARROW, SSS_Arrow, arrow_Spawn_Location, aim_Head, LEVEL_1);
                             }
                         }
                         if (check_RB_Collision(&archer->rigid_Body, &warrior->rigid_Body)) {
@@ -671,9 +671,9 @@ int main(int argc, char** argv) {
 			}
 
 
-            // ***Renderering happens here***
-            draw_Layer(Globals::sprite_Sheet_Data_Map["bkg_Gameloop"].sprites[0].image.texture);
-            draw_Layer(Globals::sprite_Sheet_Data_Map["collision_Terrain_1"].sprites[0].image.texture);
+            // ***Rendering happens here***
+            draw_Layer(Globals::sprite_Sheet_Array[SSS_Bkg_Gameloop].sprites[0].image.texture);
+            draw_Layer(Globals::sprite_Sheet_Array[SSS_Collision_Terrain_1].sprites[0].image.texture);
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
 
@@ -790,11 +790,11 @@ int main(int argc, char** argv) {
             V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
 			int button_Height_Unit_Spawn = 150;
             // int x_Offset = button_Width;
-            if (button_Image(Globals::sprite_Sheet_Data_Map["warrior_Stop"].sprites[0].image.texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(Globals::sprite_Sheet_Array[SSS_Warrior_Stop].sprites[0].image.texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
                 spawn_Warrior_Pressed = true;
             } 
             button_Pos.x += button_Height_Unit_Spawn;
-            if (button_Image(Globals::sprite_Sheet_Data_Map["archer_Stop"].sprites[0].image.texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(Globals::sprite_Sheet_Array[SSS_Archer_Stop].sprites[0].image.texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
 				spawn_Archer_Pressed = true;
 			}
             button_Pos.x += button_Height_Unit_Spawn;
@@ -902,8 +902,9 @@ int main(int argc, char** argv) {
         SDL_RenderPresent(Globals::renderer);
     }
 
-	for (const auto& sprite_Sheet : Globals::sprite_Sheet_Data_Map) {
-        stbi_image_free(sprite_Sheet.second.sprites[0].image.pixel_Data);
+    // Free the pixel data inside the sprites
+    for (int i = 0; i < SSS_TOTAL; i++) {
+        stbi_image_free(Globals::sprite_Sheet_Array[i].sprites[0].image.pixel_Data);
 	}
 
     soloud.deinit();

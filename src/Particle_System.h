@@ -1,5 +1,5 @@
 #pragma once
-#include "Image.h"
+#include "Sprite.h"
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -13,7 +13,7 @@ struct F_Color {
 };
 
 struct Particle_Data {
-	std::string sprite_Sheet_Name;
+	Sprite_Sheet_Selector sprite_Sheet_Selector;
 	int size;
 	float time_Between_Spawns;
 
@@ -54,6 +54,7 @@ struct Particle {
 
 struct Particle_System {
 	SDL_Rect rect;
+	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	std::string particle_Type;
 	float time_Between_Spawns;
 	float lifetime;

@@ -69,6 +69,17 @@ void process_Vector(std::vector<T>& vector, Archive* archive) {
 	}
 }
 
+
+template <typename T>
+void process_Struct(T& my_Struct, Archive* archive) {
+	if (archive->operation == GDO_SAVE) {
+		fwrite(&my_Struct, sizeof(my_Struct), 1, archive->file);
+	}
+	else if (archive->operation == GDO_LOAD) {
+		fread(&my_Struct, sizeof(my_Struct), 1, archive->file);
+	}
+}
+
 void process_SDL_Rect(SDL_Rect& rect, Archive* archive);
 
 void process_Bool(bool& my_Bool, Archive* archive);

@@ -109,6 +109,7 @@ void process_String(std::string& string, Archive* archive) {
 
 void process_Particle_System(Particle_System& particle_System, Archive* archive) {
 	process_SDL_Rect(particle_System.rect, archive);
+	process_Struct(particle_System.sprite_Sheet_Tracker, archive);
 	process_String(particle_System.particle_Type, archive);
 	process_Float(particle_System.time_Between_Spawns, archive);
 	process_Float(particle_System.lifetime, archive);
@@ -171,13 +172,13 @@ void start_Game(Game_Data* game_Data) {
 	*game_Data = {};
 	game_Data->terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 	spawn_Player_Castle(
-		"castle",
+		SSS_Castle,
 		game_Data,
 		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) + 25.0f },
 		LEVEL_1
 	);
 	spawn_Enemy_Castle(
-		"castle",
+		SSS_Castle,
 		game_Data,
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
 		LEVEL_1

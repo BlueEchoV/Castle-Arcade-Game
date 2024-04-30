@@ -14,6 +14,7 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 	particle_System.rect.w = w;
 	particle_System.rect.h = h;
 	particle_System.particle_Type = particle_Type;
+	particle_System.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(Globals::particle_Data_Map[particle_Type].sprite_Sheet_Selector);
 	particle_System.time_Between_Spawns = 0.0f;
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
@@ -163,7 +164,7 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 
 			const Particle* particle = &particle_System.particles[i];
 			const Particle_Data* particle_Data = &Globals::particle_Data_Map[particle_System.particle_Type];
-			const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Data_Map[particle_Data->sprite_Sheet_Name];
+			const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Array[particle_Data->sprite_Sheet_Selector];
 			SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
 
 			F_Color color = {};
@@ -226,16 +227,17 @@ void load_Particle_Data_CSV(std::string file_Name) {
 		std::string row_Name = tokens[row_Count++];
 
 		if (tokens.size() == 11) {
-			particle_Data.sprite_Sheet_Name = tokens[1];
-			particle_Data.size = std::stoi(tokens[2]);
-			particle_Data.time_Between_Spawns = std::stof(tokens[3]);
-			particle_Data.max_Fade = std::stof(tokens[3]);
-			particle_Data.lifetime_Min = std::stof(tokens[4]);
-			particle_Data.lifetime_Max = std::stof(tokens[5]);
-			particle_Data.velocity_Min.x = std::stof(tokens[6]);
-			particle_Data.velocity_Min.y = std::stof(tokens[7]);
-			particle_Data.velocity_Max.x = std::stof(tokens[8]);
-			particle_Data.velocity_Max.y = std::stof(tokens[9]);
+			// Need to cast this 
+			particle_Data.sprite_Sheet_Selector = (Sprite_Sheet_Selector)(std::stoi(tokens[row_Count++]));
+			particle_Data.size = std::stoi(tokens[row_Count++]);
+			particle_Data.time_Between_Spawns = std::stof(tokens[row_Count++]);
+			particle_Data.max_Fade = std::stof(tokens[row_Count++]);
+			particle_Data.lifetime_Min = std::stof(tokens[row_Count++]);
+			particle_Data.lifetime_Max = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Min.x = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Min.y = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Max.x = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Max.y = std::stof(tokens[row_Count++]);
 			Globals::particle_Data_Map[row_Name] = particle_Data;
 		}
 		else {

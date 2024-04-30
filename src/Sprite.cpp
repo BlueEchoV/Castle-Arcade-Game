@@ -1,13 +1,14 @@
 #include "Sprite.h"
+#include <assert.h>
 
 namespace Globals {
-	std::unordered_map<std::string, Sprite_Sheet> sprite_Sheet_Data_Map = {};
+	Sprite_Sheet sprite_Sheet_Array[SSS_TOTAL];
 }
 
-Sprite_Sheet_Tracker create_Sprite_Sheet_Tracker(std::string sprite_Sheet_Name) {
+Sprite_Sheet_Tracker create_Sprite_Sheet_Tracker(Sprite_Sheet_Selector sprite_Sheet_Selector) {
 	Sprite_Sheet_Tracker result;
 
-	result.sprite_Sheet_Name = sprite_Sheet_Name;
+	result.sprite_Sheet_Selector = sprite_Sheet_Selector;
 	result.animation_Time = 0.0f;
 	result.current_Frame = 0;
 
@@ -40,7 +41,7 @@ float return_Sprite_Radius(Sprite sprite) {
 // Returns the radius of the first sprite in the sprite sheet
 // get_Radius_Of_First_Sprite_In_Selected_Sheet???? Way too long
 float get_Sprite_Radius(Sprite_Sheet_Tracker* tracker) {
-	Sprite sprite = Globals::sprite_Sheet_Data_Map[tracker->sprite_Sheet_Name].sprites[0];
+	Sprite sprite = Globals::sprite_Sheet_Array[tracker->sprite_Sheet_Selector].sprites[0];
 	float radius = sprite.radius;
 	return radius;
 }
@@ -103,25 +104,31 @@ void load_Sprite_Sheet_Data_CSV(const char* file_Path_CSV) {
 	};
 
 	std::string line;
-	// Skip the first line containing the headers and the count
-	// NOTE: getline reads characters from an input stream and places them into a string: 
+	// Skip the first rows in the .csv file 
 	std::getline(file, line);
-	// I could parse out this row to know what each value is
 	std::getline(file, line);
 
+	int file_Row_Count = 1;
 	while (std::getline(file, line)) {
 		std::vector<std::string> tokens = split(line, ',');
-		std::string file_Name = tokens[0];
+		int file_Column_Count = 0;
+		int enum_Value = std::stoi(tokens[file_Column_Count++]);
+		std::string file_Name = tokens[file_Column_Count++];
 		// images/basic_Particle_1.png
 		std::string file_Path = "images/" + file_Name + ".png";
-		if (tokens.size() == 3) {
-			int rows = std::stoi(tokens[1]);
-			int columns = std::stoi(tokens[2]);
-			Sprite_Sheet sprite_Sheet = create_Sprite_Sheet(file_Path.c_str(), rows, columns);
-			Globals::sprite_Sheet_Data_Map[file_Name] = sprite_Sheet;
+		if (tokens.size() == 4) {
+			int sprite_Sheet_Rows = std::stoi(tokens[file_Column_Count++]);
+			int sprite_Sheet_Columns = std::stoi(tokens[file_Column_Count++]);
+			
+			Sprite_Sheet sprite_Sheet = create_Sprite_Sheet(file_Path.c_str(), sprite_Sheet_Rows, sprite_Sheet_Columns);
+			Globals::sprite_Sheet_Array[enum_Value] = sprite_Sheet;
 		}
 		else {
 			SDL_Log("Error: Line does not have enough data");
 		}
+		file_Row_Count++;
 	}
+
+	// Make sure the file and enums match
+	assert(file_Row_Count == SSS_TOTAL);
 }
