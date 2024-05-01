@@ -202,7 +202,7 @@ void draw_Castle(Castle* castle, bool flip);
 
 void draw_Arrow(Arrow* arrow, bool flip);
 
-Attached_Entity return_Attached_Entity(Sprite_Sheet_Selector sprite_Sheet_Selector, float angle, V2 offset);
+Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
 void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip);
 
@@ -210,7 +210,7 @@ void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float del
 
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, bool flip);
 
-void change_Animation(Sprite_Sheet_Tracker* tracker, Sprite_Sheet_Selector sprite_Sheet_Selector);
+void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Name);
 
 V2 get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
 
@@ -222,17 +222,17 @@ Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness,
 
 Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 
-void spawn_Player_Castle(Sprite_Sheet_Selector sprite_Sheet_Selector, Game_Data* game_Data, V2 position_WS, Level level);
+void spawn_Player_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level);
 
-void spawn_Enemy_Castle(Sprite_Sheet_Selector sprite_Sheet_Selector, Game_Data* game_Data, V2 position_WS, Level level);
+void spawn_Enemy_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level);
 
-void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
 
-void spawn_Player_Warrior(Game_Data* game_Data, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
 
-void spawn_Enemy_Warrior(Game_Data* game_Data, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
 
-void spawn_Archer(Game_Data* game_Data, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
 
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color);
 
@@ -249,3 +249,5 @@ bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height
 bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2);
 
 float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos);
+
+void load_Unit_Data_CSV(std::string file_Name);

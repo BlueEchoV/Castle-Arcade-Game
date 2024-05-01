@@ -39,8 +39,6 @@ std::string create_Save_Game_File_Name(Saved_Games save_Game);
 
 bool check_If_File_Exists(const char* file_Name);
 
-void process_Float(float& my_Float, Archive* archive);
-
 // NOTE: Templates should be defined in a header file because 
 // the compiler needs to have access to the full definition
 template <typename T>
@@ -60,37 +58,72 @@ void read_Vector(std::vector<T>& vector, FILE* file) {
 }
 
 template <typename T>
-void process_Vector(std::vector<T>& vector, Archive* archive) {
+void process(std::vector<T>& vector, Archive* archive) {
 	if (archive->operation == GDO_SAVE) {
-		write_Vector(vector, archive->file);
+		size_t vector_Size = vector.size();
+		fwrite(&vector_Size, sizeof(vector_Size), 1, archive->file);
+		for (T& value : vector) {
+			process(value, archive);
+		}
 	}
 	else if (archive->operation == GDO_LOAD) {
-		read_Vector(vector, archive->file);
+		size_t vector_Size = 0;
+		fread(&vector_Size, sizeof(vector_Size), 1, archive->file);
+		vector.clear();
+		vector.resize(vector_Size);
+		for (T& value : vector) {
+			process(value, archive);
+		}
 	}
 }
 
-
-template <typename T>
-void process_Struct(T& my_Struct, Archive* archive) {
+template <typename T> 
+void process(T my_Array[], Archive* archive) {
 	if (archive->operation == GDO_SAVE) {
-		fwrite(&my_Struct, sizeof(my_Struct), 1, archive->file);
+		fwrite(&my_Array, sizeof(my_Array), 1, archive->file);
 	}
 	else if (archive->operation == GDO_LOAD) {
-		fread(&my_Struct, sizeof(my_Struct), 1, archive->file);
+		fread(&my_Array, sizeof(my_Array), 1, archive->file);
 	}
 }
 
-void process_SDL_Rect(SDL_Rect& rect, Archive* archive);
+void process(bool& my_Bool, Archive* archive);
 
-void process_Bool(bool& my_Bool, Archive* archive);
+void process(int& my_Int, Archive* archive);
 
-void process_String(std::string& string, Archive* archive);
+void process(float& my_Float, Archive* archive);
 
-void process_Particle_System(Particle_System& particle_System, Archive* archive);
+void process(SDL_Rect& rect, Archive* archive);
 
-void process_Particle_Systems_Vector(std::vector<Particle_System>& particle_Systems, Archive* archive);
+void process(std::string& string, Archive* archive);
 
-void process_Game_Data(Game_Data* game_Data, Archive* archive);
+void process(Sprite_Sheet_Tracker& sprite_Sheet_Tracker, Archive* archive);
+
+void process(Particle& particle, Archive* archive);
+
+void process(Particle_System& particle_System, Archive* archive);
+
+void process(std::vector<Particle_System>& particle_Systems, Archive* archive);
+
+void process(V2& vector, Archive* archive);
+
+void process(Rigid_Body& rigid_Body, Archive* archive);
+
+void process(Health_Bar& health_Bar, Archive* archive);
+
+void process(Cooldown& cooldown, Archive* archive);
+
+void process(Castle& castle, Archive* archive);
+
+void process(Warrior& warrior, Archive* archive);
+
+void process(Arrow_Type& arrow_Type, Archive* archive);
+
+void process(Arrow& arrow, Archive* archive);
+
+void process(Archer& archer, Archive* archive);
+
+void process(Game_Data* game_Data, Archive* archive);
 
 void load_Game(Game_Data* game_Data, Saved_Games save_Game);
 

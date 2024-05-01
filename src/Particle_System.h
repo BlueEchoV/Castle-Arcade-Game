@@ -13,7 +13,7 @@ struct F_Color {
 };
 
 struct Particle_Data {
-	Sprite_Sheet_Selector sprite_Sheet_Selector;
+	std::string sprite_Sheet_Name;
 	int size;
 	float time_Between_Spawns;
 

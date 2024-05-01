@@ -202,8 +202,10 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 	return button_Pressed;
 }
 
-void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, V2 pos, int w, int h) {
+// Have this display an image?
+void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, V2 pos, int w, int h) {
 	std::string save_Game_String = create_Save_Game_File_Name(save_Game);
+	Game_Data selected_Game_Data = cache_Data.cache[save_Game_String];
 
 	SDL_Rect button_Area = {};
 	int outline_Thickness = 5;
@@ -214,10 +216,41 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, V2 po
 	button_Area.x = ((int)(pos.x - w) - (w / 2));
 	button_Area.y = ((int)pos.y - (h / 2));
 	button_Area.w = w;
-	button_Area.h = h;
+	button_Area.h = h * 2;
 
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(Globals::renderer, &button_Area);
+	
+	// Stats
+	std::string title_String = "Info";
+	const char* title_ptr = title_String.c_str();
+
+	int total_Arrows = (int)selected_Game_Data.player_Castle.arrow_Ammo;
+	std::string total_Arrows_String = "Player Ammo: " + std::to_string(total_Arrows);
+	const char* total_Arrows_Ptr = total_Arrows_String.c_str();
+
+	int total_Player_Warriors = (int)selected_Game_Data.player_Warriors.size();
+	int total_Player_Archers = (int)selected_Game_Data.player_Archers.size();
+	std::string total_Player_Units_String = "Player Units: " + std::to_string(total_Player_Warriors + total_Player_Archers);
+	const char* total_Player_Units_Ptr = total_Player_Units_String.c_str();
+
+	int total_Enemies = (int)selected_Game_Data.enemy_Warriors.size();
+	std::string total_Enemies_String = "Enemy Units: " + std::to_string(total_Enemies);
+	const char* total_Enemies_Ptr = total_Enemies_String.c_str();
+
+	int x_Offset = button_Area.x + 5;
+	int y_Offset = button_Area.y + 5;
+	int string_Size = 2;
+
+	draw_String(font, title_ptr, x_Offset, y_Offset, string_Size, false);
+	y_Offset += font->char_Height * string_Size;
+	draw_String(font, total_Arrows_Ptr, x_Offset, y_Offset, string_Size, false);
+	y_Offset += font->char_Height * string_Size;
+	draw_String(font, total_Player_Units_Ptr, x_Offset, y_Offset, string_Size, false);
+	y_Offset += font->char_Height * string_Size;
+	draw_String(font, total_Enemies_Ptr, x_Offset, y_Offset, string_Size, false);
+	y_Offset += font->char_Height * string_Size;
+
 }
 
 void draw_Timer(Game_Data* game_Data, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
@@ -255,7 +288,7 @@ bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, F
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
 		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		// Call the window that displays the info
-		display_Save_Game_Info(save_Game, cache_Data, pos, w, h);
+		display_Save_Game_Info(save_Game, cache_Data, font, pos, w, h);
 		if (mouse_Down_This_Frame) {
 			next_Frame_Hot_Name = string;
 		}

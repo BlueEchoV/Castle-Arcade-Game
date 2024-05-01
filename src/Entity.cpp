@@ -9,7 +9,7 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
 
 void draw_Castle(Castle* castle, bool flip) {
 	SDL_Rect temp = {};
-	Sprite* sprite = &Globals::sprite_Sheet_Array[castle->sprite_Sheet_Tracker.sprite_Sheet_Selector].sprites[0];
+	Sprite* sprite = &Globals::sprite_Sheet_Map[castle->sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
@@ -24,7 +24,7 @@ void draw_Castle(Castle* castle, bool flip) {
 
 void draw_Arrow(Arrow* arrow, bool flip) {
 	SDL_Rect temp = {};
-	Sprite* sprite = &Globals::sprite_Sheet_Array[arrow->sprite_Sheet_Tracker.sprite_Sheet_Selector].sprites[0];
+	Sprite* sprite = &Globals::sprite_Sheet_Map[arrow->sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
@@ -37,11 +37,11 @@ void draw_Arrow(Arrow* arrow, bool flip) {
 	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
-Attached_Entity return_Attached_Entity(Sprite_Sheet_Selector sprite_Sheet_Selector, float angle, V2 offset) {
+Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset) {
 	Attached_Entity result = {};
 
 	//                 selected     animation_Time      current_Frame
-	result.tracker = { sprite_Sheet_Selector,    0.0f,               0 };
+	result.tracker = { sprite_Sheet_Name,    0.0f,               0 };
 	result.angle = angle;
 	result.offset = offset;
 
@@ -50,7 +50,7 @@ Attached_Entity return_Attached_Entity(Sprite_Sheet_Selector sprite_Sheet_Select
 
 void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip) {
 	SDL_Rect temp = {};
-	Sprite* sprite = &Globals::sprite_Sheet_Array[attached_Entity->tracker.sprite_Sheet_Selector].sprites[0];
+	Sprite* sprite = &Globals::sprite_Sheet_Map[attached_Entity->tracker.sprite_Sheet_Name].sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
@@ -77,7 +77,7 @@ void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float del
 		if (tracker->animation_Time >= conversion_Frames) {
 			tracker->current_Frame++;
 			tracker->animation_Time = 0;
-			if (tracker->current_Frame >= Globals::sprite_Sheet_Array[tracker->sprite_Sheet_Selector].sprites.size()) {
+			if (tracker->current_Frame >= Globals::sprite_Sheet_Map[tracker->sprite_Sheet_Name].sprites.size()) {
 				tracker->current_Frame = 0;
 			}
 		}
@@ -94,7 +94,7 @@ void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float del
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, bool flip) {
 	Uint32 sprite_Frame = tracker->current_Frame;
 
-	const Sprite_Sheet* sprite_Sheet = &Globals::sprite_Sheet_Array[tracker->sprite_Sheet_Selector];
+	const Sprite_Sheet* sprite_Sheet = &Globals::sprite_Sheet_Map[tracker->sprite_Sheet_Name];
 	SDL_Rect current_Frame_Rect = sprite_Sheet->sprites[sprite_Frame].source_Rect;
 
 	const SDL_Rect* src_Rect = &sprite_Sheet->sprites[0].source_Rect;
@@ -131,9 +131,9 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 	);
 }
 
-void change_Animation(Sprite_Sheet_Tracker* tracker, Sprite_Sheet_Selector sprite_Sheet_Selector) {
-	if (tracker->sprite_Sheet_Selector != sprite_Sheet_Selector) {
-		tracker->sprite_Sheet_Selector = sprite_Sheet_Selector;
+void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Name) {
+	if (tracker->sprite_Sheet_Name != sprite_Sheet_Name) {
+		tracker->sprite_Sheet_Name = sprite_Sheet_Name;
 		tracker->current_Frame = 0;
 	}
 }
@@ -207,10 +207,10 @@ Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity) {
 }
 
 
-void spawn_Player_Castle(Sprite_Sheet_Selector sprite_Sheet_Selector, Game_Data* game_Data, V2 position_WS, Level level) {
+void spawn_Player_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
-	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Selector);
+	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
@@ -221,18 +221,18 @@ void spawn_Player_Castle(Sprite_Sheet_Selector sprite_Sheet_Selector, Game_Data*
 	castle.arrow_Ammo = castle_Stats_Array[level].arrow_Ammo;
 	castle.arrow_Ammo_Cooldown = castle_Stats_Array[level].arrow_Ammo_Cooldown;
 
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Array[sprite_Sheet_Selector].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius);
 
 	game_Data->player_Castle = castle;
 }
 
-void spawn_Enemy_Castle(Sprite_Sheet_Selector sprite_Sheet_Selector, Game_Data* game_Data, V2 position_WS, Level level) {
+void spawn_Enemy_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
 	// Would be the appropriate way to do it but it breaks the serialization
 	// castle.stats_Info = &castle_Stats_Array[level];
 
-	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Selector);
+	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
@@ -241,18 +241,18 @@ void spawn_Enemy_Castle(Sprite_Sheet_Selector sprite_Sheet_Selector, Game_Data* 
 	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
 	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
 
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Array[sprite_Sheet_Selector].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius);
 
 	game_Data->enemy_Castle = castle;
 }
 
 
-void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
 	Arrow arrow = {};
 
 	arrow.type = type;
 
-	arrow.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Selector);
+	arrow.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	arrow.rigid_Body = create_Rigid_Body(spawn_Position, true);
 
@@ -283,10 +283,10 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, Sprite_Sheet_Selector sp
 	game_Data->player_Arrows.push_back(arrow);
 }
 
-void spawn_Player_Warrior(Game_Data* game_Data, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
 	Warrior warrior = {};
 
-	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Selector);
+	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
@@ -317,10 +317,10 @@ void spawn_Player_Warrior(Game_Data* game_Data, Sprite_Sheet_Selector sprite_She
 	game_Data->player_Warriors.push_back(warrior);
 }
 
-void spawn_Enemy_Warrior(Game_Data* game_Data, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
 	Warrior warrior = {};
 
-	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Selector);
+	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
@@ -351,12 +351,12 @@ void spawn_Enemy_Warrior(Game_Data* game_Data, Sprite_Sheet_Selector sprite_Shee
 	game_Data->enemy_Warriors.push_back(warrior);
 }
 
-void spawn_Archer(Game_Data* game_Data, Sprite_Sheet_Selector sprite_Sheet_Selector, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
 	Archer archer = {};
 
 	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, archer_Stats_Array[level].hp);
 
-	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Selector);
+	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	archer.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
@@ -575,3 +575,47 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 	}
 	return (float)game_Data->terrain_Height_Map[x_Pos];
 }
+/*
+void load_Unit_Data_CSV(std::string file_Name) {
+	std::ifstream file(file_Name);
+
+	if (!file.is_open()) {
+		SDL_Log("Error loading .csv file");
+	}
+
+	DEFER{
+		file.close();
+	};
+
+	std::string line;
+
+	std::getline(file, line);
+	std::getline(file, line);
+
+	Particle_Data particle_Data = {};
+	while (std::getline(file, line)) {
+		// Types,size,max_Particles,time_Between Spawns,max_Fade,lifetime_Min,lifetime_Max
+		std::vector<std::string> tokens = split(line, ',');
+		int row_Count = 0;
+		std::string row_Name = tokens[row_Count++];
+
+		if (tokens.size() == 11) {
+			// Need to cast this 
+			particle_Data.sprite_Sheet_Name = (sprite_Sheet_Name)(std::stoi(tokens[row_Count++]));
+			particle_Data.size = std::stoi(tokens[row_Count++]);
+			particle_Data.time_Between_Spawns = std::stof(tokens[row_Count++]);
+			particle_Data.max_Fade = std::stof(tokens[row_Count++]);
+			particle_Data.lifetime_Min = std::stof(tokens[row_Count++]);
+			particle_Data.lifetime_Max = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Min.x = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Min.y = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Max.x = std::stof(tokens[row_Count++]);
+			particle_Data.velocity_Max.y = std::stof(tokens[row_Count++]);
+			Globals::particle_Data_Map[row_Name] = particle_Data;
+		}
+		else {
+			SDL_Log("Error: Line does not have enough data");
+		}
+	}
+}
+*/

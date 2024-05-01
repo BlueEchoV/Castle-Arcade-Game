@@ -14,7 +14,7 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 	particle_System.rect.w = w;
 	particle_System.rect.h = h;
 	particle_System.particle_Type = particle_Type;
-	particle_System.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(Globals::particle_Data_Map[particle_Type].sprite_Sheet_Selector);
+	particle_System.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(Globals::particle_Data_Map[particle_Type].sprite_Sheet_Name);
 	particle_System.time_Between_Spawns = 0.0f;
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
@@ -164,7 +164,7 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 
 			const Particle* particle = &particle_System.particles[i];
 			const Particle_Data* particle_Data = &Globals::particle_Data_Map[particle_System.particle_Type];
-			const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Array[particle_Data->sprite_Sheet_Selector];
+			 const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Map[particle_Data->sprite_Sheet_Name];
 			SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
 
 			F_Color color = {};
@@ -213,10 +213,8 @@ void load_Particle_Data_CSV(std::string file_Name) {
 	};
 
 	std::string line;
-	// Skip the first line containing the headers and the count
-	// NOTE: getline reads characters from an input stream and places them into a string: 
+
 	std::getline(file, line);
-	// I could parse out this row to know what each value is
 	std::getline(file, line);
 
 	Particle_Data particle_Data = {};
@@ -224,11 +222,10 @@ void load_Particle_Data_CSV(std::string file_Name) {
 		// Types,size,max_Particles,time_Between Spawns,max_Fade,lifetime_Min,lifetime_Max
 		std::vector<std::string> tokens = split(line, ',');
 		int row_Count = 0;
-		std::string row_Name = tokens[row_Count++];
+		std::string particle_Type = tokens[row_Count++];
 
 		if (tokens.size() == 11) {
-			// Need to cast this 
-			particle_Data.sprite_Sheet_Selector = (Sprite_Sheet_Selector)(std::stoi(tokens[row_Count++]));
+			particle_Data.sprite_Sheet_Name = tokens[row_Count++];
 			particle_Data.size = std::stoi(tokens[row_Count++]);
 			particle_Data.time_Between_Spawns = std::stof(tokens[row_Count++]);
 			particle_Data.max_Fade = std::stof(tokens[row_Count++]);
@@ -238,7 +235,8 @@ void load_Particle_Data_CSV(std::string file_Name) {
 			particle_Data.velocity_Min.y = std::stof(tokens[row_Count++]);
 			particle_Data.velocity_Max.x = std::stof(tokens[row_Count++]);
 			particle_Data.velocity_Max.y = std::stof(tokens[row_Count++]);
-			Globals::particle_Data_Map[row_Name] = particle_Data;
+
+			Globals::particle_Data_Map[particle_Type] = particle_Data;
 		}
 		else {
 			SDL_Log("Error: Line does not have enough data");
