@@ -89,11 +89,8 @@ void process(std::string& string, Archive* archive) {
 		size_t length;
 		fread(&length, sizeof(length), 1, archive->file);
 
-		std::vector<char> buffer(length);
-		fread(buffer.data(), sizeof(char), length, archive->file);
-
-		// The whole vector
-		string.assign(buffer.begin(), buffer.end());
+		string.resize(length);
+		fread(string.data(), sizeof(char), length, archive->file);
 	}
 }
 
