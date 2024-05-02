@@ -342,12 +342,12 @@ int main(int argc, char** argv) {
                     spawn_Player_Warrior(
                         &game_Data,
                         "warrior_Stop",
+                        1,
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
                         },
-                        enemy_Castle->rigid_Body.position_WS,
-                        "warrior_1"
+                        enemy_Castle->rigid_Body.position_WS
                     );
                     spawn_Warrior_Pressed = false;
                 }
@@ -357,12 +357,12 @@ int main(int argc, char** argv) {
                     spawn_Archer(
                         &game_Data,
                         "archer_Stop",
+                        1,
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
 						},
-                        enemy_Castle->rigid_Body.position_WS,
-                        LEVEL_1
+                        enemy_Castle->rigid_Body.position_WS
                     );
                     spawn_Archer_Pressed = false;
                 }
@@ -379,9 +379,9 @@ int main(int argc, char** argv) {
                     spawn_Enemy_Warrior(
 						&game_Data,
                         "warrior_Stop",
+                        1,
                         { x_Pos, y_Pos },
-						player_Castle->rigid_Body.position_WS,
-						LEVEL_1
+						player_Castle->rigid_Body.position_WS
 					);
                     enemy_Castle->spawn_Cooldown.remaining = enemy_Castle->spawn_Cooldown.duration;
                 }

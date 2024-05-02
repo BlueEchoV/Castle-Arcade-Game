@@ -79,7 +79,6 @@ struct Castle {
 	Stored_Units stored_Units;
 };
 
-
 struct Arrow_Stats {
 	float speed;
 	float damage;
@@ -118,21 +117,6 @@ struct Unit_Data {
 	float attack_Range;
 };
 
-struct Warrior_Stats {
-	float speed;
-	float damage;
-	float max_HP;
-	float current_HP;
-	float attack_Cooldown;
-	float attack_Range;
-};
-
-const Warrior_Stats warrior_Stats_Array[TOTAL_LEVELS] = {
-	// speed    |   damage  |   max_HP  |   attack_Cooldown  |  attack_Range
-	{  100,         20,         100,        1,                  150        },
-	{  200,         25,         125,        1,                  150        }
-};
-
 struct Attached_Entity {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	float angle;
@@ -159,21 +143,6 @@ struct Warrior {
 	bool stop;
 
 	int ID;
-};
-
-struct Archer_Stats {
-	float speed;
-	float damage;
-	float hp;
-	float attack_Cooldown;
-	float current_Attack_Cooldown;
-	float attack_Range;
-};
-
-const Archer_Stats archer_Stats_Array[TOTAL_LEVELS] = {
-	// speed | damage |  hp  |  attack_Cooldown | current_Attack_Cooldown | attack_Range
-	{  100,    10,      100,    1,                0.0,                      750        },
-	{  150,    15,      125,    0.5,              0.0,                      1000       },
 };
 
 struct Archer {
@@ -231,17 +200,19 @@ Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness,
 
 Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 
+std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name, int level);
+
 void spawn_Player_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level);
 
 void spawn_Enemy_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level);
 
 void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
 
-void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, std::string level);
+void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position);
 
-void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position);
 
-void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position);
 
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color);
 

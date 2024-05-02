@@ -207,6 +207,11 @@ Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity) {
 }
 
 
+std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name, int level) {
+	std::vector<std::string> tokens = split(sprite_Sheet_Name, '_');
+	return tokens[0] + "_" + std::to_string(level);
+}
+
 void spawn_Player_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
@@ -283,29 +288,30 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet
 	game_Data->player_Arrows.push_back(arrow);
 }
 
-void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, std::string level) {
+void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position) {
 	Warrior warrior = {};
+
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
 
 	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Globals::unit_Data_Map[level].max_HP);
+	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Globals::unit_Data_Map[unit_Data_Map_Key].max_HP);
 
-	warrior.speed = Globals::unit_Data_Map[level].speed;
-	warrior.damage = Globals::unit_Data_Map[level].damage;
-	warrior.attack_Cooldown = Globals::unit_Data_Map[level].attack_Cooldown;
+	warrior.speed = Globals::unit_Data_Map[unit_Data_Map_Key].speed;
+	warrior.damage = Globals::unit_Data_Map[unit_Data_Map_Key].damage;
+	warrior.attack_Cooldown = Globals::unit_Data_Map[unit_Data_Map_Key].attack_Cooldown;
 	warrior.current_Attack_Cooldown = 0.0f;
-	warrior.attack_Range = Globals::unit_Data_Map[level].attack_Range;
+	warrior.attack_Range = Globals::unit_Data_Map[unit_Data_Map_Key].attack_Range;
 
 	warrior.destroyed = false;
 	warrior.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
-	// Set the new velocity
-	warrior.rigid_Body.velocity.x = direction_V2.x * Globals::unit_Data_Map[level].speed;
-	warrior.rigid_Body.velocity.y = direction_V2.y * Globals::unit_Data_Map[level].speed;
+	warrior.rigid_Body.velocity.x = direction_V2.x * Globals::unit_Data_Map[unit_Data_Map_Key].speed;
+	warrior.rigid_Body.velocity.y = direction_V2.y * Globals::unit_Data_Map[unit_Data_Map_Key].speed;
 
 	float radius = get_Sprite_Radius(&warrior.sprite_Sheet_Tracker);
 
@@ -317,29 +323,30 @@ void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V
 	game_Data->player_Warriors.push_back(warrior);
 }
 
-void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position) {
 	Warrior warrior = {};
+
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
 
 	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, warrior_Stats_Array[level].max_HP);
+	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Globals::unit_Data_Map[unit_Data_Map_Key].max_HP);
 
-	warrior.speed = warrior_Stats_Array[level].speed;
-	warrior.damage = warrior_Stats_Array[level].damage;
-	warrior.attack_Cooldown = warrior_Stats_Array[level].attack_Cooldown;
+	warrior.speed = Globals::unit_Data_Map[unit_Data_Map_Key].speed;
+	warrior.damage = Globals::unit_Data_Map[unit_Data_Map_Key].damage;
+	warrior.attack_Cooldown = Globals::unit_Data_Map[unit_Data_Map_Key].attack_Cooldown;
 	warrior.current_Attack_Cooldown = 0.0f;
-	warrior.attack_Range = warrior_Stats_Array[level].attack_Range;
+	warrior.attack_Range = Globals::unit_Data_Map[unit_Data_Map_Key].attack_Range;
 
 	warrior.destroyed = false;
 	warrior.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
-	// Set the new velocity
-	warrior.rigid_Body.velocity.x = direction_V2.x * warrior_Stats_Array[level].speed;
-	warrior.rigid_Body.velocity.y = direction_V2.y * warrior_Stats_Array[level].speed;
+	warrior.rigid_Body.velocity.x = direction_V2.x * Globals::unit_Data_Map[unit_Data_Map_Key].speed;
+	warrior.rigid_Body.velocity.y = direction_V2.y * Globals::unit_Data_Map[unit_Data_Map_Key].speed;
 
 	float radius = get_Sprite_Radius(&warrior.sprite_Sheet_Tracker);
 
@@ -351,28 +358,29 @@ void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2
 	game_Data->enemy_Warriors.push_back(warrior);
 }
 
-void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position) {
 	Archer archer = {};
 
-	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, archer_Stats_Array[level].hp);
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
+
+	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, Globals::unit_Data_Map[unit_Data_Map_Key].max_HP);
 
 	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	archer.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	archer.speed = archer_Stats_Array[level].speed;
-	archer.attack_Cooldown = archer_Stats_Array[level].attack_Cooldown;
+	archer.speed = Globals::unit_Data_Map[unit_Data_Map_Key].speed;
+	archer.attack_Cooldown = Globals::unit_Data_Map[unit_Data_Map_Key].attack_Cooldown;
 	archer.current_Attack_Cooldown = 0.0f;
-	archer.attack_Range = archer_Stats_Array[level].attack_Range;
+	archer.attack_Range = Globals::unit_Data_Map[unit_Data_Map_Key].attack_Range;
 
 	archer.destroyed = false;
 	archer.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
-	// Set the new velocity
-	archer.rigid_Body.velocity.x = direction_V2.x * archer_Stats_Array[level].speed;
-	archer.rigid_Body.velocity.y = direction_V2.y * archer_Stats_Array[level].speed;
+	archer.rigid_Body.velocity.x = direction_V2.x * Globals::unit_Data_Map[unit_Data_Map_Key].speed;
+	archer.rigid_Body.velocity.y = direction_V2.y * Globals::unit_Data_Map[unit_Data_Map_Key].speed;
 
 	float radius = get_Sprite_Radius(&archer.sprite_Sheet_Tracker);
 
