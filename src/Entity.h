@@ -109,6 +109,15 @@ struct Arrow {
 	bool destroyed;
 };
 
+// Applies to: Warrior, Archer
+struct Unit_Data {
+	float max_HP;
+	float damage;
+	float speed;
+	float attack_Cooldown;
+	float attack_Range;
+};
+
 struct Warrior_Stats {
 	float speed;
 	float damage;
@@ -228,7 +237,7 @@ void spawn_Enemy_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 
 
 void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
 
-void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, std::string level);
 
 void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
 

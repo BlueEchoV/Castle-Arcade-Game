@@ -283,20 +283,20 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet
 	game_Data->player_Arrows.push_back(arrow);
 }
 
-void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, std::string level) {
 	Warrior warrior = {};
 
 	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, warrior_Stats_Array[level].max_HP);
+	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Globals::unit_Data_Map[level].max_HP);
 
-	warrior.speed = warrior_Stats_Array[level].speed;
-	warrior.damage = warrior_Stats_Array[level].damage;
-	warrior.attack_Cooldown = warrior_Stats_Array[level].attack_Cooldown;
+	warrior.speed = Globals::unit_Data_Map[level].speed;
+	warrior.damage = Globals::unit_Data_Map[level].damage;
+	warrior.attack_Cooldown = Globals::unit_Data_Map[level].attack_Cooldown;
 	warrior.current_Attack_Cooldown = 0.0f;
-	warrior.attack_Range = warrior_Stats_Array[level].attack_Range;
+	warrior.attack_Range = Globals::unit_Data_Map[level].attack_Range;
 
 	warrior.destroyed = false;
 	warrior.stop = false;
@@ -304,8 +304,8 @@ void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, V
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
 
 	// Set the new velocity
-	warrior.rigid_Body.velocity.x = direction_V2.x * warrior_Stats_Array[level].speed;
-	warrior.rigid_Body.velocity.y = direction_V2.y * warrior_Stats_Array[level].speed;
+	warrior.rigid_Body.velocity.x = direction_V2.x * Globals::unit_Data_Map[level].speed;
+	warrior.rigid_Body.velocity.y = direction_V2.y * Globals::unit_Data_Map[level].speed;
 
 	float radius = get_Sprite_Radius(&warrior.sprite_Sheet_Tracker);
 
@@ -575,7 +575,11 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 	}
 	return (float)game_Data->terrain_Height_Map[x_Pos];
 }
-/*
+
+namespace Globals {
+	std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
+}
+
 void load_Unit_Data_CSV(std::string file_Name) {
 	std::ifstream file(file_Name);
 
@@ -592,30 +596,21 @@ void load_Unit_Data_CSV(std::string file_Name) {
 	std::getline(file, line);
 	std::getline(file, line);
 
-	Particle_Data particle_Data = {};
+	Unit_Data unit_Data = {};
 	while (std::getline(file, line)) {
-		// Types,size,max_Particles,time_Between Spawns,max_Fade,lifetime_Min,lifetime_Max
 		std::vector<std::string> tokens = split(line, ',');
+		
 		int row_Count = 0;
-		std::string row_Name = tokens[row_Count++];
+		std::string unit_Type = tokens[row_Count++];
+		std::string unit_Level = tokens[row_Count++];
+		std::string unit_Map_Key = unit_Type + "_" + unit_Level;
 
-		if (tokens.size() == 11) {
-			// Need to cast this 
-			particle_Data.sprite_Sheet_Name = (sprite_Sheet_Name)(std::stoi(tokens[row_Count++]));
-			particle_Data.size = std::stoi(tokens[row_Count++]);
-			particle_Data.time_Between_Spawns = std::stof(tokens[row_Count++]);
-			particle_Data.max_Fade = std::stof(tokens[row_Count++]);
-			particle_Data.lifetime_Min = std::stof(tokens[row_Count++]);
-			particle_Data.lifetime_Max = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Min.x = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Min.y = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Max.x = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Max.y = std::stof(tokens[row_Count++]);
-			Globals::particle_Data_Map[row_Name] = particle_Data;
-		}
-		else {
-			SDL_Log("Error: Line does not have enough data");
-		}
+		unit_Data.max_HP = std::stof(tokens[row_Count++]);
+		unit_Data.damage = std::stof(tokens[row_Count++]);
+		unit_Data.speed = std::stof(tokens[row_Count++]);
+		unit_Data.attack_Cooldown = std::stof(tokens[row_Count++]);
+		unit_Data.attack_Range = std::stof(tokens[row_Count++]);
+
+		Globals::unit_Data_Map[unit_Map_Key] = unit_Data;
 	}
 }
-*/

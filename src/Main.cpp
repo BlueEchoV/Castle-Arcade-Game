@@ -80,6 +80,10 @@ int main(int argc, char** argv) {
     size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
     load_Particle_Data_CSV(particle_Data_File_Path);
 
+    // No hotloading currently
+    std::string unit_Data_File_Path = "data/Unit_Data.csv";
+    load_Unit_Data_CSV(unit_Data_File_Path);
+
     /*
 	spawn_Particle_System(
 		game_Data,
@@ -343,7 +347,7 @@ int main(int argc, char** argv) {
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
                         },
                         enemy_Castle->rigid_Body.position_WS,
-                        LEVEL_1
+                        "warrior_1"
                     );
                     spawn_Warrior_Pressed = false;
                 }
