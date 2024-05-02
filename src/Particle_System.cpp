@@ -154,6 +154,9 @@ F_Color HSV_To_RGB(float h,		float s,		float v) {
 // Render
 void draw_Particle_Systems(Game_Data& game_Data) {
 	for (const Particle_System& particle_System : game_Data.particle_Systems) {
+		const Particle_Data* particle_Data = &Globals::particle_Data_Map[particle_System.particle_Type];
+		const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Map[particle_Data->sprite_Sheet_Name];
+		SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
 		// Chris' trick for rendering backwards
 		for (size_t i = particle_System.particles.size(); i--;) {
 			SDL_Rect src_Rect = {};
@@ -163,9 +166,6 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			src_Rect.y = (int)particle_System.particles[i].position.y;
 
 			const Particle* particle = &particle_System.particles[i];
-			const Particle_Data* particle_Data = &Globals::particle_Data_Map[particle_System.particle_Type];
-			 const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Map[particle_Data->sprite_Sheet_Name];
-			SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
 
 			F_Color color = {};
 			float lifetime_Delta = particle->lifetime_Max - particle->lifetime;
@@ -198,6 +198,8 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			
 			SDL_RenderCopyEx(Globals::renderer, texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
+		SDL_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
+		SDL_SetTextureColorMod(texture, 0, 0, 0);
 	}
 }
 
