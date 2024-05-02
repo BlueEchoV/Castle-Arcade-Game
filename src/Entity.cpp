@@ -41,7 +41,7 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 	Attached_Entity result = {};
 
 	//                 selected     animation_Time      current_Frame
-	result.tracker = { sprite_Sheet_Name,    0.0f,               0 };
+	result.sprite_Sheet_Tracker = { sprite_Sheet_Name,    0.0f,               0 };
 	result.angle = angle;
 	result.offset = offset;
 
@@ -50,7 +50,7 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 
 void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip) {
 	SDL_Rect temp = {};
-	Sprite* sprite = &Globals::sprite_Sheet_Map[attached_Entity->tracker.sprite_Sheet_Name].sprites[0];
+	Sprite* sprite = &Globals::sprite_Sheet_Map[attached_Entity->sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;

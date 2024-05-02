@@ -125,7 +125,7 @@ const Warrior_Stats warrior_Stats_Array[TOTAL_LEVELS] = {
 };
 
 struct Attached_Entity {
-	Sprite_Sheet_Tracker tracker;
+	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	float angle;
 	V2 offset;
 };

@@ -77,13 +77,17 @@ void process(std::vector<T>& vector, Archive* archive) {
 	}
 }
 
-template <typename T> 
-void process(T my_Array[], Archive* archive) {
+template <typename T, int size>
+void process(T (&my_Array)[size], Archive* archive) {
 	if (archive->operation == GDO_SAVE) {
-		fwrite(&my_Array, sizeof(my_Array), 1, archive->file);
+		for (int i = 0; i < size; i++) {
+			process(my_Array[i], archive);
+		}
 	}
 	else if (archive->operation == GDO_LOAD) {
-		fread(&my_Array, sizeof(my_Array), 1, archive->file);
+		for (int i = 0; i < size; i++) {
+			process(my_Array[i], archive);
+		}
 	}
 }
 

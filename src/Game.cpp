@@ -145,6 +145,11 @@ void process(V2& vector, Archive* archive) {
 	process(vector.y, archive);
 }
 
+void process(Collider& collider, Archive* archive) {
+	process(collider.position_LS, archive);
+	process(collider.radius, archive);
+}
+
 void process(Rigid_Body& rigid_Body, Archive* archive) {
 	process(rigid_Body.rigid_Body_Faces_Velocity, archive);
 	process(rigid_Body.position_WS, archive);
@@ -176,6 +181,12 @@ void process(Castle& castle, Archive* archive) {
 	process(castle.spawn_Cooldown, archive);
 	process(castle.arrow_Ammo, archive);
 	process(castle.arrow_Ammo_Cooldown, archive);
+}
+
+void process(Attached_Entity& attached_Entity, Archive* archive) {
+	process(attached_Entity.sprite_Sheet_Tracker, archive);
+	process(attached_Entity.angle, archive);
+	process(attached_Entity.offset, archive);
 }
 
 void process(Warrior& warrior, Archive* archive) {
