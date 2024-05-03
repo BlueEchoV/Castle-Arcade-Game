@@ -221,7 +221,7 @@ void load_Particle_Data_CSV(std::string file_Name) {
 	const int delay_ms = 200;
 
 	// copy pasta for testing and it worked
-	// The first run through is failing but the second runthrough isn't.
+	// The first run through is failing but the second run through isn't.
 	while (retries < max_retries) {
 		file.open(file_Name);
 		if (file.is_open()) {
