@@ -42,14 +42,14 @@ bool check_If_File_Exists(const char* file_Name);
 // NOTE: Templates should be defined in a header file because 
 // the compiler needs to have access to the full definition
 template <typename T>
-void write_Vector(std::vector<T>& vector, FILE* file) {
+void write_Vector(FILE* file, std::vector<T>& vector) {
 	size_t vector_Size = vector.size();
 	fwrite(&vector_Size, sizeof(vector_Size), 1, file);
 	fwrite(vector.data(), sizeof(vector[0]), vector_Size, file);
 }
 
 template <typename T>
-void read_Vector(std::vector<T>& vector, FILE* file) {
+void read_Vector(FILE* file, std::vector<T>& vector) {
 	size_t vector_Size = 0;
 	fread(&vector_Size, sizeof(vector_Size), 1, file);
 	vector.clear();
@@ -58,12 +58,12 @@ void read_Vector(std::vector<T>& vector, FILE* file) {
 }
 
 template <typename T>
-void process(std::vector<T>& vector, Archive* archive) {
+void process(Archive* archive, std::vector<T>& vector) {
 	if (archive->operation == GDO_SAVE) {
 		size_t vector_Size = vector.size();
 		fwrite(&vector_Size, sizeof(vector_Size), 1, archive->file);
 		for (T& value : vector) {
-			process(value, archive);
+			process(archive, value);
 		}
 	}
 	else if (archive->operation == GDO_LOAD) {
@@ -72,7 +72,7 @@ void process(std::vector<T>& vector, Archive* archive) {
 		vector.clear();
 		vector.resize(vector_Size);
 		for (T& value : vector) {
-			process(value, archive);
+			process(archive, value);
 		}
 	}
 }
@@ -82,31 +82,31 @@ void process(std::vector<T>& vector, Archive* archive) {
 // good for documenting the number I expect, but it's STILL a pointer
 // int size is creating a new function for different sizes (more code)
 template <typename T, int size>
-void process(T (&my_Array)[size], Archive* archive) {
+void process(Archive* archive, T (&my_Array)[size]) {
 	for (int i = 0; i < size; i++) {
-		process(my_Array[i], archive);
+		process(archive, my_Array[i]);
 	}
 }
 
-void process(bool& my_Bool, Archive* archive);
-void process(int& my_Int, Archive* archive);
-void process(float& my_Float, Archive* archive);
-void process(SDL_Rect& rect, Archive* archive);
-void process(std::string& string, Archive* archive);
-void process(Sprite_Sheet_Tracker& sprite_Sheet_Tracker, Archive* archive);
-void process(Particle& particle, Archive* archive);
-void process(Particle_System& particle_System, Archive* archive);
-void process(std::vector<Particle_System>& particle_Systems, Archive* archive);
-void process(V2& vector, Archive* archive);
-void process(Rigid_Body& rigid_Body, Archive* archive);
-void process(Health_Bar& health_Bar, Archive* archive);
-void process(Cooldown& cooldown, Archive* archive);
-void process(Castle& castle, Archive* archive);
-void process(Warrior& warrior, Archive* archive);
-void process(Arrow_Type& arrow_Type, Archive* archive);
-void process(Arrow& arrow, Archive* archive);
-void process(Archer& archer, Archive* archive);
-void process(Game_Data* game_Data, Archive* archive);
+void process(Archive* archive, bool& my_Bool);
+void process(Archive* archive, int& my_Int);
+void process(Archive* archive, float& my_Float);
+void process(Archive* archive, SDL_Rect& rect);
+void process(Archive* archive, std::string& string);
+void process(Archive* archive, Sprite_Sheet_Tracker& sprite_Sheet_Tracker);
+void process(Archive* archive, Particle& particle);
+void process(Archive* archive, Particle_System& particle_System);
+void process(Archive* archive, std::vector<Particle_System>& particle_Systems);
+void process(Archive* archive, V2& vector);
+void process(Archive* archive, Rigid_Body& rigid_Body);
+void process(Archive* archive, Health_Bar& health_Bar);
+void process(Archive* archive, Cooldown& cooldown);
+void process(Archive* archive, Castle& castle);
+void process(Archive* archive, Warrior& warrior);
+void process(Archive* archive, Arrow_Type& arrow_Type);
+void process(Archive* archive, Arrow& arrow);
+void process(Archive* archive, Archer& archer);
+void process(Archive* archive, Game_Data* game_Data);
 
 void load_Game(Game_Data* game_Data, Saved_Games save_Game);
 void save_Game(Game_Data* game_Data, Saved_Games save_Game);
