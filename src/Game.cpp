@@ -40,226 +40,226 @@ Archive create_Archive(std::string file_Name, GAME_DATA_OPERATION operation) {
 	return result;
 }
 
-void close_Archive(Archive* archive) {
-	fclose(archive->file);
+void close_Archive(Archive* ar) {
+	fclose(ar->file);
 }
 
-void process(Archive* archive, bool& my_Bool) {
-	if (archive->operation == GDO_SAVE) {
-		fwrite(&my_Bool, sizeof(my_Bool), 1, archive->file);
+void process(Archive* ar, bool& my_Bool) {
+	if (ar->operation == GDO_SAVE) {
+		fwrite(&my_Bool, sizeof(my_Bool), 1, ar->file);
 	}
-	else if (archive->operation == GDO_LOAD) {
-		fread(&my_Bool, sizeof(my_Bool), 1, archive->file);
+	else if (ar->operation == GDO_LOAD) {
+		fread(&my_Bool, sizeof(my_Bool), 1, ar->file);
 	}
 }
 
-void process(Archive* archive, int& my_Int) {
-	if (archive->operation == GDO_SAVE) {
-		fwrite(&my_Int, sizeof(my_Int), 1, archive->file);
+void process(Archive* ar, int& my_Int) {
+	if (ar->operation == GDO_SAVE) {
+		fwrite(&my_Int, sizeof(my_Int), 1, ar->file);
 	}
-	else if (archive->operation == GDO_LOAD) {
-		fread(&my_Int, sizeof(my_Int), 1, archive->file);
+	else if (ar->operation == GDO_LOAD) {
+		fread(&my_Int, sizeof(my_Int), 1, ar->file);
 	}
 }
 
 // Process the primitive (float, int, double)
-void process(Archive* archive, float& my_Float) {
-	if (archive->operation == GDO_SAVE) {
-		fwrite(&my_Float, sizeof(my_Float), 1, archive->file);
+void process(Archive* ar, float& my_Float) {
+	if (ar->operation == GDO_SAVE) {
+		fwrite(&my_Float, sizeof(my_Float), 1, ar->file);
 	}
-	else if (archive->operation == GDO_LOAD) {
-		fread(&my_Float, sizeof(my_Float), 1, archive->file);
+	else if (ar->operation == GDO_LOAD) {
+		fread(&my_Float, sizeof(my_Float), 1, ar->file);
 	}
 }
 
-void process(Archive* archive, SDL_Rect& rect) {
-	process(archive, rect.x);
-	process(archive, rect.y);
-	process(archive, rect.w);
-	process(archive, rect.h);
+void process(Archive* ar, SDL_Rect& rect) {
+	process(ar, rect.x);
+	process(ar, rect.y);
+	process(ar, rect.w);
+	process(ar, rect.h);
 }
 
-void process(Archive* archive, std::string& string) {
-	if (archive->operation == GDO_SAVE) {
+void process(Archive* ar, std::string& string) {
+	if (ar->operation == GDO_SAVE) {
 		size_t length = string.size();
-		fwrite(&length, sizeof(length), 1, archive->file);
-		fwrite(string.data(), sizeof(char), length, archive->file);
+		fwrite(&length, sizeof(length), 1, ar->file);
+		fwrite(string.data(), sizeof(char), length, ar->file);
 	}
-	else if (archive->operation == GDO_LOAD) {
+	else if (ar->operation == GDO_LOAD) {
 		size_t length;
-		fread(&length, sizeof(length), 1, archive->file);
+		fread(&length, sizeof(length), 1, ar->file);
 
 		string.resize(length);
-		fread(string.data(), sizeof(char), length, archive->file);
+		fread(string.data(), sizeof(char), length, ar->file);
 	}
 }
 
-void process(Archive* archive, Sprite_Sheet_Tracker& sprite_Sheet_Tracker) {
-	process(archive, sprite_Sheet_Tracker.sprite_Sheet_Name);
-	process(archive, sprite_Sheet_Tracker.animation_Time);
-	process(archive, sprite_Sheet_Tracker.current_Frame);
+void process(Archive* ar, Sprite_Sheet_Tracker& sprite_Sheet_Tracker) {
+	process(ar, sprite_Sheet_Tracker.sprite_Sheet_Name);
+	process(ar, sprite_Sheet_Tracker.animation_Time);
+	process(ar, sprite_Sheet_Tracker.current_Frame);
 }
 
-void process(Archive* archive, Particle& particle) {
-	process(archive, particle.size);
-	process(archive, particle.lifetime_Max);
-	process(archive, particle.lifetime);
-	process(archive, particle.fade_In);
-	process(archive, particle.velocity);
-	process(archive, particle.position);
+void process(Archive* ar, Particle& particle) {
+	process(ar, particle.size);
+	process(ar, particle.lifetime_Max);
+	process(ar, particle.lifetime);
+	process(ar, particle.fade_In);
+	process(ar, particle.velocity);
+	process(ar, particle.position);
 }
 
-void process(Archive* archive, Particle_System& particle_System) {
-	process(archive, particle_System.rect);
-	process(archive, particle_System.sprite_Sheet_Tracker);
-	process(archive, particle_System.particle_Type);
-	process(archive, particle_System.time_Between_Spawns);
-	process(archive, particle_System.lifetime);
-	process(archive, particle_System.destroyed);
-	process(archive, particle_System.particles);
+void process(Archive* ar, Particle_System& particle_System) {
+	process(ar, particle_System.rect);
+	process(ar, particle_System.sprite_Sheet_Tracker);
+	process(ar, particle_System.particle_Type);
+	process(ar, particle_System.time_Between_Spawns);
+	process(ar, particle_System.lifetime);
+	process(ar, particle_System.destroyed);
+	process(ar, particle_System.particles);
 }
 
-void process(Archive* archive, std::vector<Particle_System>& particle_Systems) {
-	if (archive->operation == GDO_SAVE) {
+void process(Archive* ar, std::vector<Particle_System>& particle_Systems) {
+	if (ar->operation == GDO_SAVE) {
 		size_t length = particle_Systems.size();
-		fwrite(&length, sizeof(length), 1, archive->file);
+		fwrite(&length, sizeof(length), 1, ar->file);
 		for (Particle_System& particle_System : particle_Systems) {
-			process(archive, particle_System);
+			process(ar, particle_System);
 		}
 	}
-	else if (archive->operation == GDO_LOAD) {
+	else if (ar->operation == GDO_LOAD) {
 		size_t length;
-		fread(&length, sizeof(length), 1, archive->file);
+		fread(&length, sizeof(length), 1, ar->file);
 		particle_Systems.resize(length);
 		for (Particle_System& particle_System : particle_Systems) {
-			process(archive, particle_System);
+			process(ar, particle_System);
 		}
 	}
 }
 
-void process(Archive* archive, V2& vector) {
-	process(archive, vector.x);
-	process(archive, vector.y);
+void process(Archive* ar, V2& vector) {
+	process(ar, vector.x);
+	process(ar, vector.y);
 }
 
-void process(Archive* archive, Collider& collider) {
-	process(archive, collider.position_LS);
-	process(archive, collider.radius);
+void process(Archive* ar, Collider& collider) {
+	process(ar, collider.position_LS);
+	process(ar, collider.radius);
 }
 
-void process(Archive* archive, Rigid_Body& rigid_Body) {
-	process(archive, rigid_Body.rigid_Body_Faces_Velocity);
-	process(archive, rigid_Body.position_WS);
-	process(archive, rigid_Body.velocity);
-	process(archive, rigid_Body.angle);
-	process(archive, rigid_Body.num_Colliders);
-	process(archive, rigid_Body.colliders);
+void process(Archive* ar, Rigid_Body& rigid_Body) {
+	process(ar, rigid_Body.rigid_Body_Faces_Velocity);
+	process(ar, rigid_Body.position_WS);
+	process(ar, rigid_Body.velocity);
+	process(ar, rigid_Body.angle);
+	process(ar, rigid_Body.num_Colliders);
+	process(ar, rigid_Body.colliders);
 }
 
-void process(Archive* archive, Health_Bar& health_Bar) {
-	process(archive, health_Bar.max_HP);
-	process(archive, health_Bar.current_HP);
-	process(archive, health_Bar.width);
-	process(archive, health_Bar.height);
-	process(archive, health_Bar.y_Offset);
-	process(archive, health_Bar.thickness);
+void process(Archive* ar, Health_Bar& health_Bar) {
+	process(ar, health_Bar.max_HP);
+	process(ar, health_Bar.current_HP);
+	process(ar, health_Bar.width);
+	process(ar, health_Bar.height);
+	process(ar, health_Bar.y_Offset);
+	process(ar, health_Bar.thickness);
 }
 
-void process(Archive* archive, Cooldown& cooldown) {
-	process(archive, cooldown.duration);
-	process(archive, cooldown.remaining);
+void process(Archive* ar, Cooldown& cooldown) {
+	process(ar, cooldown.duration);
+	process(ar, cooldown.remaining);
 }
 
-void process(Archive* archive, Castle& castle) {
-	process(archive, castle.sprite_Sheet_Tracker);
-	process(archive, castle.rigid_Body);
-	process(archive, castle.health_Bar);
-	process(archive, castle.fire_Cooldown);
-	process(archive, castle.spawn_Cooldown);
-	process(archive, castle.arrow_Ammo);
-	process(archive, castle.arrow_Ammo_Cooldown);
+void process(Archive* ar, Castle& castle) {
+	process(ar, castle.sprite_Sheet_Tracker);
+	process(ar, castle.rigid_Body);
+	process(ar, castle.health_Bar);
+	process(ar, castle.fire_Cooldown);
+	process(ar, castle.spawn_Cooldown);
+	process(ar, castle.arrow_Ammo);
+	process(ar, castle.arrow_Ammo_Cooldown);
 }
 
-void process(Archive* archive, Attached_Entity& attached_Entity) {
-	process(archive, attached_Entity.sprite_Sheet_Tracker);
-	process(archive, attached_Entity.angle);
-	process(archive, attached_Entity.offset);
+void process(Archive* ar, Attached_Entity& attached_Entity) {
+	process(ar, attached_Entity.sprite_Sheet_Tracker);
+	process(ar, attached_Entity.angle);
+	process(ar, attached_Entity.offset);
 }
 
-void process(Archive* archive, Warrior& warrior) {
-	process(archive, warrior.sprite_Sheet_Tracker);
-	process(archive, warrior.rigid_Body);
-	process(archive, warrior.health_Bar);
-	process(archive, warrior.speed);
-	process(archive, warrior.damage);
-	process(archive, warrior.attack_Cooldown);
-	process(archive, warrior.current_Attack_Cooldown);
-	process(archive, warrior.attack_Range);
-	process(archive, warrior.attached_Entities);
-	process(archive, warrior.attached_Entities_Size);
-	process(archive, warrior.destroyed);
-	process(archive, warrior.stop);
-	process(archive, warrior.ID);
+void process(Archive* ar, Warrior& warrior) {
+	process(ar, warrior.sprite_Sheet_Tracker);
+	process(ar, warrior.rigid_Body);
+	process(ar, warrior.health_Bar);
+	process(ar, warrior.speed);
+	process(ar, warrior.damage);
+	process(ar, warrior.attack_Cooldown);
+	process(ar, warrior.current_Attack_Cooldown);
+	process(ar, warrior.attack_Range);
+	process(ar, warrior.attached_Entities);
+	process(ar, warrior.attached_Entities_Size);
+	process(ar, warrior.destroyed);
+	process(ar, warrior.stop);
+	process(ar, warrior.ID);
 }
 
-void process(Archive* archive, Arrow_Type& arrow_Type) {
-	process(archive, (int&)arrow_Type);
+void process(Archive* ar, Arrow_Type& arrow_Type) {
+	process(ar, (int&)arrow_Type);
 }
 
-void process(Archive* archive, Arrow& arrow) {
-	process(archive, arrow.type);
-	process(archive, arrow.sprite_Sheet_Tracker);
-	process(archive, arrow.rigid_Body);
-	process(archive, arrow.damage);
-	process(archive, arrow.speed);
-	process(archive, arrow.life_Time);
-	process(archive, arrow.collision_Delay);
-	process(archive, arrow.target_ID);
-	process(archive, arrow.stop);
-	process(archive, arrow.destroyed);
+void process(Archive* ar, Arrow& arrow) {
+	process(ar, arrow.type);
+	process(ar, arrow.sprite_Sheet_Tracker);
+	process(ar, arrow.rigid_Body);
+	process(ar, arrow.damage);
+	process(ar, arrow.speed);
+	process(ar, arrow.life_Time);
+	process(ar, arrow.collision_Delay);
+	process(ar, arrow.target_ID);
+	process(ar, arrow.stop);
+	process(ar, arrow.destroyed);
 }
 
-void process(Archive* archive, Archer& archer) {
-	process(archive, archer.sprite_Sheet_Tracker);
-	process(archive, archer.rigid_Body);
-	process(archive, archer.health_Bar);
-	process(archive, archer.speed);
-	process(archive, archer.attack_Cooldown);
-	process(archive, archer.current_Attack_Cooldown);
-	process(archive, archer.attack_Range);
-	process(archive, archer.destroyed);
-	process(archive, archer.stop);
+void process(Archive* ar, Archer& archer) {
+	process(ar, archer.sprite_Sheet_Tracker);
+	process(ar, archer.rigid_Body);
+	process(ar, archer.health_Bar);
+	process(ar, archer.speed);
+	process(ar, archer.attack_Cooldown);
+	process(ar, archer.current_Attack_Cooldown);
+	process(ar, archer.attack_Range);
+	process(ar, archer.destroyed);
+	process(ar, archer.stop);
 }
 
-void process(Archive* archive, Game_Data* game_Data) {
-	process(archive, game_Data->timer);
-	process(archive, game_Data->player_Castle);
-	process(archive, game_Data->enemy_Castle);
-	process(archive, game_Data->terrain_Height_Map);
-	process(archive, game_Data->player_Arrows);
-	process(archive, game_Data->enemy_Warriors);
-	process(archive, game_Data->player_Warriors);
-	process(archive, game_Data->player_Archers);
-	process(archive, game_Data->particle_Systems);
-	process(archive, game_Data->next_Entity_ID);
+void process(Archive* ar, Game_Data* game_Data) {
+	process(ar, game_Data->timer);
+	process(ar, game_Data->player_Castle);
+	process(ar, game_Data->enemy_Castle);
+	process(ar, game_Data->terrain_Height_Map);
+	process(ar, game_Data->player_Arrows);
+	process(ar, game_Data->enemy_Warriors);
+	process(ar, game_Data->player_Warriors);
+	process(ar, game_Data->player_Archers);
+	process(ar, game_Data->particle_Systems);
+	process(ar, game_Data->next_Entity_ID);
 }
 
 // Call load game function and save game function that calls process game data
 void load_Game(Game_Data* game_Data, Saved_Games save_Game) {
 	std::string file_Name = create_Save_Game_File_Name(save_Game);
-	Archive archive = create_Archive(file_Name, GDO_LOAD);
-	if (archive.file != NULL) {
-		process(&archive, game_Data);
-		close_Archive(&archive);
+	Archive ar = create_Archive(file_Name, GDO_LOAD);
+	if (ar.file != NULL) {
+		process(&ar, game_Data);
+		close_Archive(&ar);
 	}
 }
 
 void save_Game(Game_Data* game_Data, Saved_Games save_Game) {
 	std::string file_Name = create_Save_Game_File_Name(save_Game);
-	Archive archive = create_Archive(file_Name, GDO_SAVE);
-	if (archive.file != NULL) {
-		process(&archive, game_Data);
-		close_Archive(&archive);
+	Archive ar = create_Archive(file_Name, GDO_SAVE);
+	if (ar.file != NULL) {
+		process(&ar, game_Data);
+		close_Archive(&ar);
 	}
 }
 

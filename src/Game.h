@@ -58,21 +58,21 @@ void read_Vector(FILE* file, std::vector<T>& vector) {
 }
 
 template <typename T>
-void process(Archive* archive, std::vector<T>& vector) {
-	if (archive->operation == GDO_SAVE) {
+void process(Archive* ar, std::vector<T>& vector) {
+	if (ar->operation == GDO_SAVE) {
 		size_t vector_Size = vector.size();
-		fwrite(&vector_Size, sizeof(vector_Size), 1, archive->file);
+		fwrite(&vector_Size, sizeof(vector_Size), 1, ar->file);
 		for (T& value : vector) {
-			process(archive, value);
+			process(ar, value);
 		}
 	}
-	else if (archive->operation == GDO_LOAD) {
+	else if (ar->operation == GDO_LOAD) {
 		size_t vector_Size = 0;
-		fread(&vector_Size, sizeof(vector_Size), 1, archive->file);
+		fread(&vector_Size, sizeof(vector_Size), 1, ar->file);
 		vector.clear();
 		vector.resize(vector_Size);
 		for (T& value : vector) {
-			process(archive, value);
+			process(ar, value);
 		}
 	}
 }
@@ -82,31 +82,31 @@ void process(Archive* archive, std::vector<T>& vector) {
 // good for documenting the number I expect, but it's STILL a pointer
 // int size is creating a new function for different sizes (more code)
 template <typename T, int size>
-void process(Archive* archive, T (&my_Array)[size]) {
+void process(Archive* ar, T (&my_Array)[size]) {
 	for (int i = 0; i < size; i++) {
-		process(archive, my_Array[i]);
+		process(ar, my_Array[i]);
 	}
 }
 
-void process(Archive* archive, bool& my_Bool);
-void process(Archive* archive, int& my_Int);
-void process(Archive* archive, float& my_Float);
-void process(Archive* archive, SDL_Rect& rect);
-void process(Archive* archive, std::string& string);
-void process(Archive* archive, Sprite_Sheet_Tracker& sprite_Sheet_Tracker);
-void process(Archive* archive, Particle& particle);
-void process(Archive* archive, Particle_System& particle_System);
-void process(Archive* archive, std::vector<Particle_System>& particle_Systems);
-void process(Archive* archive, V2& vector);
-void process(Archive* archive, Rigid_Body& rigid_Body);
-void process(Archive* archive, Health_Bar& health_Bar);
-void process(Archive* archive, Cooldown& cooldown);
-void process(Archive* archive, Castle& castle);
-void process(Archive* archive, Warrior& warrior);
-void process(Archive* archive, Arrow_Type& arrow_Type);
-void process(Archive* archive, Arrow& arrow);
-void process(Archive* archive, Archer& archer);
-void process(Archive* archive, Game_Data* game_Data);
+void process(Archive* ar, bool& my_Bool);
+void process(Archive* ar, int& my_Int);
+void process(Archive* ar, float& my_Float);
+void process(Archive* ar, SDL_Rect& rect);
+void process(Archive* ar, std::string& string);
+void process(Archive* ar, Sprite_Sheet_Tracker& sprite_Sheet_Tracker);
+void process(Archive* ar, Particle& particle);
+void process(Archive* ar, Particle_System& particle_System);
+void process(Archive* ar, std::vector<Particle_System>& particle_Systems);
+void process(Archive* ar, V2& vector);
+void process(Archive* ar, Rigid_Body& rigid_Body);
+void process(Archive* ar, Health_Bar& health_Bar);
+void process(Archive* ar, Cooldown& cooldown);
+void process(Archive* ar, Castle& castle);
+void process(Archive* ar, Warrior& warrior);
+void process(Archive* ar, Arrow_Type& arrow_Type);
+void process(Archive* ar, Arrow& arrow);
+void process(Archive* ar, Archer& archer);
+void process(Archive* ar, Game_Data* game_Data);
 
 void load_Game(Game_Data* game_Data, Saved_Games save_Game);
 void save_Game(Game_Data* game_Data, Saved_Games save_Game);
