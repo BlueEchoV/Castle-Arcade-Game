@@ -185,12 +185,12 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos);
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
-void spawn_Player_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level);
-void spawn_Enemy_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level);
-void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level);
-void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position);
-void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position);
-void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level);
+void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level);
+void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Arrow_Position(Arrow* arrow, float delta_Time);

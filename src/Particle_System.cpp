@@ -188,6 +188,15 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			}
 
 			SDL_SetTextureAlphaMod(texture, (Uint8)(255 * (color.a)));
+			// Only affect primitive shapes and lines drawn directly to the renderer
+			// SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, 128);
+			// SDL_SetRenderDrawBlendMode(Globals::renderer, SDL_BLENDMODE_BLEND);
+			// SDL_Rect particleRect;
+			// particleRect.w = particle_System.particles[i].size;
+			// particleRect.h = particle_System.particles[i].size;
+			// particleRect.x = (int)particle_System.particles[i].position.x;
+			// particleRect.y = (int)particle_System.particles[i].position.y;
+			// SDL_RenderFillRect(Globals::renderer, &particleRect);
 
 			float percent_Life_time = particle_System.particles[i].lifetime / particle->lifetime_Max;
 
@@ -202,12 +211,11 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			}
 			SDL_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
 			
-			// SDL_SetRenderDrawColor();
 
 			SDL_RenderCopyEx(Globals::renderer, texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
-		SDL_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
-		SDL_SetTextureColorMod(texture, 0, 0, 0);
+		// SDL_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
+		// SDL_SetTextureColorMod(texture, 0, 0, 0);
 	}
 }
 

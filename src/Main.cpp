@@ -315,7 +315,7 @@ int main(int argc, char** argv) {
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
-                        spawn_Arrow(&game_Data, AT_PLAYER_ARROW, "arrow", game_Data.player_Castle.rigid_Body.position_WS, target_Mouse, LEVEL_1);
+                        spawn_Arrow(&game_Data, AT_PLAYER_ARROW, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse, LEVEL_1);
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
                         if (game_Data.player_Castle.arrow_Ammo > 0) {
                             game_Data.player_Castle.arrow_Ammo--;
@@ -340,7 +340,6 @@ int main(int argc, char** argv) {
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Player_Warrior(
                         &game_Data,
-                        "warrior_Stop",
                         1,
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
@@ -355,7 +354,6 @@ int main(int argc, char** argv) {
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Archer(
                         &game_Data,
-                        "archer_Stop",
                         1,
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
@@ -377,7 +375,6 @@ int main(int argc, char** argv) {
 					float y_Pos = terrain_height + radius;
                     spawn_Enemy_Warrior(
 						&game_Data,
-                        "warrior_Stop",
                         2,
                         { x_Pos, y_Pos },
 						player_Castle->rigid_Body.position_WS
@@ -631,7 +628,7 @@ int main(int argc, char** argv) {
                                 aim_Head.x += Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius;
                                 V2 arrow_Spawn_Location = archer->rigid_Body.position_WS;
                                 arrow_Spawn_Location.y -= Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius / 2;
-                                spawn_Arrow(&game_Data, AT_ARCHER_ARROW, "arrow", arrow_Spawn_Location, aim_Head, LEVEL_1);
+                                spawn_Arrow(&game_Data, AT_ARCHER_ARROW, arrow_Spawn_Location, aim_Head, LEVEL_1);
                             }
                         }
                         if (check_RB_Collision(&archer->rigid_Body, &warrior->rigid_Body)) {

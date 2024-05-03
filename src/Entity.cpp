@@ -212,10 +212,10 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name, int level) {
 	return tokens[0] + "_" + std::to_string(level);
 }
 
-void spawn_Player_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level) {
+void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
-	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
+	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
@@ -226,18 +226,18 @@ void spawn_Player_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2
 	castle.arrow_Ammo = castle_Stats_Array[level].arrow_Ammo;
 	castle.arrow_Ammo_Cooldown = castle_Stats_Array[level].arrow_Ammo_Cooldown;
 
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[castle.sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0].radius);
 
 	game_Data->player_Castle = castle;
 }
 
-void spawn_Enemy_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 position_WS, Level level) {
+void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
 	// Would be the appropriate way to do it but it breaks the serialization
 	// castle.stats_Info = &castle_Stats_Array[level];
 
-	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
+	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
@@ -246,19 +246,18 @@ void spawn_Enemy_Castle(std::string sprite_Sheet_Name, Game_Data* game_Data, V2 
 	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
 	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
 
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[castle.sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0].radius);
 
 	game_Data->enemy_Castle = castle;
 }
 
 
-void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet_Name, V2 spawn_Position, V2 target_Position, Level level) {
+void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 target_Position, Level level) {
 	Arrow arrow = {};
 
 	arrow.type = type;
 
-	arrow.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
-
+	arrow.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("arrow");
 	arrow.rigid_Body = create_Rigid_Body(spawn_Position, true);
 
 	arrow.damage = arrow_Stats_Array[level].damage;
@@ -288,17 +287,17 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, std::string sprite_Sheet
 	game_Data->player_Arrows.push_back(arrow);
 }
 
-void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position) {
+void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Warrior warrior = {};
-
+	
+	std::string sprite_Sheet_Name = "warrior_Stop";
 	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
-
 	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
-
+	
 	Unit_Data unit_Data = Globals::unit_Data_Map[unit_Data_Map_Key];
-
+	
 	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
 
 	warrior.speed = unit_Data.speed;
@@ -325,17 +324,17 @@ void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, i
 	game_Data->player_Warriors.push_back(warrior);
 }
 
-void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position) {
+void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Warrior warrior = {};
 
+	std::string sprite_Sheet_Name = "warrior_Stop";
 	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
-
 	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
-
+	
 	Unit_Data unit_Data = Globals::unit_Data_Map[unit_Data_Map_Key];
-
+	
 	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
 
 	warrior.speed = unit_Data.speed;
@@ -362,17 +361,15 @@ void spawn_Enemy_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, in
 	game_Data->enemy_Warriors.push_back(warrior);
 }
 
-void spawn_Archer(Game_Data* game_Data, std::string sprite_Sheet_Name, int level, V2 spawn_Position, V2 target_Position) {
+void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Archer archer = {};
 
+	std::string sprite_Sheet_Name = "archer_Stop";
 	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
-
 	Unit_Data unit_Data = Globals::unit_Data_Map[unit_Data_Map_Key];
 
 	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
-
 	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
-
 	archer.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
 	archer.speed = unit_Data.speed;
