@@ -1,5 +1,26 @@
 #include "Entity.h"
-void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
+#include <assert.h>
+
+std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
+
+Unit_Data bad_unit_Data = {
+	// max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
+	   100,	    25,		50,		1.0f,				150,		    ""         
+};
+
+Unit_Data& get_Unit_Data(std::string key) {
+	auto it = unit_Data_Map.find(key);
+	if (it != unit_Data_Map.end()) {
+		// Key found
+		return it->second;
+	} 
+
+	assert(false);
+	// Return garbage values
+	return bad_unit_Data;
+}
+
+void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
 	// assert(rigid_Body->num_Colliders < Globals::MAX_COLLIDERS);
 
 	Collider* collider = &rigid_Body->colliders[rigid_Body->num_Colliders++];
@@ -296,7 +317,7 @@ void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 	
-	Unit_Data unit_Data = Globals::unit_Data_Map[unit_Data_Map_Key];
+	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
 	
 	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
 
@@ -333,7 +354,7 @@ void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 	
-	Unit_Data unit_Data = Globals::unit_Data_Map[unit_Data_Map_Key];
+	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
 	
 	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
 
@@ -366,7 +387,7 @@ void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_
 
 	std::string sprite_Sheet_Name = "archer_Stop";
 	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
-	Unit_Data unit_Data = Globals::unit_Data_Map[unit_Data_Map_Key];
+	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
 
 	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
 	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
@@ -587,10 +608,6 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 	return (float)game_Data->terrain_Height_Map[x_Pos];
 }
 
-namespace Globals {
-	std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
-}
-
 void load_Unit_Data_CSV(std::string file_Name) {
 	std::ifstream file(file_Name);
 
@@ -604,7 +621,6 @@ void load_Unit_Data_CSV(std::string file_Name) {
 
 	std::string line;
 
-	std::getline(file, line);
 	std::getline(file, line);
 
 	Unit_Data unit_Data = {};
@@ -626,6 +642,6 @@ void load_Unit_Data_CSV(std::string file_Name) {
 		// No if statement needed
 		// unit_Data.spell_Type = tokens[row_Count++];
 
-		Globals::unit_Data_Map[unit_Map_Key] = unit_Data;
+		unit_Data_Map[unit_Map_Key] = unit_Data;
 	}
 }

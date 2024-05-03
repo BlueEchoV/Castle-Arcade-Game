@@ -15,7 +15,6 @@ namespace Globals {
 	extern SDL_Renderer* renderer;
 	extern std::unordered_map<std::string, Particle_Data> particle_Data_Map;
 	extern std::unordered_map<std::string, Sprite_Sheet> sprite_Sheet_Map;
-	extern std::unordered_map<std::string, Unit_Data> unit_Data_Map;
 
 	const float GRAVITY = 300;
 	const float ARCHER_ARROW_GRAVITY = 50;
