@@ -84,17 +84,16 @@ int main(int argc, char** argv) {
     std::string unit_Data_File_Path = "data/Unit_Data.csv";
     load_Unit_Data_CSV(unit_Data_File_Path);
 
-    /*
 	spawn_Particle_System(
 		game_Data,
 		"PT_RAINBOW",
         { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 4 },
-		10,
-		400,
-		400,
-		&basic_Particle_Image
+		1000,
+		500,
+		100,
+        -1,
+        false
 	);
-    */
 
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
@@ -379,7 +378,7 @@ int main(int argc, char** argv) {
                     spawn_Enemy_Warrior(
 						&game_Data,
                         "warrior_Stop",
-                        1,
+                        2,
                         { x_Pos, y_Pos },
 						player_Castle->rigid_Body.position_WS
 					);
@@ -467,14 +466,15 @@ int main(int argc, char** argv) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
-									spawn_Particle_System(
-										game_Data,
-										"PT_RAINBOW",
-										enemy_Warrior->rigid_Body.position_WS,
-										2,
-										15,
-										15,
-										enemy_Warrior->ID
+                                    spawn_Particle_System(
+                                        game_Data,
+                                        "PT_BLOOD",
+                                        enemy_Warrior->rigid_Body.position_WS,
+                                        0.5,
+                                        15,
+                                        15,
+										enemy_Warrior->ID,
+                                        false
 									);
                                     enemy_Warrior->health_Bar.current_HP -= arrow->damage;
                                     arrow->target_ID = enemy_Warrior->ID;

@@ -77,66 +77,41 @@ void process(std::vector<T>& vector, Archive* archive) {
 	}
 }
 
+// T my_Array[] is the same as T* my_Array
+// T my_Array[3] is also the same as T* my_Array. This syntax could be 
+// good for documenting the number I expect, but it's STILL a pointer
+// int size is creating a new function for different sizes (more code)
 template <typename T, int size>
 void process(T (&my_Array)[size], Archive* archive) {
-	if (archive->operation == GDO_SAVE) {
-		for (int i = 0; i < size; i++) {
-			process(my_Array[i], archive);
-		}
-	}
-	else if (archive->operation == GDO_LOAD) {
-		for (int i = 0; i < size; i++) {
-			process(my_Array[i], archive);
-		}
+	for (int i = 0; i < size; i++) {
+		process(my_Array[i], archive);
 	}
 }
 
 void process(bool& my_Bool, Archive* archive);
-
 void process(int& my_Int, Archive* archive);
-
 void process(float& my_Float, Archive* archive);
-
 void process(SDL_Rect& rect, Archive* archive);
-
 void process(std::string& string, Archive* archive);
-
 void process(Sprite_Sheet_Tracker& sprite_Sheet_Tracker, Archive* archive);
-
 void process(Particle& particle, Archive* archive);
-
 void process(Particle_System& particle_System, Archive* archive);
-
 void process(std::vector<Particle_System>& particle_Systems, Archive* archive);
-
 void process(V2& vector, Archive* archive);
-
 void process(Rigid_Body& rigid_Body, Archive* archive);
-
 void process(Health_Bar& health_Bar, Archive* archive);
-
 void process(Cooldown& cooldown, Archive* archive);
-
 void process(Castle& castle, Archive* archive);
-
 void process(Warrior& warrior, Archive* archive);
-
 void process(Arrow_Type& arrow_Type, Archive* archive);
-
 void process(Arrow& arrow, Archive* archive);
-
 void process(Archer& archer, Archive* archive);
-
 void process(Game_Data* game_Data, Archive* archive);
 
 void load_Game(Game_Data* game_Data, Saved_Games save_Game);
-
 void save_Game(Game_Data* game_Data, Saved_Games save_Game);
-
 void start_Game(Game_Data* game_Data);
 
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache);
-
 void load_Game_Data_Cache(Cache_Data& cache_Data);
-
 void save_Game_To_Cache(Saved_Games save_Game, Game_Data& game_Data, Cache_Data& cache_Data);

@@ -6,7 +6,7 @@ namespace Globals {
 	std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 }
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID) {
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID, bool flip_Horizontally) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
@@ -19,6 +19,7 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
 	particle_System.target_ID = target_ID;
+	particle_System.flip_Horizontally = flip_Horizontally;
 
 	game_Data.particle_Systems.push_back(particle_System);
 }
@@ -62,6 +63,11 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 					data->velocity_Min,
 					data->velocity_Max
 				);
+			if (particle_System.flip_Horizontally) {
+				// Flip the sign so it goes the opposite way
+				particle.velocity.x *= -1;
+				particle.velocity.y *= -1;
+			}
 			particle.position =
 				random_Vector_In_Range(
 					{
@@ -196,6 +202,8 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 			}
 			SDL_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
 			
+			// SDL_SetRenderDrawColor();
+
 			SDL_RenderCopyEx(Globals::renderer, texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 		}
 		SDL_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
@@ -203,8 +211,27 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 	}
 }
 
+#include <chrono>
+#include <thread>
 void load_Particle_Data_CSV(std::string file_Name) {
-	std::ifstream file(file_Name);
+	std::ifstream file;
+	
+	int retries = 0;
+	const int max_retries = 5;
+	const int delay_ms = 200;
+
+	// copy pasta for testing and it worked
+	// The first run through is failing but the second runthrough isn't.
+	while (retries < max_retries) {
+		file.open(file_Name);
+		if (file.is_open()) {
+			break;
+		}
+
+		SDL_Log("Attempt %d: Error loading .csv file", retries + 1);
+		std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+		retries++;
+	}
 
 	if (!file.is_open()) {
 		SDL_Log("Error loading .csv file");

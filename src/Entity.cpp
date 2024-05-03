@@ -297,7 +297,9 @@ void spawn_Player_Warrior(Game_Data* game_Data, std::string sprite_Sheet_Name, i
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
 
-	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, Globals::unit_Data_Map[unit_Data_Map_Key].max_HP);
+	Unit_Data unit_Data = Globals::unit_Data_Map[unit_Data_Map_Key];
+
+	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
 
 	warrior.speed = Globals::unit_Data_Map[unit_Data_Map_Key].speed;
 	warrior.damage = Globals::unit_Data_Map[unit_Data_Map_Key].damage;
@@ -609,6 +611,7 @@ void load_Unit_Data_CSV(std::string file_Name) {
 		std::vector<std::string> tokens = split(line, ',');
 		
 		int row_Count = 0;
+		// check column count is good
 		std::string unit_Type = tokens[row_Count++];
 		std::string unit_Level = tokens[row_Count++];
 		std::string unit_Map_Key = unit_Type + "_" + unit_Level;
@@ -618,6 +621,9 @@ void load_Unit_Data_CSV(std::string file_Name) {
 		unit_Data.speed = std::stof(tokens[row_Count++]);
 		unit_Data.attack_Cooldown = std::stof(tokens[row_Count++]);
 		unit_Data.attack_Range = std::stof(tokens[row_Count++]);
+
+		// No if statement needed
+		// unit_Data.spell_Type = tokens[row_Count++];
 
 		Globals::unit_Data_Map[unit_Map_Key] = unit_Data;
 	}

@@ -60,10 +60,11 @@ struct Particle_System {
 	float lifetime;
 	bool destroyed;
 	int target_ID = -1;
+	bool flip_Horizontally = false;
 	std::vector<Particle> particles;
 };
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID = -1);
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID = -1, bool flip_Horizontally = false);
 
 void update_Particle_System(Particle_System& particle_System, float delta_Time);
 
