@@ -68,6 +68,7 @@ int main(int argc, char** argv) {
 
     bool spawn_Warrior_Pressed = false;
     bool spawn_Archer_Pressed = false;
+    bool spawn_Necromancer_Pressed = false;
 
     bool running = true;
 
@@ -363,6 +364,20 @@ int main(int argc, char** argv) {
                     );
                     spawn_Archer_Pressed = false;
                 }
+                if (spawn_Necromancer_Pressed) {
+					Castle* player_Castle = &game_Data.player_Castle;
+					Castle* enemy_Castle = &game_Data.enemy_Castle;
+					spawn_Necromancer(
+						&game_Data,
+						1,
+						{
+							(float)player_Castle->rigid_Body.position_WS.x,
+							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
+						},
+						enemy_Castle->rigid_Body.position_WS
+					);
+					spawn_Necromancer_Pressed = false;
+                }
 
                 // Spawn enemy Warriors
                 if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
@@ -425,7 +440,8 @@ int main(int argc, char** argv) {
                 // Update enemy Warrior positions
                 for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
                     if (game_Data.enemy_Warriors[i].destroyed == false) {
-                        update_Unit_Position(&game_Data.enemy_Warriors[i].rigid_Body,
+                        update_Unit_Position(
+                            &game_Data.enemy_Warriors[i].rigid_Body,
                             game_Data.enemy_Warriors[i].stop,
                             delta_Time
                         );
@@ -442,6 +458,16 @@ int main(int argc, char** argv) {
                         );
                     }
                 }
+
+				for (int i = 0; i < game_Data.player_Necromancer.size(); i++) {
+					if (game_Data.player_Necromancer[i].destroyed == false) {
+						update_Unit_Position(
+							&game_Data.player_Necromancer[i].rigid_Body,
+							game_Data.player_Necromancer[i].stop,
+							delta_Time
+						);
+					}
+				}
 
                 // arrow collision
                 for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
@@ -543,6 +569,19 @@ int main(int argc, char** argv) {
                     }
                 }
 
+				// Collision necromancer with map
+				for (int i = 0; i < game_Data.player_Necromancer.size(); i++) {
+					Necromancer* necromancer = &game_Data.player_Necromancer[i];
+					if (check_Height_Map_Collision(&game_Data.player_Necromancer[i].rigid_Body, game_Data.terrain_Height_Map)) {
+						// Function: Pass in an archer and get the radius of the animation / sprite
+						// OR pass in the animation tracker (Makes sense)
+						float radius = get_Sprite_Radius(&necromancer->sprite_Sheet_Tracker);
+						float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)necromancer->rigid_Body.position_WS.x];
+
+                        necromancer->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+					}
+				}
+
                 // Initialize default values before collision check
                 for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
                     Warrior* warrior = &game_Data.player_Warriors[i];
@@ -630,6 +669,8 @@ int main(int argc, char** argv) {
                                 arrow_Spawn_Location.y -= Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius / 2;
                                 spawn_Arrow(&game_Data, AT_ARCHER_ARROW, arrow_Spawn_Location, aim_Head, LEVEL_1);
                             }
+                        } else {
+                            change_Animation(&archer->sprite_Sheet_Tracker, "archer_Walk");
                         }
                         if (check_RB_Collision(&archer->rigid_Body, &warrior->rigid_Body)) {
                             game_Data.enemy_Warriors[j].stop = true;
@@ -757,9 +798,19 @@ int main(int argc, char** argv) {
                     false
                 );
                 draw_HP_Bar(&archer->rigid_Body.position_WS, &archer->health_Bar);
-                draw_HP_Bar(&archer->rigid_Body.position_WS, &archer->health_Bar);
-                draw_HP_Bar(&archer->rigid_Body.position_WS, &archer->health_Bar);
             }
+
+			for (int i = 0; i < game_Data.player_Necromancer.size(); i++) {
+				Necromancer* necromancer = &game_Data.player_Necromancer[i];
+				draw_RigidBody_Colliders(&necromancer->rigid_Body, CI_GREEN);
+				draw_Unit_Animated(
+					&necromancer->rigid_Body,
+					&necromancer->sprite_Sheet_Tracker,
+					false
+				);
+				draw_HP_Bar(&necromancer->rigid_Body.position_WS, &necromancer->health_Bar);
+			}
+
 
             draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
             draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
@@ -800,6 +851,10 @@ int main(int argc, char** argv) {
 				spawn_Archer_Pressed = true;
 			}
             button_Pos.x += button_Height_Unit_Spawn;
+			if (button_Image(Globals::sprite_Sheet_Map["necromancer_Stop"].sprites[0].image.texture, "Spawn Necromancer", button_Pos, button_Height_Unit_Spawn)) {
+				spawn_Necromancer_Pressed = true;
+			}
+			button_Pos.x += button_Height_Unit_Spawn;
 
             if (current_Game_State == GS_PAUSED) {
                 int button_Width_Paused = 325;
@@ -893,6 +948,10 @@ int main(int argc, char** argv) {
 			std::erase_if(game_Data.player_Archers, [](Archer& archer) {
 				// Return if we want the value to be destroyed
 				return archer.destroyed || archer.health_Bar.current_HP <= 0;
+				});
+
+			std::erase_if(game_Data.player_Necromancer, [](Necromancer& necromancer) {
+				return necromancer.destroyed || necromancer.health_Bar.current_HP <= 0;
 				});
 
 			// Erase destroy units

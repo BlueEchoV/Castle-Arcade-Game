@@ -115,13 +115,35 @@ struct Unit_Data {
 	float speed;
 	float attack_Cooldown;
 	float attack_Range;
-	std::string spell_Type;
+	// std::string spell_Type;
 };
 
 struct Attached_Entity {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	float angle;
 	V2 offset;
+};
+
+struct Unit {
+	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
+
+	Rigid_Body rigid_Body;
+
+	Health_Bar health_Bar;
+
+	float speed;
+	float damage;
+	float attack_Cooldown;
+	float current_Attack_Cooldown;
+	float attack_Range;
+
+	Attached_Entity attached_Entities[Globals::MAX_ATTACHED_ENTITIES];
+	int attached_Entities_Size = 0;
+
+	bool destroyed;
+	bool stop;
+
+	int ID;
 };
 
 struct Warrior {
@@ -162,6 +184,23 @@ struct Archer {
 	bool stop;
 };
 
+// Spells 
+struct Necromancer {
+	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
+
+	Rigid_Body rigid_Body;
+
+	Health_Bar health_Bar;
+
+	float speed;
+	float attack_Cooldown;
+	float current_Attack_Cooldown;
+	float attack_Range;
+
+	bool destroyed;
+	bool stop;
+};
+
 struct Game_Data {
 	float									timer;
 	Castle									player_Castle;
@@ -171,6 +210,7 @@ struct Game_Data {
 	std::vector<Warrior>					enemy_Warriors;
 	std::vector<Warrior>					player_Warriors;
 	std::vector<Archer>						player_Archers;
+	std::vector<Necromancer>				player_Necromancer;
 	std::vector<Particle_System>			particle_Systems;
 	int										next_Entity_ID;
 };
@@ -188,9 +228,14 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level);
 void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level);
 void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 target_Position, Level level);
+// spawn_Unit("type", level (scalar));
+// Anytime I need a 'if' statement, add it in the csv.
+// Anytime something is different in the spawn functions, add it to the .csv file. All units should 
+// be treated the exact same.
 void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
 void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
 void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Necromancer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Arrow_Position(Arrow* arrow, float delta_Time);
@@ -213,4 +258,21 @@ Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name, int level);
 std::vector<int> create_Height_Map(const char* filename);
 
+
+enum Data_Type {
+	MT_BOOL,
+	MT_INT,
+	MT_FLOAT,
+	MT_STRING
+};
+
+struct Type_Descriptor {
+	Data_Type variable_Type;
+	int variable_Offset;
+	std::string column_Name;
+};
+
+int count_CSV_Rows(std::string file_Name);
+int get_Column_Index(std::vector<std::string> column_Names, std::string current_Column_Name);
+void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors);
 void load_Unit_Data_CSV(std::string file_Name);

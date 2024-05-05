@@ -1,14 +1,14 @@
 #include "Entity.h"
 #include <assert.h>
 
-std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
+static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
-Unit_Data bad_unit_Data = {
+const Unit_Data bad_unit_Data = {
 	// max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
-	   100,	    25,		50,		1.0f,				150,		    ""         
+	   100,	    25,		50,		1.0f,				150//,		    ""         
 };
 
-Unit_Data& get_Unit_Data(std::string key) {
+const Unit_Data& get_Unit_Data(std::string key) {
 	auto it = unit_Data_Map.find(key);
 	if (it != unit_Data_Map.end()) {
 		// Key found
@@ -385,7 +385,7 @@ void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 
 void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Archer archer = {};
 
-	std::string sprite_Sheet_Name = "archer_Stop";
+	std::string sprite_Sheet_Name = "archer_Walk";
 	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
 	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
 
@@ -413,6 +413,39 @@ void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_
 	add_Collider(&archer.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
 	game_Data->player_Archers.push_back(archer);
+}
+
+void spawn_Necromancer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
+	Necromancer necromancer = {};
+
+	std::string sprite_Sheet_Name = "necromancer_Stop";
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
+	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
+
+	necromancer.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
+	necromancer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
+	necromancer.rigid_Body = create_Rigid_Body(spawn_Position, false);
+
+	necromancer.speed = unit_Data.speed;
+	necromancer.attack_Cooldown = unit_Data.attack_Cooldown;
+	necromancer.current_Attack_Cooldown = 0.0f;
+	necromancer.attack_Range = unit_Data.attack_Range;
+
+	necromancer.destroyed = false;
+	necromancer.stop = false;
+
+	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
+
+	necromancer.rigid_Body.velocity.x = direction_V2.x * unit_Data.speed;
+	necromancer.rigid_Body.velocity.y = direction_V2.y * unit_Data.speed;
+
+	float radius = get_Sprite_Radius(&necromancer.sprite_Sheet_Tracker);
+
+	add_Collider(&necromancer.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&necromancer.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&necromancer.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
+
+	game_Data->player_Necromancer.push_back(necromancer);
 }
 
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color) {
@@ -608,40 +641,114 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 	return (float)game_Data->terrain_Height_Map[x_Pos];
 }
 
-void load_Unit_Data_CSV(std::string file_Name) {
+// Macro named FIELD
+// data_Type: This is the type of the field, passed as an argument to the macro.
+// offsetof(struct_Type, name): This macro is used to determine the offset of a member within a struct.
+//					  It returns the byte offset of name within the struct_Type. This assumes 
+//					  that name is a member of the struct_Type.
+// #name: This is a preprocessor operator that turns the name into a string literal.
+#define FIELD(struct_Type, data_Type, name) { data_Type, offsetof(struct_Type, name), #name }
+
+#if 0
+float max_HP;
+float damage;
+float speed;
+float attack_Cooldown;
+float attack_Range;
+// std::string spell_Type
+#endif
+
+// Array size will be determined based off total number of initializations
+Type_Descriptor unit_Type_Descriptors[] = {
+	FIELD(Unit_Data, MT_FLOAT, max_HP),
+	FIELD(Unit_Data, MT_FLOAT, damage),
+	FIELD(Unit_Data, MT_FLOAT, speed),
+	FIELD(Unit_Data, MT_FLOAT, attack_Cooldown),
+	FIELD(Unit_Data, MT_FLOAT, attack_Range),
+	// FIELD(Unit_Data, MT_STRING, spell_Type),
+};
+
+int count_CSV_Rows(std::string file_Name) {
+	// ifstream closes the file automatically
 	std::ifstream file(file_Name);
 
 	if (!file.is_open()) {
 		SDL_Log("Error loading .csv file");
 	}
 
-	DEFER{
-		file.close();
-	};
+	std::string line;
+	std::getline(file, line);
+	int total_Rows = 0;
+	while(std::getline(file, line)) {
+		total_Rows++;
+	}
+
+	assert(total_Rows > 0);
+	return total_Rows;
+}
+
+int get_Column_Index(std::vector<std::string> column_Names, std::string current_Column_Name) {
+	for (int i = 0; i < column_Names.size(); i++) {
+		if (column_Names[i] == current_Column_Name) {
+			return i;
+		}
+	}
+	// -1 if the index isn't found
+	return -1;
+}
+
+void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors) {
+	std::ifstream file(file_Name);
+
+	if (!file.is_open()) {
+		SDL_Log("Error loading .csv file");
+	}
 
 	std::string line;
-
+	// Don't throw away the first line
 	std::getline(file, line);
+	std::vector<std::string> column_Names = split(line, ',');
 
-	Unit_Data unit_Data = {};
-	while (std::getline(file, line)) {
+	int current_Row = 0;
+	while(std::getline(file, line)) {
 		std::vector<std::string> tokens = split(line, ',');
-		
-		int row_Count = 0;
-		// check column count is good
-		std::string unit_Type = tokens[row_Count++];
-		std::string unit_Level = tokens[row_Count++];
-		std::string unit_Map_Key = unit_Type + "_" + unit_Level;
 
-		unit_Data.max_HP = std::stof(tokens[row_Count++]);
-		unit_Data.damage = std::stof(tokens[row_Count++]);
-		unit_Data.speed = std::stof(tokens[row_Count++]);
-		unit_Data.attack_Cooldown = std::stof(tokens[row_Count++]);
-		unit_Data.attack_Range = std::stof(tokens[row_Count++]);
+		// Pointer arithmetic: Calculate a pointer 'write_Ptr' to the destination in memory 
+		//					   where the data will be written. The stride determines the offset
+		//					   between rows in the destination memory.
+		// NOTE: using a uint8_t* ensures that each increment or decrement of the pointer corresponds 
+		//		 to one byte.
+		uint8_t* write_Ptr = current_Row + stride + (uint8_t*)destination;
+		current_Row++;
 
-		// No if statement needed
-		// unit_Data.spell_Type = tokens[row_Count++];
+		for (int i = 0; i < total_Descriptors; i++) {
+			// Grab the descriptor we are currently on in the loop
+			Type_Descriptor* type_Descriptor = &type_Descriptors[i];
+			// This is for finding the correct token
+			int column_Index = get_Column_Index(column_Names, type_Descriptor->column_Name);
+			if (type_Descriptor->variable_Type == MT_INT) {
+				// Add the variable offset to get to the correct position in memory
+				int* destination_Ptr = (int*)(write_Ptr + type_Descriptor->variable_Offset);
+				*destination_Ptr = std::stoi(tokens[column_Index]);
 
-		unit_Data_Map[unit_Map_Key] = unit_Data;
+			} else if (type_Descriptor->variable_Type == MT_FLOAT) {
+				float* destination_Ptr = (float*)(write_Ptr + type_Descriptor->variable_Offset);
+				*destination_Ptr = std::stof(tokens[column_Index]);
+
+			} else if (type_Descriptor->variable_Type == MT_STRING) {
+				std::string* destination_Ptr = (std::string*)(write_Ptr + type_Descriptor->variable_Offset);
+				*destination_Ptr = tokens[column_Index];
+			}
+		}
 	}
+}
+
+void load_Unit_Data_CSV(std::string file_Name) {
+	// Each row is one unit_Data
+	int rows = count_CSV_Rows(file_Name);
+	std::vector<Unit_Data> unit_Data;
+	unit_Data.resize(rows);
+	//					 Data destination		 size of one stride	   descriptors above      total descriptors (sizeof)
+	//					(char*) ptr math
+	load_CSV(file_Name, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, sizeof(unit_Type_Descriptors));
 }
