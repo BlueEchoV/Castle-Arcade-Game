@@ -110,6 +110,7 @@ struct Arrow {
 
 // Applies to: Warrior, Archer
 struct Unit_Data {
+	std::string type;
 	float max_HP;
 	float damage;
 	float speed;
@@ -255,7 +256,7 @@ void draw_HP_Bar(V2* position, Health_Bar* health_Bar);
 
 Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness, float hp);
 Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
-std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name, int level);
+std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name);
 std::vector<int> create_Height_Map(const char* filename);
 
 

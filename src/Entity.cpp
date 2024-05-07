@@ -4,8 +4,8 @@
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_unit_Data = {
-	// max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
-	   100,	    25,		50,		1.0f,				150//,		    ""         
+	//	Type		max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
+	   "warrior",	100,	25,		50,		1.0f,				150//,		    ""         
 };
 
 const Unit_Data& get_Unit_Data(std::string key) {
@@ -228,9 +228,9 @@ Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity) {
 }
 
 
-std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name, int level) {
+std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	std::vector<std::string> tokens = split(sprite_Sheet_Name, '_');
-	return tokens[0] + "_" + std::to_string(level);
+	return tokens[0];
 }
 
 void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
@@ -310,9 +310,10 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 ta
 
 void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Warrior warrior = {};
-	
+	REF(level);
+
 	std::string sprite_Sheet_Name = "warrior_Stop";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
 	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
@@ -347,9 +348,10 @@ void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2
 
 void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Warrior warrior = {};
+	REF(level);
 
 	std::string sprite_Sheet_Name = "warrior_Stop";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
 	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
@@ -384,9 +386,10 @@ void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 
 
 void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Archer archer = {};
+	REF(level);
 
 	std::string sprite_Sheet_Name = "archer_Walk";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
 	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
 
 	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
@@ -417,9 +420,10 @@ void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_
 
 void spawn_Necromancer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Necromancer necromancer = {};
+	REF(level);
 
 	std::string sprite_Sheet_Name = "necromancer_Stop";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name, level);
+	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
 	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
 
 	necromancer.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
@@ -649,17 +653,9 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 // #name: This is a preprocessor operator that turns the name into a string literal.
 #define FIELD(struct_Type, data_Type, name) { data_Type, offsetof(struct_Type, name), #name }
 
-#if 0
-float max_HP;
-float damage;
-float speed;
-float attack_Cooldown;
-float attack_Range;
-// std::string spell_Type
-#endif
-
 // Array size will be determined based off total number of initializations
 Type_Descriptor unit_Type_Descriptors[] = {
+	FIELD(Unit_Data, MT_STRING, type),
 	FIELD(Unit_Data, MT_FLOAT, max_HP),
 	FIELD(Unit_Data, MT_FLOAT, damage),
 	FIELD(Unit_Data, MT_FLOAT, speed),
@@ -688,13 +684,15 @@ int count_CSV_Rows(std::string file_Name) {
 }
 
 int get_Column_Index(std::vector<std::string> column_Names, std::string current_Column_Name) {
-	for (int i = 0; i < column_Names.size(); i++) {
+	int i = -1;
+	for (i = 0; i < column_Names.size(); i++) {
 		if (column_Names[i] == current_Column_Name) {
 			return i;
 		}
 	}
+	assert(i >= 0);
 	// -1 if the index isn't found
-	return -1;
+	return i;
 }
 
 void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors) {
@@ -718,7 +716,7 @@ void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Desc
 		//					   between rows in the destination memory.
 		// NOTE: using a uint8_t* ensures that each increment or decrement of the pointer corresponds 
 		//		 to one byte.
-		uint8_t* write_Ptr = current_Row + stride + (uint8_t*)destination;
+		uint8_t* write_Ptr = (uint8_t*)destination + (current_Row * stride);
 		current_Row++;
 
 		for (int i = 0; i < total_Descriptors; i++) {
@@ -748,7 +746,14 @@ void load_Unit_Data_CSV(std::string file_Name) {
 	int rows = count_CSV_Rows(file_Name);
 	std::vector<Unit_Data> unit_Data;
 	unit_Data.resize(rows);
+	char* unit_Data_Char = (char*)(unit_Data.data());
+	REF(unit_Data_Char);
 	//					 Data destination		 size of one stride	   descriptors above      total descriptors (sizeof)
 	//					(char*) ptr math
-	load_CSV(file_Name, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, sizeof(unit_Type_Descriptors));
+	load_CSV(file_Name, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, ARRAY_SIZE(unit_Type_Descriptors));
+
+	// Loop through the vector and add the data to the unordered map
+	for (Unit_Data& iterator : unit_Data) {
+		unit_Data_Map[iterator.type] = iterator;
+	}
 }
