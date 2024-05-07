@@ -9,6 +9,12 @@ struct Sprite {
 	Image image;
 };
 
+struct Sprite_Sheet_Data {
+	std::string sprite_Sheet_Name;
+	int rows;
+	int columns;
+};
+
 struct Sprite_Sheet {
 	std::vector<Sprite> sprites;
 };
@@ -33,7 +39,7 @@ void draw_Layer(SDL_Texture* texture);
 
 std::vector<std::string> split(const std::string& my_String, char delimiter);
 
-void load_Sprite_Sheet_Data_CSV(const char* file_Path_CSV);
+void load_Sprite_Sheet_Data_CSV(std::string file_Path);
 
 Sprite_Sheet& get_Sprite_Sheet(std::string key);
 

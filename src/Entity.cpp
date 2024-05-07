@@ -667,8 +667,6 @@ void load_Unit_Data_CSV(std::string file_Name) {
 	int rows = count_CSV_Rows(file_Name);
 	std::vector<Unit_Data> unit_Data;
 	unit_Data.resize(rows);
-	char* unit_Data_Char = (char*)(unit_Data.data());
-	REF(unit_Data_Char);
 	//					 Data destination		 size of one stride	   descriptors above      total descriptors (sizeof)
 	//					(char*) ptr math
 	load_CSV(file_Name, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, ARRAY_SIZE(unit_Type_Descriptors));

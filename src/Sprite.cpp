@@ -114,45 +114,6 @@ std::vector<std::string> split(const std::string& my_String, char delimiter) {
 	return tokens;
 }
 
-void load_Sprite_Sheet_Data_CSV(const char* file_Path_CSV) {
-	std::string my_String = std::string(file_Path_CSV);
-	std::ifstream file(my_String);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
-	DEFER{
-		file.close();
-	};
-
-	std::string line;
-	// Skip the first rows in the .csv file 
-	std::getline(file, line);
-
-	int file_Row_Count = 1;
-	while (std::getline(file, line)) {
-		std::vector<std::string> tokens = split(line, ',');
-		int file_Column_Count = 0;
-		std::string file_Name = tokens[file_Column_Count++];
-		// images/basic_Particle_1.png
-		std::string file_Path = "images/" + file_Name + ".png";
-		if (tokens.size() == 3) {
-			int sprite_Sheet_Rows = std::stoi(tokens[file_Column_Count++]);
-			int sprite_Sheet_Columns = std::stoi(tokens[file_Column_Count++]);
-			
-			Sprite_Sheet sprite_Sheet = create_Sprite_Sheet(file_Path.c_str(), sprite_Sheet_Rows, sprite_Sheet_Columns);
-			sprite_Sheet_Map[file_Name] = sprite_Sheet;
-		}
-		else {
-			SDL_Log("Error: Line does not have enough data");
-		}
-		file_Row_Count++;
-	}
-
-}
-
-
 int count_CSV_Rows(std::string file_Name) {
 	// ifstream closes the file automatically
 	std::ifstream file(file_Name);
@@ -231,3 +192,30 @@ void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Desc
 		}
 	}
 }
+
+Type_Descriptor sprite_Sheet_Type_Descriptor[] = {
+	FIELD(Sprite_Sheet_Data, MT_STRING, sprite_Sheet_Name),
+	FIELD(Sprite_Sheet_Data, MT_INT, rows),
+	FIELD(Sprite_Sheet_Data, MT_INT, columns),
+};
+
+void load_Sprite_Sheet_Data_CSV(std::string file_Path) {
+	std::ifstream file(file_Path);
+
+	if (!file.is_open()) {
+		SDL_Log("Error loading .csv file");
+	}
+
+	int rows = count_CSV_Rows(file_Path);
+	std::vector<Sprite_Sheet_Data> sprite_Sheets;
+	sprite_Sheets.resize(rows);
+
+	load_CSV(file_Path, (char*)sprite_Sheets.data(), sizeof(sprite_Sheets[0]), sprite_Sheet_Type_Descriptor, ARRAY_SIZE(sprite_Sheet_Type_Descriptor));
+
+	for (Sprite_Sheet_Data& sprite_Sheet_Data : sprite_Sheets) {
+		std::string sprite_Sheet_File_Path = "images/" + sprite_Sheet_Data.sprite_Sheet_Name + ".png";
+		Sprite_Sheet sprite_Sheet = create_Sprite_Sheet(sprite_Sheet_File_Path.c_str(), sprite_Sheet_Data.rows, sprite_Sheet_Data.columns);
+		sprite_Sheet_Map[sprite_Sheet_Data.sprite_Sheet_Name] = sprite_Sheet;
+	}
+}
+
