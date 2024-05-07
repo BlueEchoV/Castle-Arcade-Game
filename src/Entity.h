@@ -111,6 +111,7 @@ struct Arrow {
 // Applies to: Warrior, Archer
 struct Unit_Data {
 	std::string type;
+	std::string sprite_Sheet_Name;
 	float max_HP;
 	float damage;
 	float speed;

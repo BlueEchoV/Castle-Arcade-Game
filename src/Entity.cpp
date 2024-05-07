@@ -4,8 +4,8 @@
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_unit_Data = {
-	//	Type		max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
-	   "warrior",	100,	25,		50,		1.0f,				150//,		    ""         
+	//	Type		sprite_Sheet	max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
+	   "warrior",	"warrior_Stop", 100,	25,		50,		1.0f,				150//,		    ""         
 };
 
 const Unit_Data& get_Unit_Data(std::string key) {
@@ -308,17 +308,19 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 ta
 	game_Data->player_Arrows.push_back(arrow);
 }
 
+//void spawn_Unit(Game_Data* game_Data, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
+//
+//}
+
 void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
 	Warrior warrior = {};
 	REF(level);
 
-	std::string sprite_Sheet_Name = "warrior_Stop";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
-	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
+	Unit_Data unit_Data = get_Unit_Data("warrior");
+	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(unit_Data.sprite_Sheet_Name);
 
 	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
-	
-	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
+
 	
 	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
 
@@ -656,6 +658,7 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 // Array size will be determined based off total number of initializations
 Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, MT_STRING, type),
+	FIELD(Unit_Data, MT_STRING, sprite_Sheet_Name),
 	FIELD(Unit_Data, MT_FLOAT, max_HP),
 	FIELD(Unit_Data, MT_FLOAT, damage),
 	FIELD(Unit_Data, MT_FLOAT, speed),

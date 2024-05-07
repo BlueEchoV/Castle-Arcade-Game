@@ -106,7 +106,6 @@ void load_Sprite_Sheet_Data_CSV(const char* file_Path_CSV) {
 	std::string line;
 	// Skip the first rows in the .csv file 
 	std::getline(file, line);
-	std::getline(file, line);
 
 	int file_Row_Count = 1;
 	while (std::getline(file, line)) {
