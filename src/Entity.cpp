@@ -3,7 +3,7 @@
 
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
-const Unit_Data bad_unit_Data = {
+const Unit_Data bad_Unit_Data = {
 	//	Type		sprite_Sheet	max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
 	   "warrior",	"warrior_Stop", 100,	25,		50,		1.0f,				150//,		    ""         
 };
@@ -17,7 +17,7 @@ const Unit_Data& get_Unit_Data(std::string key) {
 
 	assert(false);
 	// Return garbage values
-	return bad_unit_Data;
+	return bad_Unit_Data;
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	

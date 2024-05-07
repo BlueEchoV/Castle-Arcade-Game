@@ -7,11 +7,9 @@
 
 // Forward declaration
 struct SDL_Renderer;
-struct Particle_Data;
 
 namespace Globals {
 	extern SDL_Renderer* renderer;
-	extern std::unordered_map<std::string, Particle_Data> particle_Data_Map;
 
 	const float GRAVITY = 300;
 	const float ARCHER_ARROW_GRAVITY = 50;

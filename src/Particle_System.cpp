@@ -1,9 +1,36 @@
 #include "Particle_System.h"
 #include <algorithm> 
 #include "Entity.h"
+#include <assert.h>
 
-namespace Globals {
-	std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
+std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
+
+std::string type;
+std::string sprite_Sheet_Name;
+int size;
+float time_Between_Spawns;
+
+float max_Fade;
+float lifetime_Min;
+float lifetime_Max;
+V2 velocity_Min;
+V2 velocity_Max;
+
+const Particle_Data bad_Particle_Data = {
+	// type,		sprite_Sheet,		size	 time_Between_Spawns  max_Fade_In  lifetime_Min		lifetime_Max  velocity_Min  velocity_Max  
+	  "PT_RAINBOW", "basic_Particle_1", 20,		 0.01f,				  0.5f,		   3.0f,			3.0f,		 {0.0f, 0.0f}, {0.0f, 0.0f}
+};
+
+const Particle_Data& get_Particle_Data(std::string key) {
+	auto it = particle_Data_Map.find(key);
+	if (it != particle_Data_Map.end()) {
+		// Key found
+		return it->second;
+	}
+
+	assert(false);
+	// Return garbage values
+	return bad_Particle_Data;
 }
 
 void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID, bool flip_Horizontally) {
@@ -14,7 +41,7 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 	particle_System.rect.w = w;
 	particle_System.rect.h = h;
 	particle_System.particle_Type = particle_Type;
-	particle_System.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(Globals::particle_Data_Map[particle_Type].sprite_Sheet_Name);
+	particle_System.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(particle_Data_Map[particle_Type].sprite_Sheet_Name);
 	particle_System.time_Between_Spawns = 0.0f;
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
@@ -44,7 +71,7 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 		int max_Spawn = 1000;
 		int current_Spawn = 0;
 		
-		const Particle_Data* data = &Globals::particle_Data_Map[particle_System.particle_Type];
+		const Particle_Data* data = &get_Particle_Data(particle_System.particle_Type);
 
 		while (particle_System.time_Between_Spawns <= 0 
 			&& current_Spawn <= max_Spawn
@@ -160,7 +187,7 @@ F_Color HSV_To_RGB(float h,		float s,		float v) {
 // Render
 void draw_Particle_Systems(Game_Data& game_Data) {
 	for (const Particle_System& particle_System : game_Data.particle_Systems) {
-		const Particle_Data* particle_Data = &Globals::particle_Data_Map[particle_System.particle_Type];
+		const Particle_Data* particle_Data = &get_Particle_Data(particle_System.particle_Type);
 		const Sprite_Sheet* sprite_Sheet_Data = &get_Sprite_Sheet(particle_Data->sprite_Sheet_Name);
 		SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
 		// Chris' trick for rendering backwards
@@ -210,63 +237,29 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 	}
 }
 
-#include <chrono>
-#include <thread>
+Type_Descriptor particle_Data_Type_Descriptors[] = {
+	FIELD(Particle_Data, MT_STRING, type),
+	FIELD(Particle_Data, MT_STRING, sprite_Sheet_Name),
+	FIELD(Particle_Data, MT_INT, size),
+	FIELD(Particle_Data, MT_FLOAT, time_Between_Spawns),
+
+	FIELD(Particle_Data, MT_FLOAT, max_Fade),
+	FIELD(Particle_Data, MT_FLOAT, lifetime_Min),
+	FIELD(Particle_Data, MT_FLOAT, lifetime_Max),
+	FIELD(Particle_Data, MT_FLOAT, velocity_Min.x),
+	FIELD(Particle_Data, MT_FLOAT, velocity_Min.y),
+	FIELD(Particle_Data, MT_FLOAT, velocity_Max.x),
+	FIELD(Particle_Data, MT_FLOAT, velocity_Max.y),
+};
+
 void load_Particle_Data_CSV(std::string file_Name) {
-	std::ifstream file;
-	
-	int retries = 0;
-	const int max_retries = 5;
-	const int delay_ms = 200;
+	int rows = count_CSV_Rows(file_Name);
+	std::vector<Particle_Data> particle_Data;
+	particle_Data.resize(rows);
 
-	// copy pasta for testing and it worked
-	// The first run through is failing but the second run through isn't.
-	while (retries < max_retries) {
-		file.open(file_Name);
-		if (file.is_open()) {
-			break;
-		}
+	load_CSV(file_Name, (char*)particle_Data.data(), sizeof(particle_Data[0]), particle_Data_Type_Descriptors, ARRAY_SIZE(particle_Data_Type_Descriptors));
 
-		SDL_Log("Attempt %d: Error loading .csv file", retries + 1);
-		std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
-		retries++;
-	}
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
-	DEFER{
-		file.close();
-	};
-
-	std::string line;
-
-	std::getline(file, line);
-
-	Particle_Data particle_Data = {};
-	while (std::getline(file, line)) {
-		// Types,size,max_Particles,time_Between Spawns,max_Fade,lifetime_Min,lifetime_Max
-		std::vector<std::string> tokens = split(line, ',');
-		int row_Count = 0;
-		std::string particle_Type = tokens[row_Count++];
-
-		if (tokens.size() == 11) {
-			particle_Data.sprite_Sheet_Name = tokens[row_Count++];
-			particle_Data.size = std::stoi(tokens[row_Count++]);
-			particle_Data.time_Between_Spawns = std::stof(tokens[row_Count++]);
-			particle_Data.max_Fade = std::stof(tokens[row_Count++]);
-			particle_Data.lifetime_Min = std::stof(tokens[row_Count++]);
-			particle_Data.lifetime_Max = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Min.x = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Min.y = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Max.x = std::stof(tokens[row_Count++]);
-			particle_Data.velocity_Max.y = std::stof(tokens[row_Count++]);
-
-			Globals::particle_Data_Map[particle_Type] = particle_Data;
-		}
-		else {
-			SDL_Log("Error: Line does not have enough data");
-		}
+	for (Particle_Data& iterator : particle_Data) {
+		particle_Data_Map[iterator.type] = iterator;
 	}
 }

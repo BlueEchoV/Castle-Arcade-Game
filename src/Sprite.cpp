@@ -200,22 +200,16 @@ Type_Descriptor sprite_Sheet_Type_Descriptor[] = {
 };
 
 void load_Sprite_Sheet_Data_CSV(std::string file_Path) {
-	std::ifstream file(file_Path);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
 	int rows = count_CSV_Rows(file_Path);
 	std::vector<Sprite_Sheet_Data> sprite_Sheets;
 	sprite_Sheets.resize(rows);
 
 	load_CSV(file_Path, (char*)sprite_Sheets.data(), sizeof(sprite_Sheets[0]), sprite_Sheet_Type_Descriptor, ARRAY_SIZE(sprite_Sheet_Type_Descriptor));
 
-	for (Sprite_Sheet_Data& sprite_Sheet_Data : sprite_Sheets) {
-		std::string sprite_Sheet_File_Path = "images/" + sprite_Sheet_Data.sprite_Sheet_Name + ".png";
-		Sprite_Sheet sprite_Sheet = create_Sprite_Sheet(sprite_Sheet_File_Path.c_str(), sprite_Sheet_Data.rows, sprite_Sheet_Data.columns);
-		sprite_Sheet_Map[sprite_Sheet_Data.sprite_Sheet_Name] = sprite_Sheet;
+	for (Sprite_Sheet_Data& iterator : sprite_Sheets) {
+		std::string sprite_Sheet_File_Path = "images/" + iterator.sprite_Sheet_Name + ".png";
+		Sprite_Sheet sprite_Sheet = create_Sprite_Sheet(sprite_Sheet_File_Path.c_str(), iterator.rows, iterator.columns);
+		sprite_Sheet_Map[iterator.sprite_Sheet_Name] = sprite_Sheet;
 	}
 }
 
