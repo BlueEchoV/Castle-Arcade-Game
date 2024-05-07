@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_MENU) {
 			// No game logic
-			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Map["bkg_Menu"].sprites[0].image.texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
         
             draw_String_With_Background(
                 &font_1, 
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
             button_Pos.y += 100;
         }
         else if (current_Game_State == GS_LOADGAME) {
-            SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Map["bkg_Menu"].sprites[0].image.texture, NULL, NULL);
+            SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
 
             int button_Width = 325;
             int button_Height = 90;
@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
 			}
         }
 		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
-			SDL_RenderCopy(Globals::renderer, Globals::sprite_Sheet_Map["bkg_Gameloop"].sprites[0].image.texture, NULL, NULL);
+			SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Gameloop"), NULL, NULL);
 			if (current_Game_State == GS_VICTORY) {
 				draw_String_With_Background(
 					&font_1,
@@ -664,9 +664,9 @@ int main(int argc, char** argv) {
                                 archer->current_Attack_Cooldown = archer->attack_Cooldown;
                                 V2 aim_Head = warrior->rigid_Body.position_WS;
                                 std::string sprite_Sheet_Name = game_Data.enemy_Warriors[0].sprite_Sheet_Tracker.sprite_Sheet_Name;
-                                aim_Head.x += Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius;
+                                aim_Head.x += get_Sprite_Radius(&game_Data.enemy_Warriors[0].sprite_Sheet_Tracker);
                                 V2 arrow_Spawn_Location = archer->rigid_Body.position_WS;
-                                arrow_Spawn_Location.y -= Globals::sprite_Sheet_Map[sprite_Sheet_Name].sprites[0].radius / 2;
+                                arrow_Spawn_Location.y -= get_Sprite_Radius(&game_Data.enemy_Warriors[0].sprite_Sheet_Tracker) / 2;
                                 spawn_Arrow(&game_Data, AT_ARCHER_ARROW, arrow_Spawn_Location, aim_Head, LEVEL_1);
                             }
                         } else {
@@ -715,8 +715,8 @@ int main(int argc, char** argv) {
 
 
             // ***Rendering happens here***
-            draw_Layer(Globals::sprite_Sheet_Map["bkg_Gameloop"].sprites[0].image.texture);
-            draw_Layer(Globals::sprite_Sheet_Map["collision_Terrain_1"].sprites[0].image.texture);
+            draw_Layer(get_Sprite_Sheet_Texture("bkg_Gameloop"));
+            draw_Layer(get_Sprite_Sheet_Texture("collision_Terrain_1"));
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
 
@@ -843,15 +843,15 @@ int main(int argc, char** argv) {
             V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
 			int button_Height_Unit_Spawn = 150;
             // int x_Offset = button_Width;
-            if (button_Image(Globals::sprite_Sheet_Map["warrior_Stop"].sprites[0].image.texture, "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(get_Sprite_Sheet_Texture("warrior_Stop"), "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
                 spawn_Warrior_Pressed = true;
             } 
             button_Pos.x += button_Height_Unit_Spawn;
-            if (button_Image(Globals::sprite_Sheet_Map["archer_Stop"].sprites[0].image.texture, "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
+            if (button_Image(get_Sprite_Sheet_Texture("archer_Stop"), "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
 				spawn_Archer_Pressed = true;
 			}
             button_Pos.x += button_Height_Unit_Spawn;
-			if (button_Image(Globals::sprite_Sheet_Map["necromancer_Stop"].sprites[0].image.texture, "Spawn Necromancer", button_Pos, button_Height_Unit_Spawn)) {
+			if (button_Image(get_Sprite_Sheet_Texture("necromancer_Stop"), "Spawn Necromancer", button_Pos, button_Height_Unit_Spawn)) {
 				spawn_Necromancer_Pressed = true;
 			}
 			button_Pos.x += button_Height_Unit_Spawn;
@@ -963,10 +963,7 @@ int main(int argc, char** argv) {
         SDL_RenderPresent(Globals::renderer);
     }
 
-    // Free the pixel data inside the sprites
-    for (const auto& value : Globals::sprite_Sheet_Map) {
-        stbi_image_free(value.second.sprites[0].image.pixel_Data);
-	}
+    free_Pixel_Data_In_Sprite_Sheet_Map();
 
     soloud.deinit();
     return 0;

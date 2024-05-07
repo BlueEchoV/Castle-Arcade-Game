@@ -161,7 +161,7 @@ F_Color HSV_To_RGB(float h,		float s,		float v) {
 void draw_Particle_Systems(Game_Data& game_Data) {
 	for (const Particle_System& particle_System : game_Data.particle_Systems) {
 		const Particle_Data* particle_Data = &Globals::particle_Data_Map[particle_System.particle_Type];
-		const Sprite_Sheet* sprite_Sheet_Data = &Globals::sprite_Sheet_Map[particle_Data->sprite_Sheet_Name];
+		const Sprite_Sheet* sprite_Sheet_Data = &get_Sprite_Sheet(particle_Data->sprite_Sheet_Name);
 		SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
 		// Chris' trick for rendering backwards
 		for (size_t i = particle_System.particles.size(); i--;) {
@@ -242,7 +242,6 @@ void load_Particle_Data_CSV(std::string file_Name) {
 
 	std::string line;
 
-	std::getline(file, line);
 	std::getline(file, line);
 
 	Particle_Data particle_Data = {};

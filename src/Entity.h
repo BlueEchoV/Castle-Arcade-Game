@@ -260,21 +260,4 @@ Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name);
 std::vector<int> create_Height_Map(const char* filename);
 
-
-enum Data_Type {
-	MT_BOOL,
-	MT_INT,
-	MT_FLOAT,
-	MT_STRING
-};
-
-struct Type_Descriptor {
-	Data_Type variable_Type;
-	int variable_Offset;
-	std::string column_Name;
-};
-
-int count_CSV_Rows(std::string file_Name);
-int get_Column_Index(std::vector<std::string> column_Names, std::string current_Column_Name);
-void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors);
 void load_Unit_Data_CSV(std::string file_Name);

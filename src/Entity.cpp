@@ -30,7 +30,8 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
 
 void draw_Castle(Castle* castle, bool flip) {
 	SDL_Rect temp = {};
-	Sprite* sprite = &Globals::sprite_Sheet_Map[castle->sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0];
+	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(castle->sprite_Sheet_Tracker.sprite_Sheet_Name);
+	Sprite* sprite = &sprite_Sheet->sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
@@ -45,7 +46,8 @@ void draw_Castle(Castle* castle, bool flip) {
 
 void draw_Arrow(Arrow* arrow, bool flip) {
 	SDL_Rect temp = {};
-	Sprite* sprite = &Globals::sprite_Sheet_Map[arrow->sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0];
+	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(arrow->sprite_Sheet_Tracker.sprite_Sheet_Name);
+	Sprite* sprite = &sprite_Sheet->sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
@@ -71,7 +73,8 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 
 void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip) {
 	SDL_Rect temp = {};
-	Sprite* sprite = &Globals::sprite_Sheet_Map[attached_Entity->sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0];
+	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(attached_Entity->sprite_Sheet_Tracker.sprite_Sheet_Name);
+	Sprite* sprite = &sprite_Sheet->sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
@@ -98,7 +101,7 @@ void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float del
 		if (tracker->animation_Time >= conversion_Frames) {
 			tracker->current_Frame++;
 			tracker->animation_Time = 0;
-			if (tracker->current_Frame >= Globals::sprite_Sheet_Map[tracker->sprite_Sheet_Name].sprites.size()) {
+			if (tracker->current_Frame >= get_Sprite_Sheet(tracker->sprite_Sheet_Name).sprites.size()) {
 				tracker->current_Frame = 0;
 			}
 		}
@@ -115,7 +118,7 @@ void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float del
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, bool flip) {
 	Uint32 sprite_Frame = tracker->current_Frame;
 
-	const Sprite_Sheet* sprite_Sheet = &Globals::sprite_Sheet_Map[tracker->sprite_Sheet_Name];
+	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(tracker->sprite_Sheet_Name);
 	SDL_Rect current_Frame_Rect = sprite_Sheet->sprites[sprite_Frame].source_Rect;
 
 	const SDL_Rect* src_Rect = &sprite_Sheet->sprites[0].source_Rect;
@@ -247,7 +250,7 @@ void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 	castle.arrow_Ammo = castle_Stats_Array[level].arrow_Ammo;
 	castle.arrow_Ammo_Cooldown = castle_Stats_Array[level].arrow_Ammo_Cooldown;
 
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[castle.sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 
 	game_Data->player_Castle = castle;
 }
@@ -267,7 +270,7 @@ void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
 	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
 
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, Globals::sprite_Sheet_Map[castle.sprite_Sheet_Tracker.sprite_Sheet_Name].sprites[0].radius);
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 
 	game_Data->enemy_Castle = castle;
 }
@@ -647,14 +650,6 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 	return (float)game_Data->terrain_Height_Map[x_Pos];
 }
 
-// Macro named FIELD
-// data_Type: This is the type of the field, passed as an argument to the macro.
-// offsetof(struct_Type, name): This macro is used to determine the offset of a member within a struct.
-//					  It returns the byte offset of name within the struct_Type. This assumes 
-//					  that name is a member of the struct_Type.
-// #name: This is a preprocessor operator that turns the name into a string literal.
-#define FIELD(struct_Type, data_Type, name) { data_Type, offsetof(struct_Type, name), #name }
-
 // Array size will be determined based off total number of initializations
 Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, MT_STRING, type),
@@ -666,83 +661,6 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, MT_FLOAT, attack_Range),
 	// FIELD(Unit_Data, MT_STRING, spell_Type),
 };
-
-int count_CSV_Rows(std::string file_Name) {
-	// ifstream closes the file automatically
-	std::ifstream file(file_Name);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
-	std::string line;
-	std::getline(file, line);
-	int total_Rows = 0;
-	while(std::getline(file, line)) {
-		total_Rows++;
-	}
-
-	assert(total_Rows > 0);
-	return total_Rows;
-}
-
-int get_Column_Index(std::vector<std::string> column_Names, std::string current_Column_Name) {
-	int i = -1;
-	for (i = 0; i < column_Names.size(); i++) {
-		if (column_Names[i] == current_Column_Name) {
-			return i;
-		}
-	}
-	assert(i >= 0);
-	// -1 if the index isn't found
-	return i;
-}
-
-void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors) {
-	std::ifstream file(file_Name);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
-	std::string line;
-	// Don't throw away the first line
-	std::getline(file, line);
-	std::vector<std::string> column_Names = split(line, ',');
-
-	int current_Row = 0;
-	while(std::getline(file, line)) {
-		std::vector<std::string> tokens = split(line, ',');
-
-		// Pointer arithmetic: Calculate a pointer 'write_Ptr' to the destination in memory 
-		//					   where the data will be written. The stride determines the offset
-		//					   between rows in the destination memory.
-		// NOTE: using a uint8_t* ensures that each increment or decrement of the pointer corresponds 
-		//		 to one byte.
-		uint8_t* write_Ptr = (uint8_t*)destination + (current_Row * stride);
-		current_Row++;
-
-		for (int i = 0; i < total_Descriptors; i++) {
-			// Grab the descriptor we are currently on in the loop
-			Type_Descriptor* type_Descriptor = &type_Descriptors[i];
-			// This is for finding the correct token
-			int column_Index = get_Column_Index(column_Names, type_Descriptor->column_Name);
-			if (type_Descriptor->variable_Type == MT_INT) {
-				// Add the variable offset to get to the correct position in memory
-				int* destination_Ptr = (int*)(write_Ptr + type_Descriptor->variable_Offset);
-				*destination_Ptr = std::stoi(tokens[column_Index]);
-
-			} else if (type_Descriptor->variable_Type == MT_FLOAT) {
-				float* destination_Ptr = (float*)(write_Ptr + type_Descriptor->variable_Offset);
-				*destination_Ptr = std::stof(tokens[column_Index]);
-
-			} else if (type_Descriptor->variable_Type == MT_STRING) {
-				std::string* destination_Ptr = (std::string*)(write_Ptr + type_Descriptor->variable_Offset);
-				*destination_Ptr = tokens[column_Index];
-			}
-		}
-	}
-}
 
 void load_Unit_Data_CSV(std::string file_Name) {
 	// Each row is one unit_Data
