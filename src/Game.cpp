@@ -186,20 +186,20 @@ void process(Archive* ar, Attached_Entity& attached_Entity) {
 	process(ar, attached_Entity.offset);
 }
 
-void process(Archive* ar, Warrior& warrior) {
-	process(ar, warrior.sprite_Sheet_Tracker);
-	process(ar, warrior.rigid_Body);
-	process(ar, warrior.health_Bar);
-	process(ar, warrior.speed);
-	process(ar, warrior.damage);
-	process(ar, warrior.attack_Cooldown);
-	process(ar, warrior.current_Attack_Cooldown);
-	process(ar, warrior.attack_Range);
-	process(ar, warrior.attached_Entities);
-	process(ar, warrior.attached_Entities_Size);
-	process(ar, warrior.destroyed);
-	process(ar, warrior.stop);
-	process(ar, warrior.ID);
+void process(Archive* ar, Unit& unit) {
+	process(ar, unit.sprite_Sheet_Tracker);
+	process(ar, unit.rigid_Body);
+	process(ar, unit.health_Bar);
+	process(ar, unit.speed);
+	process(ar, unit.damage);
+	process(ar, unit.attack_Cooldown);
+	process(ar, unit.current_Attack_Cooldown);
+	process(ar, unit.attack_Range);
+	process(ar, unit.attached_Entities);
+	process(ar, unit.attached_Entities_Size);
+	process(ar, unit.destroyed);
+	process(ar, unit.stop);
+	process(ar, unit.ID);
 }
 
 void process(Archive* ar, Arrow_Type& arrow_Type) {
@@ -219,27 +219,14 @@ void process(Archive* ar, Arrow& arrow) {
 	process(ar, arrow.destroyed);
 }
 
-void process(Archive* ar, Archer& archer) {
-	process(ar, archer.sprite_Sheet_Tracker);
-	process(ar, archer.rigid_Body);
-	process(ar, archer.health_Bar);
-	process(ar, archer.speed);
-	process(ar, archer.attack_Cooldown);
-	process(ar, archer.current_Attack_Cooldown);
-	process(ar, archer.attack_Range);
-	process(ar, archer.destroyed);
-	process(ar, archer.stop);
-}
-
 void process(Archive* ar, Game_Data* game_Data) {
 	process(ar, game_Data->timer);
 	process(ar, game_Data->player_Castle);
 	process(ar, game_Data->enemy_Castle);
 	process(ar, game_Data->terrain_Height_Map);
 	process(ar, game_Data->player_Arrows);
-	process(ar, game_Data->enemy_Warriors);
-	process(ar, game_Data->player_Warriors);
-	process(ar, game_Data->player_Archers);
+	process(ar, game_Data->player_Units);
+	process(ar, game_Data->enemy_Units);
 	process(ar, game_Data->particle_Systems);
 	process(ar, game_Data->next_Entity_ID);
 }

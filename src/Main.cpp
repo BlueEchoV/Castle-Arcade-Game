@@ -153,10 +153,10 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_GAMELOOP) {
 			for (Particle_System& particle_System : game_Data.particle_Systems) {
-				for (Warrior& warrior : game_Data.enemy_Warriors) {
-					if (particle_System.target_ID == warrior.ID) {
-						particle_System.rect.x = (int)warrior.rigid_Body.position_WS.x;
-						particle_System.rect.y = (int)warrior.rigid_Body.position_WS.y;
+				for (Unit& unit : game_Data.enemy_Units) {
+					if (particle_System.target_ID == unit.ID) {
+						particle_System.rect.x = (int)unit.rigid_Body.position_WS.x;
+						particle_System.rect.y = (int)unit.rigid_Body.position_WS.y;
 						break;
 					}
 				}
@@ -339,8 +339,10 @@ int main(int argc, char** argv) {
                 if (spawn_Warrior_Pressed) {
                     Castle* player_Castle = &game_Data.player_Castle;
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
-                    spawn_Player_Warrior(
+                    spawn_Unit(
                         &game_Data,
+                        PLAYER,
+                        "warrior",
                         1,
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
@@ -353,8 +355,10 @@ int main(int argc, char** argv) {
                 if (spawn_Archer_Pressed) {
 					Castle* player_Castle = &game_Data.player_Castle;
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
-                    spawn_Archer(
-                        &game_Data,
+					spawn_Unit(
+						&game_Data,
+						PLAYER,
+						"archer",
                         1,
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
@@ -367,8 +371,10 @@ int main(int argc, char** argv) {
                 if (spawn_Necromancer_Pressed) {
 					Castle* player_Castle = &game_Data.player_Castle;
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
-					spawn_Necromancer(
+					spawn_Unit(
 						&game_Data,
+						PLAYER,
+						"necromancer",
 						1,
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
@@ -388,9 +394,11 @@ int main(int argc, char** argv) {
 					float terrain_height = (float)game_Data.terrain_Height_Map[(int)x_Pos];
 					float radius = get_Sprite_Radius(&enemy_Castle->sprite_Sheet_Tracker);
 					float y_Pos = terrain_height + radius;
-                    spawn_Enemy_Warrior(
+					spawn_Unit(
 						&game_Data,
-                        2,
+						ENEMY,
+						"warrior",
+                        1,
                         { x_Pos, y_Pos },
 						player_Castle->rigid_Body.position_WS
 					);
@@ -426,48 +434,27 @@ int main(int argc, char** argv) {
 				}
 #endif
 
-                // Update player Warrior positions
-                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    if (game_Data.player_Warriors[i].destroyed == false) {
+                // Update player units
+                for (int i = 0; i < game_Data.player_Units.size(); i++) {
+                    if (game_Data.player_Units[i].destroyed == false) {
                         update_Unit_Position(
-                            &game_Data.player_Warriors[i].rigid_Body,
-                            game_Data.player_Warriors[i].stop,
+                            &game_Data.player_Units[i].rigid_Body,
+                            game_Data.player_Units[i].stop,
                             delta_Time
                         );
                     }
                 }
 
-                // Update enemy Warrior positions
-                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    if (game_Data.enemy_Warriors[i].destroyed == false) {
+                // Update enemy units
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    if (game_Data.enemy_Units[i].destroyed == false) {
                         update_Unit_Position(
-                            &game_Data.enemy_Warriors[i].rigid_Body,
-                            game_Data.enemy_Warriors[i].stop,
+                            &game_Data.enemy_Units[i].rigid_Body,
+                            game_Data.enemy_Units[i].stop,
                             delta_Time
                         );
                     }
                 }
-
-                // Update player archer positions
-                for (int i = 0; i < game_Data.player_Archers.size(); i++) {
-                    if (game_Data.player_Archers[i].destroyed == false) {
-                        update_Unit_Position(
-                            &game_Data.player_Archers[i].rigid_Body,
-                            game_Data.player_Archers[i].stop,
-                            delta_Time
-                        );
-                    }
-                }
-
-				for (int i = 0; i < game_Data.player_Necromancer.size(); i++) {
-					if (game_Data.player_Necromancer[i].destroyed == false) {
-						update_Unit_Position(
-							&game_Data.player_Necromancer[i].rigid_Body,
-							game_Data.player_Necromancer[i].stop,
-							delta_Time
-						);
-					}
-				}
 
                 // arrow collision
                 for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
@@ -483,28 +470,28 @@ int main(int argc, char** argv) {
                         arrow->stop= true;
                     }
                     // Collision with Warriors and arrows
-                    for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
-                        Warrior* enemy_Warrior = &game_Data.enemy_Warriors[j];
-                        if (check_RB_Collision(&arrow->rigid_Body, &enemy_Warrior->rigid_Body)) {
+                    for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
+                        Unit* enemy_Unit = &game_Data.enemy_Units[j];
+                        if (check_RB_Collision(&arrow->rigid_Body, &enemy_Unit->rigid_Body)) {
 							if (!arrow->stop) {
                                 // On first hit, proc the damage
                                 if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
                                     spawn_Particle_System(
                                         game_Data,
                                         "PT_BLOOD",
-                                        enemy_Warrior->rigid_Body.position_WS,
+                                        enemy_Unit->rigid_Body.position_WS,
                                         0.5,
                                         15,
                                         15,
-										enemy_Warrior->ID,
+                                        enemy_Unit->ID,
                                         false
 									);
-                                    enemy_Warrior->health_Bar.current_HP -= arrow->damage;
-                                    arrow->target_ID = enemy_Warrior->ID;
+                                    enemy_Unit->health_Bar.current_HP -= arrow->damage;
+                                    arrow->target_ID = enemy_Unit->ID;
                                 }
                                 bool targeted_Unit_Still_Alive = false;
-                                for (int e = 0; e < game_Data.enemy_Warriors.size(); e++) {
-                                    if (arrow->target_ID == game_Data.enemy_Warriors[e].ID) {
+                                for (int e = 0; e < game_Data.enemy_Units.size(); e++) {
+                                    if (arrow->target_ID == game_Data.enemy_Units[e].ID) {
                                         targeted_Unit_Still_Alive = true;
                                     }
                                 }
@@ -516,13 +503,13 @@ int main(int argc, char** argv) {
                                         arrow->collision_Delay.remaining -= delta_Time;
                                     }
                                     else {
-                                        V2 offset = arrow->rigid_Body.position_WS - enemy_Warrior->rigid_Body.position_WS;
+                                        V2 offset = arrow->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
                                         Attached_Entity attached_Entity = return_Attached_Entity(
                                             "arrow",
                                             arrow->rigid_Body.angle,
                                             offset
                                         );
-                                        enemy_Warrior->attached_Entities[enemy_Warrior->attached_Entities_Size++] = attached_Entity;
+                                        enemy_Unit->attached_Entities[enemy_Unit->attached_Entities_Size++] = attached_Entity;
                                         arrow->destroyed = true;
                                     }
                                 }
@@ -534,176 +521,136 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Collision enemy Warrior with map
-                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.enemy_Warriors[i];
-                    if (check_Height_Map_Collision(&warrior->rigid_Body, game_Data.terrain_Height_Map)) {
-                        float radius = get_Sprite_Radius(&warrior->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)warrior->rigid_Body.position_WS.x];
+				// Collision player units with map
+				for (int i = 0; i < game_Data.player_Units.size(); i++) {
+					Unit* player_Unit = &game_Data.player_Units[i];
+					if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data.terrain_Height_Map)) {
+						float radius = get_Sprite_Radius(&player_Unit->sprite_Sheet_Tracker);
+						float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)player_Unit->rigid_Body.position_WS.x];
 
-                        warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
-                    }
-                }
-
-                // Collision player Warriors with map
-                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.player_Warriors[i];
-                    if (check_Height_Map_Collision(&game_Data.player_Warriors[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                        float radius = get_Sprite_Radius(&warrior->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)warrior->rigid_Body.position_WS.x];
-
-                        warrior->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
-                    }
-                }
-
-                // Collision player archers with map
-                for (int i = 0; i < game_Data.player_Archers.size(); i++) {
-                    Archer* archer = &game_Data.player_Archers[i];
-                    if (check_Height_Map_Collision(&game_Data.player_Archers[i].rigid_Body, game_Data.terrain_Height_Map)) {
-                        // Function: Pass in an archer and get the radius of the animation / sprite
-                        // OR pass in the animation tracker (Makes sense)
-                        float radius = get_Sprite_Radius(&archer->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)archer->rigid_Body.position_WS.x];
-
-                        archer->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
-                    }
-                }
-
-				// Collision necromancer with map
-				for (int i = 0; i < game_Data.player_Necromancer.size(); i++) {
-					Necromancer* necromancer = &game_Data.player_Necromancer[i];
-					if (check_Height_Map_Collision(&game_Data.player_Necromancer[i].rigid_Body, game_Data.terrain_Height_Map)) {
-						// Function: Pass in an archer and get the radius of the animation / sprite
-						// OR pass in the animation tracker (Makes sense)
-						float radius = get_Sprite_Radius(&necromancer->sprite_Sheet_Tracker);
-						float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)necromancer->rigid_Body.position_WS.x];
-
-                        necromancer->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+                        player_Unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
 					}
 				}
 
+                // Collision enemy units with map
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* unit = &game_Data.enemy_Units[i];
+                    if (check_Height_Map_Collision(&unit->rigid_Body, game_Data.terrain_Height_Map)) {
+                        float radius = get_Sprite_Radius(&unit->sprite_Sheet_Tracker);
+                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)unit->rigid_Body.position_WS.x];
+
+                        unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+                    }
+                }
+
                 // Initialize default values before collision check
-                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.player_Warriors[i];
-                    warrior->stop = false;
-                    warrior->current_Attack_Cooldown -= delta_Time;
+                for (int i = 0; i < game_Data.player_Units.size(); i++) {
+                    Unit* player_Unit = &game_Data.player_Units[i];
+                    player_Unit->stop = false;
+                    player_Unit->current_Attack_Cooldown -= delta_Time;
                 }
-                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.enemy_Warriors[i];
-                    warrior->stop = false;
-                    warrior->current_Attack_Cooldown -= delta_Time;
-                }
-                for (int i = 0; i < game_Data.player_Archers.size(); i++) {
-                    Archer* archer = &game_Data.player_Archers[i];
-                    archer->stop = false;
-                    archer->current_Attack_Cooldown -= delta_Time;
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* enemy_Unit = &game_Data.enemy_Units[i];
+                    enemy_Unit->stop = false;
+                    enemy_Unit->current_Attack_Cooldown -= delta_Time;
                 }
 
-                // Collision player Warrior with enemy castle
-                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.player_Warriors[i];
+                // Collision player units with enemy castle
+                for (int i = 0; i < game_Data.player_Units.size(); i++) {
+                    Unit* player_Unit = &game_Data.player_Units[i];
                     Castle* castle = &game_Data.enemy_Castle;
-                    if (check_RB_Collision(&warrior->rigid_Body, &castle->rigid_Body)) {
-                        warrior->stop = true;
-                        if (warrior->current_Attack_Cooldown < 0) {
-                            warrior->current_Attack_Cooldown = warrior->attack_Cooldown;
-                            castle->health_Bar.current_HP -= warrior->damage;
+                    if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
+                        player_Unit->stop = true;
+                        if (player_Unit->current_Attack_Cooldown < 0) {
+                            player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
+                            castle->health_Bar.current_HP -= player_Unit->damage;
                         }
                     }
                 }
-
-                // Collision enemy Warrior with player castle
-                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.enemy_Warriors[i];
+                // Collision enemy units with player castle
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* enemy_Unit = &game_Data.enemy_Units[i];
                     Castle* castle = &game_Data.player_Castle;
-                    if (check_RB_Collision(&warrior->rigid_Body, &castle->rigid_Body)) {
-                        warrior->stop = true;
-                        if (warrior->current_Attack_Cooldown < 0) {
-                            warrior->current_Attack_Cooldown = warrior->attack_Cooldown;
-                            castle->health_Bar.current_HP -= warrior->damage;
+                    if (check_RB_Collision(&enemy_Unit->rigid_Body, &castle->rigid_Body)) {
+                        enemy_Unit->stop = true;
+                        if (enemy_Unit->current_Attack_Cooldown < 0) {
+                            enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
+                            castle->health_Bar.current_HP -= enemy_Unit->damage;
                         }
                     }
                 }
 
-                // Warriors colliding with each other
-                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* player_Warrior = &game_Data.player_Warriors[i];
-                    for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
-                        Warrior* enemy_Warrior = &game_Data.enemy_Warriors[j];
-                        if (check_RB_Collision(&player_Warrior->rigid_Body, &enemy_Warrior->rigid_Body)) {
-                            player_Warrior->stop = true;
-                            enemy_Warrior->stop = true;
-                            if (player_Warrior->current_Attack_Cooldown <= 0) {
-                                player_Warrior->current_Attack_Cooldown = player_Warrior->attack_Cooldown;
-                                enemy_Warrior->health_Bar.current_HP -= player_Warrior->damage;
+                // Units colliding with each other (Remove the RB collision and just use attack range)
+                for (int i = 0; i < game_Data.player_Units.size(); i++) {
+                    Unit* player_Unit = &game_Data.player_Units[i];
+                    for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
+                        Unit* enemy_Unit = &game_Data.enemy_Units[j];
+                        if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
+                            player_Unit->stop = true;
+                            enemy_Unit->stop = true;
+                            if (player_Unit->current_Attack_Cooldown <= 0) {
+                                player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
+                                enemy_Unit->health_Bar.current_HP -= player_Unit->damage;
                             }
-                            if (enemy_Warrior->current_Attack_Cooldown <= 0) {
-                                enemy_Warrior->current_Attack_Cooldown = enemy_Warrior->attack_Cooldown;
-                                player_Warrior->health_Bar.current_HP -= enemy_Warrior->damage;
+                            if (enemy_Unit->current_Attack_Cooldown <= 0) {
+                                enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
+                                player_Unit->health_Bar.current_HP -= enemy_Unit->damage;
                             }
                         }
                     }
                 }
 
                 // Player archers and enemy Warriors colliding with each other
-                for (int i = 0; i < game_Data.player_Archers.size(); i++) {
-                    Archer* archer = &game_Data.player_Archers[i];
-                    for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
-                        Warrior* warrior = &game_Data.enemy_Warriors[j];
+                for (int i = 0; i < game_Data.player_Units.size(); i++) {
+                    Unit* player_Unit = &game_Data.player_Units[i];
+                    for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
+                        Unit* enemy_Unit = &game_Data.enemy_Units[j];
                         float distance_Between = calculate_Distance(
-                            archer->rigid_Body.position_WS.x,
-                            archer->rigid_Body.position_WS.y,
-                            warrior->rigid_Body.position_WS.x,
-                            warrior->rigid_Body.position_WS.y
+                            player_Unit->rigid_Body.position_WS.x,
+                            player_Unit->rigid_Body.position_WS.y,
+                            enemy_Unit->rigid_Body.position_WS.x,
+                            enemy_Unit->rigid_Body.position_WS.y
                         );
-                        float range_Sum = archer->attack_Range;
+                        float range_Sum = player_Unit->attack_Range;
                         if (distance_Between <= range_Sum) {
-                            change_Animation(&archer->sprite_Sheet_Tracker, "archer_Stop");
-                            archer->stop = true;
-                            if (archer->current_Attack_Cooldown <= 0) {
-                                archer->current_Attack_Cooldown = archer->attack_Cooldown;
-                                V2 aim_Head = warrior->rigid_Body.position_WS;
-                                std::string sprite_Sheet_Name = game_Data.enemy_Warriors[0].sprite_Sheet_Tracker.sprite_Sheet_Name;
-                                aim_Head.x += get_Sprite_Radius(&game_Data.enemy_Warriors[0].sprite_Sheet_Tracker);
-                                V2 arrow_Spawn_Location = archer->rigid_Body.position_WS;
-                                arrow_Spawn_Location.y -= get_Sprite_Radius(&game_Data.enemy_Warriors[0].sprite_Sheet_Tracker) / 2;
+                            change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
+                            player_Unit->stop = true;
+                            if (player_Unit->current_Attack_Cooldown <= 0) {
+                                player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
+                                V2 aim_Head = enemy_Unit->rigid_Body.position_WS;
+                                std::string sprite_Sheet_Name = enemy_Unit->sprite_Sheet_Tracker.sprite_Sheet_Name;
+                                aim_Head.x += get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
+                                V2 arrow_Spawn_Location = player_Unit->rigid_Body.position_WS;
+                                arrow_Spawn_Location.y -= get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker) / 2;
                                 spawn_Arrow(&game_Data, AT_ARCHER_ARROW, arrow_Spawn_Location, aim_Head, LEVEL_1);
                             }
                         } else {
-                            change_Animation(&archer->sprite_Sheet_Tracker, "archer_Walk");
+                            change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
                         }
-                        if (check_RB_Collision(&archer->rigid_Body, &warrior->rigid_Body)) {
-                            game_Data.enemy_Warriors[j].stop = true;
-                            if (warrior->current_Attack_Cooldown <= 0) {
-                                warrior->current_Attack_Cooldown = warrior->attack_Cooldown;
-                                archer->health_Bar.current_HP -= warrior->damage;
+                        if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
+                            enemy_Unit->stop = true;
+                            if (enemy_Unit->current_Attack_Cooldown <= 0) {
+                                enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
+                                player_Unit->health_Bar.current_HP -= enemy_Unit->damage;
                             }
                         }
                     }
                 }
 
-                for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.enemy_Warriors[i];
-                    float speed = warrior->speed;
-                    if (!warrior->stop) {
-                        update_Animation(&warrior->sprite_Sheet_Tracker, speed, delta_Time);
+				for (int i = 0; i < game_Data.player_Units.size(); i++) {
+					Unit* player_Unit = &game_Data.player_Units[i];
+					float speed = player_Unit->speed;
+					if (!player_Unit->stop) {
+						update_Animation(&player_Unit->sprite_Sheet_Tracker, speed, delta_Time);
+					}
+				}
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* enemy_Unit = &game_Data.enemy_Units[i];
+                    float speed = enemy_Unit->speed;
+                    if (!enemy_Unit->stop) {
+                        update_Animation(&enemy_Unit->sprite_Sheet_Tracker, speed, delta_Time);
                     }
                 }
-
-                for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                    Warrior* warrior = &game_Data.player_Warriors[i];
-                    float speed = warrior->speed;
-                    if (!warrior->stop) {
-                        update_Animation(&warrior->sprite_Sheet_Tracker, speed, delta_Time);
-                    }
-                }
-
-                for (int i = 0; i < game_Data.player_Archers.size(); i++) {
-                    Archer* archer = &game_Data.player_Archers[i];
-                    float speed = archer->speed;
-                    update_Animation(&archer->sprite_Sheet_Tracker, speed, delta_Time);
-                }
-
             }
 
             if (game_Data.player_Castle.health_Bar.current_HP <= 0) {
@@ -746,29 +693,11 @@ int main(int argc, char** argv) {
                 }
             }
 
-            // Draw enemy Warriors
-            for (int i = 0; i < game_Data.enemy_Warriors.size(); i++) {
-                Warrior* warrior = &game_Data.enemy_Warriors[i];
-                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 5, CI_RED);
-                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 6, CI_RED);
-                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 7, CI_RED);
-                // draw_RigidBody_Colliders(&warrior->rigid_Body, CI_GREEN);
-                draw_Unit_Animated(
-                    &warrior->rigid_Body,
-                    &warrior->sprite_Sheet_Tracker,
-                    true
-                );
-                draw_HP_Bar(&warrior->rigid_Body.position_WS, &warrior->health_Bar);
-                for (int j = 0; j < warrior->attached_Entities_Size; j++) {
-                    draw_Attached_Entity(&warrior->attached_Entities[j], warrior->rigid_Body.position_WS, false);
-				}
-			}
-
-            // Draw player Warriors
-            for (int i = 0; i < game_Data.player_Warriors.size(); i++) {
-                Warrior* player_Warrior = &game_Data.player_Warriors[i];
+            // Draw player units
+            for (int i = 0; i < game_Data.player_Units.size(); i++) {
+                Unit* player_Unit = &game_Data.player_Units[i];
                 /*
-                // Debugging circles for colliders 
+                // Debugging circles for colliders
                 for (int j = 0; j < player_Warrior->animation_Tracker.animations_Array[game_Data.player_Warriors[i].animation_Tracker.type].sprite_Sheet.sprites.size(); j++) {
                     Animation_Type type = game_Data.player_Warriors[i].animation_Tracker.type;
                     draw_Circle(
@@ -779,38 +708,32 @@ int main(int argc, char** argv) {
                     );
                 }
                 */
-                draw_RigidBody_Colliders(&player_Warrior->rigid_Body, CI_GREEN);
+                draw_RigidBody_Colliders(&player_Unit->rigid_Body, CI_GREEN);
                 draw_Unit_Animated(
-                    &player_Warrior->rigid_Body,
-                    &player_Warrior->sprite_Sheet_Tracker,
+                    &player_Unit->rigid_Body,
+                    &player_Unit->sprite_Sheet_Tracker,
                     false
                 );
-                draw_HP_Bar(&player_Warrior->rigid_Body.position_WS, &player_Warrior->health_Bar);
+                draw_HP_Bar(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
             }
 
-            // Draw player archers
-            for (int i = 0; i < game_Data.player_Archers.size(); i++) {
-                Archer* archer = &game_Data.player_Archers[i];
-                draw_RigidBody_Colliders(&archer->rigid_Body, CI_GREEN);
+            // Draw enemy Units
+            for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                Unit* enemy_Unit = &game_Data.enemy_Units[i];
+                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 5, CI_RED);
+                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 6, CI_RED);
+                // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 7, CI_RED);
+                // draw_RigidBody_Colliders(&warrior->rigid_Body, CI_GREEN);
                 draw_Unit_Animated(
-                    &archer->rigid_Body,
-                    &archer->sprite_Sheet_Tracker,
-                    false
+                    &enemy_Unit->rigid_Body,
+                    &enemy_Unit->sprite_Sheet_Tracker,
+                    true
                 );
-                draw_HP_Bar(&archer->rigid_Body.position_WS, &archer->health_Bar);
-            }
-
-			for (int i = 0; i < game_Data.player_Necromancer.size(); i++) {
-				Necromancer* necromancer = &game_Data.player_Necromancer[i];
-				draw_RigidBody_Colliders(&necromancer->rigid_Body, CI_GREEN);
-				draw_Unit_Animated(
-					&necromancer->rigid_Body,
-					&necromancer->sprite_Sheet_Tracker,
-					false
-				);
-				draw_HP_Bar(&necromancer->rigid_Body.position_WS, &necromancer->health_Bar);
+                draw_HP_Bar(&enemy_Unit->rigid_Body.position_WS, &enemy_Unit->health_Bar);
+                for (int j = 0; j < enemy_Unit->attached_Entities_Size; j++) {
+                    draw_Attached_Entity(&enemy_Unit->attached_Entities[j], enemy_Unit->rigid_Body.position_WS, false);
+				}
 			}
-
 
             draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
             draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
@@ -926,37 +849,16 @@ int main(int argc, char** argv) {
 			}
 #endif
 
-            // Erase destroyed arrows
             std::erase_if(game_Data.player_Arrows, [](Arrow& arrow) {
-                // Return if we want the value to be destroyed
                 return arrow.destroyed || arrow.life_Time <= 0;
                 });
-
-            // Erase destroy units
-            std::erase_if(game_Data.enemy_Warriors, [](Warrior& warrior) {
-                // Return if we want the value to be destroyed
-                return warrior.destroyed || warrior.health_Bar.current_HP <= 0;
-                });
-
-            // Erase destroy units
-            std::erase_if(game_Data.player_Warriors, [](Warrior& warrior) {
-                // Return if we want the value to be destroyed
-                return warrior.destroyed || warrior.health_Bar.current_HP <= 0;
-                });
-
-			// Erase destroy units
-			std::erase_if(game_Data.player_Archers, [](Archer& archer) {
-				// Return if we want the value to be destroyed
-				return archer.destroyed || archer.health_Bar.current_HP <= 0;
+			std::erase_if(game_Data.player_Units, [](Unit& unit) {
+				return unit.destroyed || unit.health_Bar.current_HP <= 0;
 				});
-
-			std::erase_if(game_Data.player_Necromancer, [](Necromancer& necromancer) {
-				return necromancer.destroyed || necromancer.health_Bar.current_HP <= 0;
-				});
-
-			// Erase destroy units
+            std::erase_if(game_Data.enemy_Units, [](Unit& unit) {
+                return unit.destroyed || unit.health_Bar.current_HP <= 0;
+                });
 			std::erase_if(game_Data.particle_Systems, [](Particle_System& particle_System) {
-				// Return if we want the value to be destroyed
 				return particle_System.destroyed && particle_System.particles.size() == 0;
 				});
         }

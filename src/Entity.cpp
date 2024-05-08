@@ -315,146 +315,38 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 ta
 //
 //}
 
-void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
-	Warrior warrior = {};
+void spawn_Unit(Game_Data* game_Data, Unit_Side unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
+	Unit unit = {};
 	REF(level);
 
-	Unit_Data unit_Data = get_Unit_Data("warrior");
-	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(unit_Data.sprite_Sheet_Name);
-
-	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
-
-	
-	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
-
-	warrior.speed = unit_Data.speed;
-	warrior.damage = unit_Data.damage;
-	warrior.attack_Cooldown = unit_Data.attack_Cooldown;
-	warrior.current_Attack_Cooldown = 0.0f;
-	warrior.attack_Range = unit_Data.attack_Range;
-
-	warrior.destroyed = false;
-	warrior.stop = false;
+	Unit_Data unit_Data = get_Unit_Data(unit_Type);
+	unit.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(unit_Data.sprite_Sheet_Name);
+	unit.rigid_Body = create_Rigid_Body(spawn_Position, false);
+	unit.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
+	unit.speed = unit_Data.speed;
+	unit.damage = unit_Data.damage;
+	unit.attack_Cooldown = unit_Data.attack_Cooldown;
+	unit.current_Attack_Cooldown = 0.0f;
+	unit.attack_Range = unit_Data.attack_Range;
+	unit.destroyed = false;
+	unit.stop = false;
 
 	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
+	unit.rigid_Body.velocity.x = direction_V2.x * unit_Data.speed;
+	unit.rigid_Body.velocity.y = direction_V2.y * unit_Data.speed;
 
-	warrior.rigid_Body.velocity.x = direction_V2.x * unit_Data.speed;
-	warrior.rigid_Body.velocity.y = direction_V2.y * unit_Data.speed;
+	float radius = get_Sprite_Radius(&unit.sprite_Sheet_Tracker);
 
-	float radius = get_Sprite_Radius(&warrior.sprite_Sheet_Tracker);
+	add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&unit.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&unit.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
-	add_Collider(&warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
-
-	warrior.ID = game_Data->next_Entity_ID++;
-	game_Data->player_Warriors.push_back(warrior);
-}
-
-void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
-	Warrior warrior = {};
-	REF(level);
-
-	std::string sprite_Sheet_Name = "warrior_Stop";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
-	warrior.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
-
-	warrior.rigid_Body = create_Rigid_Body(spawn_Position, false);
-	
-	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
-	
-	warrior.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
-
-	warrior.speed = unit_Data.speed;
-	warrior.damage = unit_Data.damage;
-	warrior.attack_Cooldown = unit_Data.attack_Cooldown;
-	warrior.current_Attack_Cooldown = 0.0f;
-	warrior.attack_Range = unit_Data.attack_Range;
-
-	warrior.destroyed = false;
-	warrior.stop = false;
-
-	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
-
-	warrior.rigid_Body.velocity.x = direction_V2.x * unit_Data.speed;
-	warrior.rigid_Body.velocity.y = direction_V2.y * unit_Data.speed;
-
-	float radius = get_Sprite_Radius(&warrior.sprite_Sheet_Tracker);
-
-	add_Collider(&warrior.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&warrior.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&warrior.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
-
-	warrior.ID = game_Data->next_Entity_ID++;
-	game_Data->enemy_Warriors.push_back(warrior);
-}
-
-void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
-	Archer archer = {};
-	REF(level);
-
-	std::string sprite_Sheet_Name = "archer_Walk";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
-	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
-
-	archer.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
-	archer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
-	archer.rigid_Body = create_Rigid_Body(spawn_Position, false);
-
-	archer.speed = unit_Data.speed;
-	archer.attack_Cooldown = unit_Data.attack_Cooldown;
-	archer.current_Attack_Cooldown = 0.0f;
-	archer.attack_Range = unit_Data.attack_Range;
-
-	archer.destroyed = false;
-	archer.stop = false;
-
-	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
-
-	archer.rigid_Body.velocity.x = direction_V2.x * unit_Data.speed;
-	archer.rigid_Body.velocity.y = direction_V2.y * unit_Data.speed;
-
-	float radius = get_Sprite_Radius(&archer.sprite_Sheet_Tracker);
-
-	add_Collider(&archer.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&archer.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&archer.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
-
-	game_Data->player_Archers.push_back(archer);
-}
-
-void spawn_Necromancer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position) {
-	Necromancer necromancer = {};
-	REF(level);
-
-	std::string sprite_Sheet_Name = "necromancer_Stop";
-	std::string unit_Data_Map_Key = create_Unit_Data_Map_Key(sprite_Sheet_Name);
-	Unit_Data unit_Data = get_Unit_Data(unit_Data_Map_Key);
-
-	necromancer.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
-	necromancer.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(sprite_Sheet_Name);
-	necromancer.rigid_Body = create_Rigid_Body(spawn_Position, false);
-
-	necromancer.speed = unit_Data.speed;
-	necromancer.attack_Cooldown = unit_Data.attack_Cooldown;
-	necromancer.current_Attack_Cooldown = 0.0f;
-	necromancer.attack_Range = unit_Data.attack_Range;
-
-	necromancer.destroyed = false;
-	necromancer.stop = false;
-
-	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
-
-	necromancer.rigid_Body.velocity.x = direction_V2.x * unit_Data.speed;
-	necromancer.rigid_Body.velocity.y = direction_V2.y * unit_Data.speed;
-
-	float radius = get_Sprite_Radius(&necromancer.sprite_Sheet_Tracker);
-
-	add_Collider(&necromancer.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	add_Collider(&necromancer.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
-	add_Collider(&necromancer.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
-
-	game_Data->player_Necromancer.push_back(necromancer);
+	unit.ID = game_Data->next_Entity_ID++;
+	if (unit_Side == PLAYER) {
+		game_Data->player_Units.push_back(unit);
+	} else if (unit_Side == ENEMY) {
+		game_Data->enemy_Units.push_back(unit);
+	}
 }
 
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color) {

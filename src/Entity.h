@@ -108,7 +108,12 @@ struct Arrow {
 	bool destroyed;
 };
 
-// Applies to: Warrior, Archer
+enum Unit_Side {
+	PLAYER,
+	ENEMY
+};
+
+// Applies to all units
 struct Unit_Data {
 	std::string type;
 	std::string sprite_Sheet_Name;
@@ -128,9 +133,7 @@ struct Attached_Entity {
 
 struct Unit {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
-
 	Rigid_Body rigid_Body;
-
 	Health_Bar health_Bar;
 
 	float speed;
@@ -146,61 +149,6 @@ struct Unit {
 	bool stop;
 
 	int ID;
-};
-
-struct Warrior {
-	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
-
-	Rigid_Body rigid_Body;
-
-	Health_Bar health_Bar;
-
-	float speed;
-	float damage;
-	float attack_Cooldown;
-	float current_Attack_Cooldown;
-	float attack_Range;
-
-	Attached_Entity attached_Entities[Globals::MAX_ATTACHED_ENTITIES];
-	int attached_Entities_Size = 0;
-
-	bool destroyed;
-	bool stop;
-
-	int ID;
-};
-
-struct Archer {
-	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
-
-	Rigid_Body rigid_Body;
-
-	Health_Bar health_Bar;
-
-	float speed;
-	float attack_Cooldown;
-	float current_Attack_Cooldown;
-	float attack_Range;
-
-	bool destroyed;
-	bool stop;
-};
-
-// Spells 
-struct Necromancer {
-	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
-
-	Rigid_Body rigid_Body;
-
-	Health_Bar health_Bar;
-
-	float speed;
-	float attack_Cooldown;
-	float current_Attack_Cooldown;
-	float attack_Range;
-
-	bool destroyed;
-	bool stop;
 };
 
 struct Game_Data {
@@ -209,10 +157,8 @@ struct Game_Data {
 	Castle									enemy_Castle;
 	std::vector<int>						terrain_Height_Map;
 	std::vector<Arrow>						player_Arrows;
-	std::vector<Warrior>					enemy_Warriors;
-	std::vector<Warrior>					player_Warriors;
-	std::vector<Archer>						player_Archers;
-	std::vector<Necromancer>				player_Necromancer;
+	std::vector<Unit>						player_Units;
+	std::vector<Unit>						enemy_Units;
 	std::vector<Particle_System>			particle_Systems;
 	int										next_Entity_ID;
 };
@@ -234,10 +180,7 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 ta
 // Anytime I need a 'if' statement, add it in the csv.
 // Anytime something is different in the spawn functions, add it to the .csv file. All units should 
 // be treated the exact same.
-void spawn_Player_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
-void spawn_Enemy_Warrior(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
-void spawn_Archer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
-void spawn_Necromancer(Game_Data* game_Data, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Unit(Game_Data* game_Data, Unit_Side unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Arrow_Position(Arrow* arrow, float delta_Time);

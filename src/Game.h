@@ -102,10 +102,8 @@ void process(Archive* ar, Rigid_Body& rigid_Body);
 void process(Archive* ar, Health_Bar& health_Bar);
 void process(Archive* ar, Cooldown& cooldown);
 void process(Archive* ar, Castle& castle);
-void process(Archive* ar, Warrior& warrior);
 void process(Archive* ar, Arrow_Type& arrow_Type);
 void process(Archive* ar, Arrow& arrow);
-void process(Archive* ar, Archer& archer);
 void process(Archive* ar, Game_Data* game_Data);
 
 void load_Game(Game_Data* game_Data, Saved_Games save_Game);
