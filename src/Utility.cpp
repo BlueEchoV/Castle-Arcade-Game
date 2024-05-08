@@ -1,6 +1,7 @@
 #include "Utility.h"
 #include "SDL.h"
 #include <string>
+#include <assert.h>
 
 V2 operator+(const V2& a, const V2& b) {
 	V2 result = {};
@@ -86,4 +87,96 @@ size_t file_Last_Modified(std::string file_Name) {
 	}
 
 	return file_Buffer.st_mtime;
+}
+
+// Splits a string using a delimiter and returns a vector of strings
+std::vector<std::string> split(const std::string& my_String, char delimiter) {
+	std::vector<std::string> tokens;
+	std::string token;
+	// Input stream class to operate on strings
+	std::istringstream my_Stream(my_String);
+	while (std::getline(my_Stream, token, delimiter)) {
+		tokens.push_back(token);
+	}
+	return tokens;
+}
+
+void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors) {
+	std::ifstream file(file_Name);
+
+	if (!file.is_open()) {
+		SDL_Log("Error loading .csv file");
+	}
+
+	std::string line;
+	// Don't throw away the first line
+	std::getline(file, line);
+	std::vector<std::string> column_Names = split(line, ',');
+
+	int current_Row = 0;
+	while (std::getline(file, line)) {
+		std::vector<std::string> tokens = split(line, ',');
+
+		// Pointer arithmetic: Calculate a pointer 'write_Ptr' to the destination in memory 
+		//					   where the data will be written. The stride determines the offset
+		//					   between rows in the destination memory.
+		// NOTE: using a uint8_t* ensures that each increment or decrement of the pointer corresponds 
+		//		 to one byte.
+		char* write_Ptr = destination + (current_Row * stride);
+		current_Row++;
+
+		for (int i = 0; i < total_Descriptors; i++) {
+			// Grab the descriptor we are currently on in the loop
+			Type_Descriptor* type_Descriptor = &type_Descriptors[i];
+			// This is for finding the correct token
+			int column_Index = get_Column_Index(column_Names, type_Descriptor->column_Name);
+			if (column_Index <= -1) {
+				continue;
+			}
+			if (type_Descriptor->variable_Type == DT_INT) {
+				// Add the variable offset to get to the correct position in memory
+				int* destination_Ptr = (int*)(write_Ptr + type_Descriptor->variable_Offset);
+				*destination_Ptr = std::stoi(tokens[column_Index]);
+			}
+			else if (type_Descriptor->variable_Type == DT_FLOAT) {
+				float* destination_Ptr = (float*)(write_Ptr + type_Descriptor->variable_Offset);
+				*destination_Ptr = std::stof(tokens[column_Index]);
+			}
+			else if (type_Descriptor->variable_Type == DT_STRING) {
+				std::string* destination_Ptr = (std::string*)(write_Ptr + type_Descriptor->variable_Offset);
+				*destination_Ptr = tokens[column_Index];
+			}
+		}
+	}
+}
+
+int count_CSV_Rows(std::string file_Name) {
+	// ifstream closes the file automatically
+	std::ifstream file(file_Name);
+
+	if (!file.is_open()) {
+		SDL_Log("Error loading .csv file");
+	}
+
+	std::string line;
+	std::getline(file, line);
+	int total_Rows = 0;
+	while (std::getline(file, line)) {
+		total_Rows++;
+	}
+
+	assert(total_Rows > 0);
+	return total_Rows;
+}
+
+int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name) {
+	int result = -1;
+	for (int i = 0; i < column_Names.size(); i++) {
+		if (column_Names[i] == current_Column_Name) {
+			result = i;
+			break;
+		}
+	}
+	assert(result >= 0);
+	return result;
 }

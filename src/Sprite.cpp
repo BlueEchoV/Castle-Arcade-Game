@@ -102,101 +102,10 @@ void draw_Layer(SDL_Texture* texture) {
 	SDL_RenderCopyEx(Globals::renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
 }
 
-// Splits a string using a delimiter and returns a vector of strings
-std::vector<std::string> split(const std::string& my_String, char delimiter) {
-	std::vector<std::string> tokens;
-	std::string token;
-	// Input stream class to operate on strings
-	std::istringstream my_Stream(my_String);
-	while (std::getline(my_Stream, token, delimiter)) {
-		tokens.push_back(token);
-	}
-	return tokens;
-}
-
-int count_CSV_Rows(std::string file_Name) {
-	// ifstream closes the file automatically
-	std::ifstream file(file_Name);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
-	std::string line;
-	std::getline(file, line);
-	int total_Rows = 0;
-	while (std::getline(file, line)) {
-		total_Rows++;
-	}
-
-	assert(total_Rows > 0);
-	return total_Rows;
-}
-
-int get_Column_Index(std::vector<std::string> column_Names, std::string current_Column_Name) {
-	int i = -1;
-	for (i = 0; i < column_Names.size(); i++) {
-		if (column_Names[i] == current_Column_Name) {
-			return i;
-		}
-	}
-	assert(i >= 0);
-	// -1 if the index isn't found
-	return i;
-}
-
-void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors) {
-	std::ifstream file(file_Name);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
-	std::string line;
-	// Don't throw away the first line
-	std::getline(file, line);
-	std::vector<std::string> column_Names = split(line, ',');
-
-	int current_Row = 0;
-	while (std::getline(file, line)) {
-		std::vector<std::string> tokens = split(line, ',');
-
-		// Pointer arithmetic: Calculate a pointer 'write_Ptr' to the destination in memory 
-		//					   where the data will be written. The stride determines the offset
-		//					   between rows in the destination memory.
-		// NOTE: using a uint8_t* ensures that each increment or decrement of the pointer corresponds 
-		//		 to one byte.
-		uint8_t* write_Ptr = (uint8_t*)destination + (current_Row * stride);
-		current_Row++;
-
-		for (int i = 0; i < total_Descriptors; i++) {
-			// Grab the descriptor we are currently on in the loop
-			Type_Descriptor* type_Descriptor = &type_Descriptors[i];
-			// This is for finding the correct token
-			int column_Index = get_Column_Index(column_Names, type_Descriptor->column_Name);
-			if (type_Descriptor->variable_Type == MT_INT) {
-				// Add the variable offset to get to the correct position in memory
-				int* destination_Ptr = (int*)(write_Ptr + type_Descriptor->variable_Offset);
-				*destination_Ptr = std::stoi(tokens[column_Index]);
-
-			}
-			else if (type_Descriptor->variable_Type == MT_FLOAT) {
-				float* destination_Ptr = (float*)(write_Ptr + type_Descriptor->variable_Offset);
-				*destination_Ptr = std::stof(tokens[column_Index]);
-
-			}
-			else if (type_Descriptor->variable_Type == MT_STRING) {
-				std::string* destination_Ptr = (std::string*)(write_Ptr + type_Descriptor->variable_Offset);
-				*destination_Ptr = tokens[column_Index];
-			}
-		}
-	}
-}
-
 Type_Descriptor sprite_Sheet_Type_Descriptor[] = {
-	FIELD(Sprite_Sheet_Data, MT_STRING, sprite_Sheet_Name),
-	FIELD(Sprite_Sheet_Data, MT_INT, rows),
-	FIELD(Sprite_Sheet_Data, MT_INT, columns),
+	FIELD(Sprite_Sheet_Data, DT_STRING, sprite_Sheet_Name),
+	FIELD(Sprite_Sheet_Data, DT_INT, rows),
+	FIELD(Sprite_Sheet_Data, DT_INT, columns),
 };
 
 void load_Sprite_Sheet_Data_CSV(std::string file_Path) {
@@ -212,4 +121,3 @@ void load_Sprite_Sheet_Data_CSV(std::string file_Path) {
 		sprite_Sheet_Map[iterator.sprite_Sheet_Name] = sprite_Sheet;
 	}
 }
-

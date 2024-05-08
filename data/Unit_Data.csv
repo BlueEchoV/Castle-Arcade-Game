@@ -1,6 +1,5 @@
-type,sprite_Sheet_Name,max_HP,damage,speed,attack_Cooldown,attack_Range
-warrior,warrior_Stop,100,10,50,1.5,150
-warrior_Multiplier,,1.2,1.2,1.2,1.2,0
-archer,archer_Stop,100,10,50,1.5,800
-wizard,,100,10,50,1.5,150
-necromancer,necromancer_Stop,200,5,75,0.25,750
+type,sprite_Sheet_Name,max_HP,max_HP_Per_Level,damage,damage_Per_Level,speed,attack_Cooldown,attack_Range
+warrior,warrior_Stop,100,25,10,5,50,1.5,150
+archer,archer_Stop,100,,10,,50,1.5,800
+wizard,,100,,10,,50,1.5,150
+necromancer,necromancer_Stop,200,,5,,75,0.25,750

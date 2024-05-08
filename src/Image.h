@@ -1,8 +1,6 @@
 #pragma once
 #include <SDL.h>
 #include <stb_image.h>
-#include <fstream>
-#include <sstream>
 
 #include "Utility.h"
 #include "Globals.h"

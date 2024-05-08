@@ -652,13 +652,13 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 
 // Array size will be determined based off total number of initializations
 Type_Descriptor unit_Type_Descriptors[] = {
-	FIELD(Unit_Data, MT_STRING, type),
-	FIELD(Unit_Data, MT_STRING, sprite_Sheet_Name),
-	FIELD(Unit_Data, MT_FLOAT, max_HP),
-	FIELD(Unit_Data, MT_FLOAT, damage),
-	FIELD(Unit_Data, MT_FLOAT, speed),
-	FIELD(Unit_Data, MT_FLOAT, attack_Cooldown),
-	FIELD(Unit_Data, MT_FLOAT, attack_Range),
+	FIELD(Unit_Data, DT_STRING, type),
+	FIELD(Unit_Data, DT_STRING, sprite_Sheet_Name),
+	FIELD(Unit_Data, DT_FLOAT, max_HP),
+	FIELD(Unit_Data, DT_FLOAT, damage),
+	FIELD(Unit_Data, DT_FLOAT, speed),
+	FIELD(Unit_Data, DT_FLOAT, attack_Cooldown),
+	FIELD(Unit_Data, DT_FLOAT, attack_Range),
 	// FIELD(Unit_Data, MT_STRING, spell_Type),
 };
 
@@ -667,7 +667,7 @@ void load_Unit_Data_CSV(std::string file_Name) {
 	int rows = count_CSV_Rows(file_Name);
 	std::vector<Unit_Data> unit_Data;
 	unit_Data.resize(rows);
-	//					 Data destination		 size of one stride	   descriptors above      total descriptors (sizeof)
+	//					 Data destination		 size of one stride	   descriptors above
 	//					(char*) ptr math
 	load_CSV(file_Name, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, ARRAY_SIZE(unit_Type_Descriptors));
 

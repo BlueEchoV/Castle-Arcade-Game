@@ -5,17 +5,6 @@
 
 std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 
-std::string type;
-std::string sprite_Sheet_Name;
-int size;
-float time_Between_Spawns;
-
-float max_Fade;
-float lifetime_Min;
-float lifetime_Max;
-V2 velocity_Min;
-V2 velocity_Max;
-
 const Particle_Data bad_Particle_Data = {
 	// type,		sprite_Sheet,		size	 time_Between_Spawns  max_Fade_In  lifetime_Min		lifetime_Max  velocity_Min  velocity_Max  
 	  "PT_RAINBOW", "basic_Particle_1", 20,		 0.01f,				  0.5f,		   3.0f,			3.0f,		 {0.0f, 0.0f}, {0.0f, 0.0f}
@@ -238,18 +227,18 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 }
 
 Type_Descriptor particle_Data_Type_Descriptors[] = {
-	FIELD(Particle_Data, MT_STRING, type),
-	FIELD(Particle_Data, MT_STRING, sprite_Sheet_Name),
-	FIELD(Particle_Data, MT_INT, size),
-	FIELD(Particle_Data, MT_FLOAT, time_Between_Spawns),
-
-	FIELD(Particle_Data, MT_FLOAT, max_Fade),
-	FIELD(Particle_Data, MT_FLOAT, lifetime_Min),
-	FIELD(Particle_Data, MT_FLOAT, lifetime_Max),
-	FIELD(Particle_Data, MT_FLOAT, velocity_Min.x),
-	FIELD(Particle_Data, MT_FLOAT, velocity_Min.y),
-	FIELD(Particle_Data, MT_FLOAT, velocity_Max.x),
-	FIELD(Particle_Data, MT_FLOAT, velocity_Max.y),
+	FIELD(Particle_Data, DT_STRING, type),
+	FIELD(Particle_Data, DT_STRING, sprite_Sheet_Name),
+	FIELD(Particle_Data, DT_INT, size),
+	FIELD(Particle_Data, DT_FLOAT, time_Between_Spawns),
+						 
+	FIELD(Particle_Data, DT_FLOAT, max_Fade),
+	FIELD(Particle_Data, DT_FLOAT, lifetime_Min),
+	FIELD(Particle_Data, DT_FLOAT, lifetime_Max),
+	FIELD(Particle_Data, DT_FLOAT, velocity_Min.x),
+	FIELD(Particle_Data, DT_FLOAT, velocity_Min.y),
+	FIELD(Particle_Data, DT_FLOAT, velocity_Max.x),
+	FIELD(Particle_Data, DT_FLOAT, velocity_Max.y),
 };
 
 void load_Particle_Data_CSV(std::string file_Name) {
