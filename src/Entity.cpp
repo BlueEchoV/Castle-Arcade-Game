@@ -162,7 +162,7 @@ void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Na
 	}
 }
 
-V2 get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
+V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
 	V2 result = rigid_Body->position_WS;
 
 	float angle_In_Radians = rigid_Body->angle * (float)(M_PI / 180.0);
@@ -275,7 +275,6 @@ void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 	game_Data->enemy_Castle = castle;
 }
 
-
 void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 target_Position, Level level) {
 	Arrow arrow = {};
 
@@ -315,7 +314,7 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 ta
 //
 //}
 
-void spawn_Unit(Game_Data* game_Data, Unit_Side unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
+void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
 	REF(level);
 
@@ -381,7 +380,7 @@ void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Color_Index color) {
 	// This is a little weird
 	for (int i = 0; i < rigid_Body->num_Colliders; i++) {
 		Collider* collider = &rigid_Body->colliders[i];
-		V2 world_Position = get_WS_Position(rigid_Body, collider);
+		V2 world_Position = get_Collider_WS_Position(rigid_Body, collider);
 		draw_Circle(world_Position.x, world_Position.y, collider->radius, color);
 	}
 }
@@ -487,7 +486,7 @@ std::vector<int> create_Height_Map(const char* filename) {
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map) {
 	for (int i = 0; i < rigid_Body->num_Colliders; i++) {
 		Collider* collider = &rigid_Body->colliders[i];
-		V2 world_Position = get_WS_Position(rigid_Body, collider);
+		V2 world_Position = get_Collider_WS_Position(rigid_Body, collider);
 
 		int collider_X = (int)world_Position.x;
 		int collider_Y = (int)world_Position.y + (int)collider->radius;
@@ -512,11 +511,11 @@ bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2) {
 	// SET THE LOCAL POSITION ONE TIME BUT THAT'S IT. Unless I want to animate the collider.
 	for (int i = 0; i < rigid_Body_1->num_Colliders; i++) {
 		Collider* collider_1 = &rigid_Body_1->colliders[i];
-		V2 world_Pos_1 = get_WS_Position(rigid_Body_1, collider_1);
+		V2 world_Pos_1 = get_Collider_WS_Position(rigid_Body_1, collider_1);
 
 		for (int j = 0; j < rigid_Body_2->num_Colliders; j++) {
 			Collider* collider_2 = &rigid_Body_2->colliders[j];
-			V2 world_Pos_2 = get_WS_Position(rigid_Body_2, collider_2);
+			V2 world_Pos_2 = get_Collider_WS_Position(rigid_Body_2, collider_2);
 
 			float distance_Between = calculate_Distance(
 				world_Pos_1.x, world_Pos_1.y,
@@ -529,6 +528,44 @@ bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2) {
 		}
 	}
 	return false;
+}
+
+// Calculates the attack from of the originating unit
+bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_RB, Rigid_Body* target_RB) {
+	V2 origin_Pos = origin_RB->position_WS;
+	V2 target_Pos = target_RB->position_WS;
+	for (int i = 0; i < target_RB->num_Colliders; i++) {
+		Collider* target_Collider = &target_RB->colliders[i];
+		V2 collider_WS_Pos = get_Collider_WS_Position(target_RB, target_Collider);
+		float distance_Between = calculate_Distance(origin_Pos, target_Pos);
+		float sum = target_Collider->radius + origin_Attack_Range;
+		if (distance_Between <= sum) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
+	for (int i = 0; i < game_Data.player_Units.size(); i++) {
+		Unit* player_Unit = &game_Data.player_Units[i];
+		Castle* castle = &game_Data.enemy_Castle;
+		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
+			player_Unit->stop = true;
+			if (player_Unit->current_Attack_Cooldown < 0) {
+				player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
+				castle->health_Bar.current_HP -= player_Unit->damage;
+			}
+		}
+	}
+}
+
+void fire_Projectile() {
+
+}
+
+void cast_Spell() {
+
 }
 
 // Doesn't account for empty height map

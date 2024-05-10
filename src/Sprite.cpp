@@ -17,7 +17,6 @@ Sprite_Sheet& get_Sprite_Sheet(std::string key) {
 
 SDL_Texture* get_Sprite_Sheet_Texture(std::string key) {
 	Sprite_Sheet& sprite_Sheet = get_Sprite_Sheet(key);
-
 	return sprite_Sheet.sprites[0].image.texture;
 }
 

@@ -60,13 +60,12 @@ struct Castle_Stats {
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
 	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
-	{  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
-	{  100.0f,    {1.0f, 0.0f},      {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
+	{  100.0f,    {0.01f, 0.0f},     {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
+	{  100.0f,    {1.0f, 0.0f},      {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
 
 struct Castle {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
-
 	Rigid_Body rigid_Body;
 	Health_Bar health_Bar;
 
@@ -108,7 +107,7 @@ struct Arrow {
 	bool destroyed;
 };
 
-enum Unit_Side {
+enum Spawn_For {
 	PLAYER,
 	ENEMY
 };
@@ -152,14 +151,19 @@ struct Unit {
 };
 
 struct Game_Data {
-	float									timer;
 	Castle									player_Castle;
-	Castle									enemy_Castle;
-	std::vector<int>						terrain_Height_Map;
 	std::vector<Arrow>						player_Arrows;
+	// std::vector<Spells>						player_Spells;
+	// std::vector<Projectile>					player_Projectiles;
 	std::vector<Unit>						player_Units;
+	
+	Castle									enemy_Castle;
+	// std::vector<Projectile>					enemy_Projectile;
 	std::vector<Unit>						enemy_Units;
 	std::vector<Particle_System>			particle_Systems;
+	
+	std::vector<int>						terrain_Height_Map;
+	float									timer;
 	int										next_Entity_ID;
 };
 
@@ -167,8 +171,10 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map);
 bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2);
+bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_RB, Rigid_Body* target_RB);
+void check_Player_Unit_Castle_Collision(Game_Data& game_Data);
 
-V2 get_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
+V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
 float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos);
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
@@ -180,7 +186,7 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 ta
 // Anytime I need a 'if' statement, add it in the csv.
 // Anytime something is different in the spawn functions, add it to the .csv file. All units should 
 // be treated the exact same.
-void spawn_Unit(Game_Data* game_Data, Unit_Side unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Arrow_Position(Arrow* arrow, float delta_Time);

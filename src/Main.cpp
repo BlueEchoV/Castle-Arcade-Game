@@ -78,10 +78,10 @@ int main(int argc, char** argv) {
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
     std::string particle_Data_File_Path = "data/Particle_Data.csv";
-    size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
+	// No hotloading currently
+    // size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
     load_Particle_Data_CSV(particle_Data_File_Path);
 
-    // No hotloading currently
     std::string unit_Data_File_Path = "data/Unit_Data.csv";
     load_Unit_Data_CSV(unit_Data_File_Path);
 
@@ -145,11 +145,11 @@ int main(int argc, char** argv) {
         delta_Time /= 1000;
 
         // Hot loading
-        size_t current_File_Time = file_Last_Modified(particle_Data_File_Path);
-        if (current_File_Time != particle_Data_CSV_Last_Modified) {
-            particle_Data_CSV_Last_Modified = current_File_Time;
-            load_Particle_Data_CSV(particle_Data_File_Path);
-        }
+        //size_t current_File_Time = file_Last_Modified(particle_Data_File_Path);
+        //if (current_File_Time != particle_Data_CSV_Last_Modified) {
+        //    particle_Data_CSV_Last_Modified = current_File_Time;
+        //    load_Particle_Data_CSV(particle_Data_File_Path);
+        //}
 
         if (current_Game_State == GS_GAMELOOP) {
 			for (Particle_System& particle_System : game_Data.particle_Systems) {
@@ -456,7 +456,8 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // arrow collision
+                // Projectile Collision (Transition)
+                // arrow collision (This will change to check weapon collision)
                 for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
                     Arrow* arrow = &game_Data.player_Arrows[i];
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
@@ -555,7 +556,7 @@ int main(int argc, char** argv) {
                     enemy_Unit->current_Attack_Cooldown -= delta_Time;
                 }
 
-                // Collision player units with enemy castle
+                // Rigid Body Collision: Player units with enemy castle
                 for (int i = 0; i < game_Data.player_Units.size(); i++) {
                     Unit* player_Unit = &game_Data.player_Units[i];
                     Castle* castle = &game_Data.enemy_Castle;
@@ -567,7 +568,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                // Collision enemy units with player castle
+                // Rigid Body Collision: Enemy units with player castle
                 for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
                     Unit* enemy_Unit = &game_Data.enemy_Units[i];
                     Castle* castle = &game_Data.player_Castle;
@@ -579,8 +580,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-
-                // Units colliding with each other (Remove the RB collision and just use attack range)
+                // Rigid Body Collision: Player units with enemy units
                 for (int i = 0; i < game_Data.player_Units.size(); i++) {
                     Unit* player_Unit = &game_Data.player_Units[i];
                     for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
@@ -600,20 +600,14 @@ int main(int argc, char** argv) {
                     }
                 }
 
+                // Units that fire projectiles?
                 // Player archers and enemy Warriors colliding with each other
                 for (int i = 0; i < game_Data.player_Units.size(); i++) {
                     Unit* player_Unit = &game_Data.player_Units[i];
                     for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
                         Unit* enemy_Unit = &game_Data.enemy_Units[j];
-                        float distance_Between = calculate_Distance(
-                            player_Unit->rigid_Body.position_WS.x,
-                            player_Unit->rigid_Body.position_WS.y,
-                            enemy_Unit->rigid_Body.position_WS.x,
-                            enemy_Unit->rigid_Body.position_WS.y
-                        );
-                        float range_Sum = player_Unit->attack_Range;
-                        if (distance_Between <= range_Sum) {
-                            change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
+                        if (check_Attack_Range_Collision(player_Unit->attack_Range, &player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
+                            // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
                             player_Unit->stop = true;
                             if (player_Unit->current_Attack_Cooldown <= 0) {
                                 player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
@@ -625,7 +619,7 @@ int main(int argc, char** argv) {
                                 spawn_Arrow(&game_Data, AT_ARCHER_ARROW, arrow_Spawn_Location, aim_Head, LEVEL_1);
                             }
                         } else {
-                            change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
+                            // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
                         }
                         if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
                             enemy_Unit->stop = true;
@@ -659,7 +653,6 @@ int main(int argc, char** argv) {
 			if (game_Data.enemy_Castle.health_Bar.current_HP <= 0) {
 				current_Game_State = GS_VICTORY;
 			}
-
 
             // ***Rendering happens here***
             draw_Layer(get_Sprite_Sheet_Texture("bkg_Gameloop"));

@@ -49,11 +49,11 @@ V2 operator/(const V2& V2, float scalar);
 void my_Memory_Copy(void* dest, const void* src, size_t count);
 
 float calculate_Distance(float x1, float y1, float x2, float y2);
+float calculate_Distance(V2 v_1, V2 v_2);
 
 float linear_Interpolation(float left_Point, float right_Point, float percent);
 
 V2 calculate_Center(float w, float h);
-
 V2 calculate_Direction_V2(V2 target, V2 start);
 
 float random_Float_In_Range(float min, float max);
