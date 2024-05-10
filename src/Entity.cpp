@@ -24,7 +24,7 @@ static std::unordered_map<std::string, Projectile_Data> projectile_Data_Map = {}
 
 const Projectile_Data bad_Projectile_Data = {
 	//	Type		sprite_Sheet	colllider	can_Attach		gravity		speed	life_Time
-	   "arrow",		"arrow",		"arrow",	1,				200,		500,	10,       
+	   "arrow_Short",		"arrow_Short",		"arrow",	1,				200,		500,	10,       
 };
 
 const Projectile_Data& get_Projectile_Data(std::string key) {
@@ -324,6 +324,8 @@ void spawn_Projectile(Game_Data& game_Data, Spawn_For unit_Side, std::string pro
 
 	projectile.rigid_Body.velocity.x = direction_V2.x * projectile.speed;
 	projectile.rigid_Body.velocity.y = direction_V2.y * projectile.speed;
+	projectile.gravity = projectile_Data.gravity;
+	projectile.can_Attach = projectile_Data.can_Attach;
 
 	Collider_Data collider_Data = get_Collider_Data(projectile_Data.type);
 	add_Collider(&projectile.rigid_Body, { collider_Data.position_LS_X, collider_Data.position_LS_Y }, collider_Data.radius);
@@ -358,7 +360,7 @@ void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type
 
 	float radius = get_Sprite_Radius(&unit.sprite_Sheet_Tracker);
 
-	if (unit_Data.projectile_Type != "none") {
+	if (unit_Data.projectile_Type != "") {
 		Projectile_Data projectile_Data = get_Projectile_Data(unit_Data.projectile_Type);
 		unit.projectile_Type = projectile_Data.type;
 	}

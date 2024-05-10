@@ -1,6 +1,9 @@
 sprite_Sheet_Name,rows,columns
 basic_Particle_1,1,1
 arrow,1,1
+arrow_Short,1,1
+arrow_Long,1,1
+shadow_Orb,1,1
 castle,1,1
 warrior_Stop,1,1
 archer_Walk,1,2

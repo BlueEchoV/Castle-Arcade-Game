@@ -316,7 +316,7 @@ int main(int argc, char** argv) {
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
-                        spawn_Projectile(game_Data, PLAYER, "arrow", 10, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse);
+                        spawn_Projectile(game_Data, PLAYER, "arrow_Short", 10, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse);
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
                         if (game_Data.player_Castle.arrow_Ammo > 0) {
                             game_Data.player_Castle.arrow_Ammo--;
@@ -612,30 +612,35 @@ int main(int argc, char** argv) {
                     Unit* player_Unit = &game_Data.player_Units[i];
                     for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
                         Unit* enemy_Unit = &game_Data.enemy_Units[j];
-                        if (check_Attack_Range_Collision(player_Unit->attack_Range, &player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
-                            // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
-                            player_Unit->stop = true;
-                            if (player_Unit->current_Attack_Cooldown <= 0) {
-                                player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
-                                V2 aim_Head = enemy_Unit->rigid_Body.position_WS;
-                                std::string sprite_Sheet_Name = enemy_Unit->sprite_Sheet_Tracker.sprite_Sheet_Name;
-                                aim_Head.x += get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
-                                V2 arrow_Spawn_Location = player_Unit->rigid_Body.position_WS;
-                                arrow_Spawn_Location.y -= get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker) / 2;
-                                spawn_Projectile(game_Data, PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
+                        if (player_Unit->projectile_Type != "") {
+                            if (check_Attack_Range_Collision(player_Unit->attack_Range, &player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
+                                // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
+                                player_Unit->stop = true;
+                                if (player_Unit->current_Attack_Cooldown <= 0) {
+                                    player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
+                                    V2 aim_Head = enemy_Unit->rigid_Body.position_WS;
+                                    std::string sprite_Sheet_Name = enemy_Unit->sprite_Sheet_Tracker.sprite_Sheet_Name;
+                                    aim_Head.x += get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
+                                    V2 arrow_Spawn_Location = player_Unit->rigid_Body.position_WS;
+                                    arrow_Spawn_Location.y -= get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker) / 2;
+                                    spawn_Projectile(game_Data, PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
+                                }
                             }
-                        } else {
-                            // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
-                        }
-                        if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
-                            enemy_Unit->stop = true;
-                            if (enemy_Unit->current_Attack_Cooldown <= 0) {
-                                enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
-                                player_Unit->health_Bar.current_HP -= enemy_Unit->damage;
+                            else {
+                                // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
+                            }
+                            if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
+                                enemy_Unit->stop = true;
+                                if (enemy_Unit->current_Attack_Cooldown <= 0) {
+                                    enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
+                                    player_Unit->health_Bar.current_HP -= enemy_Unit->damage;
+                                }
                             }
                         }
-                    }
-                }
+					}
+				}
+
+                // Need to do a attack range collision check for the enemy as well
 
 				for (int i = 0; i < game_Data.player_Units.size(); i++) {
 					Unit* player_Unit = &game_Data.player_Units[i];
@@ -684,9 +689,9 @@ int main(int argc, char** argv) {
             // Draw player projectiles
             for (int i = 0; i < game_Data.player_Projectiles.size(); i++) {
                 Projectile* projectile = &game_Data.player_Projectiles[i];
-                // draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
+                draw_RigidBody_Colliders(&projectile->rigid_Body, CI_GREEN);
                 if (projectile->life_Time > 0) {
-					// draw_Circle(arrow->rigid_Body.position_WS.x, arrow->rigid_Body.position_WS.y, 1, CI_RED); 
+                    // draw_Circle(projectile->rigid_Body.position_WS.x, projectile->rigid_Body.position_WS.y, get_Sprite_Radius(&projectile->sprite_Sheet_Tracker), CI_RED);
                     draw_Projectile(projectile, false);
                     projectile->life_Time -= delta_Time;
                 }
@@ -696,7 +701,7 @@ int main(int argc, char** argv) {
 				Projectile* projectile = &game_Data.enemy_Projectiles[i];
 				// draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
 				if (projectile->life_Time > 0) {
-					// draw_Circle(arrow->rigid_Body.position_WS.x, arrow->rigid_Body.position_WS.y, 1, CI_RED); 
+					// draw_Circle(projectile->rigid_Body.position_WS.x, projectile->rigid_Body.position_WS.y, get_Sprite_Radius(&projectile->sprite_Sheet_Tracker), CI_RED);
 					draw_Projectile(projectile, false);
                     projectile->life_Time -= delta_Time;
 				}

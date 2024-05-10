@@ -1,2 +1,4 @@
 type,position_LS_X,position_LS_Y,radius
-arrow,60,0,20
+arrow_Short,10,0,5
+arrow_Long,10,0,5
+shadow_Orb,0,0,5

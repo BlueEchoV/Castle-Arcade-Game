@@ -1,4 +1,4 @@
 type,sprite_Sheet_Name,projectile_Type,max_HP,damage,speed,attack_Cooldown,attack_Range
-warrior,warrior_Stop,none,100,10,50,1.5,150
-archer,archer_Stop,arrow,100,10,50,1.5,800
-necromancer,necromancer_Stop,none,200,5,75,0.25,750
+warrior,warrior_Stop,,100,10,50,1.5,150
+archer,archer_Stop,arrow_Long,100,10,50,1.5,800
+necromancer,necromancer_Stop,shadow_Orb,200,2.5,75,0.25,700

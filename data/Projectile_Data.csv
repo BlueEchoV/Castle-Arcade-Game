@@ -1,2 +1,4 @@
 type,sprite_Sheet_Name,collider,can_Attach,gravity,speed,life_Time
-arrow,arrow,arrow,1,200,500,10
+arrow_Short,arrow,arrow_Short,1,300,700,10
+arrow_Long,arrow,arrow_Long,1,100,700,10
+shadow_Orb,shadow_Orb,shadow_Orb,0,0,400,15
