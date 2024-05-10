@@ -202,32 +202,32 @@ void process(Archive* ar, Unit& unit) {
 	process(ar, unit.ID);
 }
 
-void process(Archive* ar, Arrow_Type& arrow_Type) {
-	process(ar, (int&)arrow_Type);
-}
-
-void process(Archive* ar, Arrow& arrow) {
-	process(ar, arrow.type);
-	process(ar, arrow.sprite_Sheet_Tracker);
-	process(ar, arrow.rigid_Body);
-	process(ar, arrow.damage);
-	process(ar, arrow.speed);
-	process(ar, arrow.life_Time);
-	process(ar, arrow.collision_Delay);
-	process(ar, arrow.target_ID);
-	process(ar, arrow.stop);
-	process(ar, arrow.destroyed);
+void process(Archive* ar, Projectile& projectile) {
+	process(ar, projectile.sprite_Sheet_Tracker);
+	process(ar, projectile.rigid_Body);
+	process(ar, projectile.damage);
+	process(ar, projectile.speed);
+	process(ar, projectile.life_Time);
+	process(ar, projectile.collision_Delay);
+	process(ar, projectile.target_ID);
+	process(ar, projectile.gravity);
+	process(ar, projectile.stop);
+	process(ar, projectile.destroyed);
 }
 
 void process(Archive* ar, Game_Data* game_Data) {
-	process(ar, game_Data->timer);
 	process(ar, game_Data->player_Castle);
-	process(ar, game_Data->enemy_Castle);
-	process(ar, game_Data->terrain_Height_Map);
-	process(ar, game_Data->player_Arrows);
+	process(ar, game_Data->player_Projectiles);
 	process(ar, game_Data->player_Units);
+
+	process(ar, game_Data->enemy_Castle);
+	process(ar, game_Data->enemy_Projectiles);
 	process(ar, game_Data->enemy_Units);
+
 	process(ar, game_Data->particle_Systems);
+
+	process(ar, game_Data->terrain_Height_Map);
+	process(ar, game_Data->timer);
 	process(ar, game_Data->next_Entity_ID);
 }
 

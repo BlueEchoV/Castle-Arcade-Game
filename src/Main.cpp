@@ -81,9 +81,9 @@ int main(int argc, char** argv) {
 	// No hotloading currently
     // size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
     load_Particle_Data_CSV(particle_Data_File_Path);
-
-    std::string unit_Data_File_Path = "data/Unit_Data.csv";
-    load_Unit_Data_CSV(unit_Data_File_Path);
+    load_Unit_Data_CSV("data/Unit_Data.csv");
+    load_Projectile_Data_CSV("data/Projectile_Data.csv");
+    load_Collider_Data_CSV("data/Collider_Data.csv");
 
 	spawn_Particle_System(
 		game_Data,
@@ -316,7 +316,7 @@ int main(int argc, char** argv) {
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
-                        spawn_Arrow(&game_Data, AT_PLAYER_ARROW, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse, LEVEL_1);
+                        spawn_Projectile(game_Data, PLAYER, "arrow", 10, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse);
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
                         if (game_Data.player_Castle.arrow_Ammo > 0) {
                             game_Data.player_Castle.arrow_Ammo--;
@@ -408,13 +408,20 @@ int main(int argc, char** argv) {
                     game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
                 }
 
-                // Update arrow positions
-                for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
-                    Arrow* arrow = &game_Data.player_Arrows[i];
-                    if (!arrow->destroyed) {
-                        update_Arrow_Position(arrow, delta_Time);
+                // Update player arrow positions
+                for (int i = 0; i < game_Data.player_Projectiles.size(); i++) {
+                    Projectile* projectile = &game_Data.player_Projectiles[i];
+                    if (!projectile->destroyed) {
+                        update_Projectile_Position(projectile, delta_Time);
                     }
                 }
+				// Update enemy arrow positions
+				for (int i = 0; i < game_Data.enemy_Projectiles.size(); i++) {
+					Projectile* projectile = &game_Data.enemy_Projectiles[i];
+					if (!projectile->destroyed) {
+						update_Projectile_Position(projectile, delta_Time);
+					}
+				}
 
 #if 0
 				if (arrow->stuck_To_Unit.is_Sticking) {
@@ -456,27 +463,26 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Projectile Collision (Transition)
-                // arrow collision (This will change to check weapon collision)
-                for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
-                    Arrow* arrow = &game_Data.player_Arrows[i];
+                // Player Projectile Collision
+                for (int i = 0; i < game_Data.player_Projectiles.size(); i++) {
+                    Projectile* projectile = &game_Data.player_Projectiles[i];
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
-                    if (check_RB_Collision(&arrow->rigid_Body, &enemy_Castle->rigid_Body)) {
-                        enemy_Castle->health_Bar.current_HP -= arrow->damage;
-                        arrow->destroyed = true;
+                    if (check_RB_Collision(&projectile->rigid_Body, &enemy_Castle->rigid_Body)) {
+                        enemy_Castle->health_Bar.current_HP -= projectile->damage;
+                        projectile->destroyed = true;
                     }
                     // Collision with map
-					if (check_Height_Map_Collision(&arrow->rigid_Body, game_Data.terrain_Height_Map))
+					if (check_Height_Map_Collision(&projectile->rigid_Body, game_Data.terrain_Height_Map))
                     {
-                        arrow->stop= true;
+                        projectile->stop= true;
                     }
                     // Collision with Warriors and arrows
                     for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
                         Unit* enemy_Unit = &game_Data.enemy_Units[j];
-                        if (check_RB_Collision(&arrow->rigid_Body, &enemy_Unit->rigid_Body)) {
-							if (!arrow->stop) {
+                        if (check_RB_Collision(&projectile->rigid_Body, &enemy_Unit->rigid_Body)) {
+							if (!projectile->stop) {
                                 // On first hit, proc the damage
-                                if (arrow->collision_Delay.remaining == arrow->collision_Delay.duration) {
+                                if (projectile->collision_Delay.remaining == projectile->collision_Delay.duration) {
                                     spawn_Particle_System(
                                         game_Data,
                                         "PT_BLOOD",
@@ -487,35 +493,35 @@ int main(int argc, char** argv) {
                                         enemy_Unit->ID,
                                         false
 									);
-                                    enemy_Unit->health_Bar.current_HP -= arrow->damage;
-                                    arrow->target_ID = enemy_Unit->ID;
+                                    enemy_Unit->health_Bar.current_HP -= projectile->damage;
+                                    projectile->target_ID = enemy_Unit->ID;
                                 }
                                 bool targeted_Unit_Still_Alive = false;
                                 for (int e = 0; e < game_Data.enemy_Units.size(); e++) {
-                                    if (arrow->target_ID == game_Data.enemy_Units[e].ID) {
+                                    if (projectile->target_ID == game_Data.enemy_Units[e].ID) {
                                         targeted_Unit_Still_Alive = true;
                                     }
                                 }
                                 // Won't always stick, but it will always proc the damage.
-                                // This way, if the arrow is fast and goes through the target (which is fine),
-                                // then the arrow is bound to the unit but will also die with the unit.
-                                if (targeted_Unit_Still_Alive) {
-                                    if (arrow->collision_Delay.remaining > 0) {
-                                        arrow->collision_Delay.remaining -= delta_Time;
+                                // This way, if the projectile is fast and goes through the target (which is fine),
+                                // then the projectile is bound to the unit but will also die with the unit.
+                                if (targeted_Unit_Still_Alive && projectile->can_Attach) {
+                                    if (projectile->collision_Delay.remaining > 0) {
+                                        projectile->collision_Delay.remaining -= delta_Time;
                                     }
                                     else {
-                                        V2 offset = arrow->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
+                                        V2 offset = projectile->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
                                         Attached_Entity attached_Entity = return_Attached_Entity(
-                                            "arrow",
-                                            arrow->rigid_Body.angle,
+                                            projectile->type,
+                                            projectile->rigid_Body.angle,
                                             offset
                                         );
                                         enemy_Unit->attached_Entities[enemy_Unit->attached_Entities_Size++] = attached_Entity;
-                                        arrow->destroyed = true;
+                                        projectile->destroyed = true;
                                     }
                                 }
                                 else {
-                                    arrow->destroyed = true;
+                                    projectile->destroyed = true;
                                 }
 							}
                         }
@@ -616,7 +622,7 @@ int main(int argc, char** argv) {
                                 aim_Head.x += get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
                                 V2 arrow_Spawn_Location = player_Unit->rigid_Body.position_WS;
                                 arrow_Spawn_Location.y -= get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker) / 2;
-                                spawn_Arrow(&game_Data, AT_ARCHER_ARROW, arrow_Spawn_Location, aim_Head, LEVEL_1);
+                                spawn_Projectile(game_Data, PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
                             }
                         } else {
                             // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
@@ -675,16 +681,26 @@ int main(int argc, char** argv) {
                 CI_GREEN
             );
 
-            // Draw player arrows
-            for (int i = 0; i < game_Data.player_Arrows.size(); i++) {
-                Arrow* arrow = &game_Data.player_Arrows[i];
+            // Draw player projectiles
+            for (int i = 0; i < game_Data.player_Projectiles.size(); i++) {
+                Projectile* projectile = &game_Data.player_Projectiles[i];
                 // draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
-                if (arrow->life_Time > 0) {
+                if (projectile->life_Time > 0) {
 					// draw_Circle(arrow->rigid_Body.position_WS.x, arrow->rigid_Body.position_WS.y, 1, CI_RED); 
-                    draw_Arrow(arrow, false);
-                    arrow->life_Time -= delta_Time;
+                    draw_Projectile(projectile, false);
+                    projectile->life_Time -= delta_Time;
                 }
             }
+			// Draw enemy projectiles
+			for (int i = 0; i < game_Data.enemy_Projectiles.size(); i++) {
+				Projectile* projectile = &game_Data.enemy_Projectiles[i];
+				// draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
+				if (projectile->life_Time > 0) {
+					// draw_Circle(arrow->rigid_Body.position_WS.x, arrow->rigid_Body.position_WS.y, 1, CI_RED); 
+					draw_Projectile(projectile, false);
+                    projectile->life_Time -= delta_Time;
+				}
+			}
 
             // Draw player units
             for (int i = 0; i < game_Data.player_Units.size(); i++) {
@@ -842,9 +858,12 @@ int main(int argc, char** argv) {
 			}
 #endif
 
-            std::erase_if(game_Data.player_Arrows, [](Arrow& arrow) {
-                return arrow.destroyed || arrow.life_Time <= 0;
+            std::erase_if(game_Data.player_Projectiles, [](Projectile& projectile) {
+                return projectile.destroyed || projectile.life_Time <= 0;
                 });
+			std::erase_if(game_Data.enemy_Projectiles, [](Projectile& projectile) {
+				return projectile.destroyed || projectile.life_Time <= 0;
+				});
 			std::erase_if(game_Data.player_Units, [](Unit& unit) {
 				return unit.destroyed || unit.health_Bar.current_HP <= 0;
 				});

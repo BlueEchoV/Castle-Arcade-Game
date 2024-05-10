@@ -1,2 +1,2 @@
-type,sprite_Sheet_Name,damage,speed
-arrow,arrow,10,500
+type,sprite_Sheet_Name,collider,can_Attach,gravity,speed,life_Time
+arrow,arrow,arrow,1,200,500,10

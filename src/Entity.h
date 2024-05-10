@@ -11,6 +11,13 @@ struct Health_Bar {
 	int thickness;
 };
 
+struct Collider_Data {
+	std::string type;
+	float position_LS_X;
+	float position_LS_Y;
+	float radius;
+};
+
 struct Collider {
 	V2 position_LS;
 	float radius;
@@ -23,11 +30,6 @@ struct Rigid_Body {
 	float angle;
 	int num_Colliders;
 	Collider colliders[Globals::MAX_COLLIDERS];
-};
-
-enum Arrow_Type {
-	AT_PLAYER_ARROW,
-	AT_ARCHER_ARROW,
 };
 
 struct Stored_Units {
@@ -78,21 +80,18 @@ struct Castle {
 	Stored_Units stored_Units;
 };
 
-struct Arrow_Stats {
+struct Projectile_Data {
+	std::string type;
+	std::string sprite_Sheet_Name;
+	std::string collider;
+	bool can_Attach;
+	float gravity;
 	float speed;
-	float damage;
 	float life_Time;
 };
 
-const Arrow_Stats arrow_Stats_Array[TOTAL_LEVELS] = {
-	// speed    |   damage  |   life_Time
-	{  800,         25,          100     },
-	{  800,         100,         100     }
-};
-
-struct Arrow {
-	Arrow_Type type;
-
+struct Projectile {
+	std::string type;
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 
 	Rigid_Body rigid_Body;
@@ -103,6 +102,8 @@ struct Arrow {
 	Cooldown collision_Delay;
 	int target_ID;
 
+	bool can_Attach;
+	float gravity;
 	bool stop;
 	bool destroyed;
 };
@@ -116,6 +117,7 @@ enum Spawn_For {
 struct Unit_Data {
 	std::string type;
 	std::string sprite_Sheet_Name;
+	std::string projectile_Type;
 	float max_HP;
 	float damage;
 	float speed;
@@ -140,6 +142,8 @@ struct Unit {
 	float attack_Cooldown;
 	float current_Attack_Cooldown;
 	float attack_Range;
+	std::string projectile_Type;
+	bool fire_Projectiles;
 
 	Attached_Entity attached_Entities[Globals::MAX_ATTACHED_ENTITIES];
 	int attached_Entities_Size = 0;
@@ -152,14 +156,14 @@ struct Unit {
 
 struct Game_Data {
 	Castle									player_Castle;
-	std::vector<Arrow>						player_Arrows;
+	std::vector<Projectile>					player_Projectiles;
 	// std::vector<Spells>						player_Spells;
-	// std::vector<Projectile>					player_Projectiles;
 	std::vector<Unit>						player_Units;
 	
 	Castle									enemy_Castle;
-	// std::vector<Projectile>					enemy_Projectile;
+	std::vector<Projectile>					enemy_Projectiles;
 	std::vector<Unit>						enemy_Units;
+
 	std::vector<Particle_System>			particle_Systems;
 	
 	std::vector<int>						terrain_Height_Map;
@@ -177,11 +181,15 @@ void check_Player_Unit_Castle_Collision(Game_Data& game_Data);
 V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
 float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos);
 
+const Unit_Data& get_Unit_Data(std::string key);
+const Projectile_Data& get_Projectile_Data(std::string key);
+const Collider_Data& get_Collider_Data(std::string key);
+
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
 void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level);
 void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level);
-void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 target_Position, Level level);
+void spawn_Projectile(Game_Data& game_Data, Spawn_For unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.
 // Anytime something is different in the spawn functions, add it to the .csv file. All units should 
@@ -189,11 +197,11 @@ void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 ta
 void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
-void update_Arrow_Position(Arrow* arrow, float delta_Time);
+void update_Projectile_Position(Projectile* projectile, float delta_Time);
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time);
 
 void draw_Castle(Castle* castle, bool flip);
-void draw_Arrow(Arrow* arrow, bool flip);
+void draw_Projectile(Projectile* projectile, bool flip);
 void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip);
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, bool flip);
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color);
@@ -210,3 +218,5 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name);
 std::vector<int> create_Height_Map(const char* filename);
 
 void load_Unit_Data_CSV(std::string file_Name);
+void load_Projectile_Data_CSV(std::string file_Name);
+void load_Collider_Data_CSV(std::string file_Path);

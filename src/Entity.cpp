@@ -5,7 +5,7 @@ static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_Unit_Data = {
 	//	Type		sprite_Sheet	max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
-	   "warrior",	"warrior_Stop", 100,	25,		50,		1.0f,				150//,		    ""         
+	   "warrior",	"warrior_Stop", "",		100,	25,		50,		1.0f,				150//,		    ""         
 };
 
 const Unit_Data& get_Unit_Data(std::string key) {
@@ -20,9 +20,46 @@ const Unit_Data& get_Unit_Data(std::string key) {
 	return bad_Unit_Data;
 }
 
+static std::unordered_map<std::string, Projectile_Data> projectile_Data_Map = {};
+
+const Projectile_Data bad_Projectile_Data = {
+	//	Type		sprite_Sheet	colllider	can_Attach		gravity		speed	life_Time
+	   "arrow",		"arrow",		"arrow",	1,				200,		500,	10,       
+};
+
+const Projectile_Data& get_Projectile_Data(std::string key) {
+	auto it = projectile_Data_Map.find(key);
+	if (it != projectile_Data_Map.end()) {
+		// Key found
+		return it->second;
+	}
+
+	assert(false);
+	// Return garbage values
+	return bad_Projectile_Data;
+}
+
+static std::unordered_map<std::string, Collider_Data> collider_Data_Map = {};
+
+const Collider_Data bad_Collider_Data = {
+	//	Type		position_LS_X	position_LS_Y	radius
+	   "arrow",		60,				0,				20,
+};
+
+const Collider_Data& get_Collider_Data(std::string key) {
+	auto it = collider_Data_Map.find(key);
+	if (it != collider_Data_Map.end()) {
+		// Key found
+		return it->second;
+	}
+
+	assert(false);
+	// Return garbage values
+	return bad_Collider_Data;
+}
+
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
 	// assert(rigid_Body->num_Colliders < Globals::MAX_COLLIDERS);
-
 	Collider* collider = &rigid_Body->colliders[rigid_Body->num_Colliders++];
 	collider->position_LS = position_LS;
 	collider->radius = radius;
@@ -44,20 +81,20 @@ void draw_Castle(Castle* castle, bool flip) {
 	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
-void draw_Arrow(Arrow* arrow, bool flip) {
+void draw_Projectile(Projectile* projectile, bool flip) {
 	SDL_Rect temp = {};
-	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(arrow->sprite_Sheet_Tracker.sprite_Sheet_Name);
+	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(projectile->sprite_Sheet_Tracker.sprite_Sheet_Name);
 	Sprite* sprite = &sprite_Sheet->sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
 	temp = {
-		((int)arrow->rigid_Body.position_WS.x - (int)sprite_Half_Size.x),
-		((int)arrow->rigid_Body.position_WS.y - (int)sprite_Half_Size.y),
+		((int)projectile->rigid_Body.position_WS.x - (int)sprite_Half_Size.x),
+		((int)projectile->rigid_Body.position_WS.y - (int)sprite_Half_Size.y),
 		sprite->source_Rect.w,
 		sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, arrow->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, projectile->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
 }
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset) {
@@ -181,22 +218,11 @@ V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
 	return result;
 }
 
-
-void update_Arrow_Position(Arrow* arrow, float delta_Time) {
-	if (!arrow->stop) {
-		if (arrow->type == AT_PLAYER_ARROW) {
-			arrow->rigid_Body.velocity.y += Globals::GRAVITY * delta_Time;
-		}
-		else if (arrow->type == AT_ARCHER_ARROW) {
-			arrow->rigid_Body.velocity.y += Globals::ARCHER_ARROW_GRAVITY * delta_Time;
-		}
-		else {
-			SDL_Log("ERROR: Arrow type not specified. update_Arrow_Position()");
-			return;
-		}
-
-		arrow->rigid_Body.position_WS.x += arrow->rigid_Body.velocity.x * delta_Time;
-		arrow->rigid_Body.position_WS.y += arrow->rigid_Body.velocity.y * delta_Time;
+void update_Projectile_Position(Projectile* projectile, float delta_Time) {
+	if (!projectile->stop) {
+		projectile->rigid_Body.velocity.y += projectile->gravity * delta_Time;
+		projectile->rigid_Body.position_WS.x += projectile->rigid_Body.velocity.x * delta_Time;
+		projectile->rigid_Body.position_WS.y += projectile->rigid_Body.velocity.y * delta_Time;
 	}
 }
 
@@ -275,44 +301,40 @@ void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 	game_Data->enemy_Castle = castle;
 }
 
-void spawn_Arrow(Game_Data* game_Data, Arrow_Type type, V2 spawn_Position, V2 target_Position, Level level) {
-	Arrow arrow = {};
+// The damage of the projectile is based off the unit's damage
+void spawn_Projectile(Game_Data& game_Data, Spawn_For unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos) {
+	Projectile projectile = {};
 
-	arrow.type = type;
+	Projectile_Data projectile_Data = get_Projectile_Data(projectile_Type);
+	projectile.type = projectile_Data.type;
+	projectile.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(projectile_Data.type);
+	projectile.rigid_Body = create_Rigid_Body(origin_Pos, true);
 
-	arrow.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("arrow");
-	arrow.rigid_Body = create_Rigid_Body(spawn_Position, true);
-
-	arrow.damage = arrow_Stats_Array[level].damage;
-	arrow.speed = arrow_Stats_Array[level].speed;
-	arrow.life_Time = arrow_Stats_Array[level].life_Time;
+	projectile.damage = damage;
+	projectile.speed = projectile_Data.speed;
+	projectile.life_Time = projectile_Data.life_Time;
 	// 90000 is a pretty garbage number. I may want to come up with a better means of measuring speed
-	arrow.collision_Delay.duration = 0.02f;
-	arrow.collision_Delay.remaining = arrow.collision_Delay.duration;
+	projectile.collision_Delay.duration = 0.02f;
+	projectile.collision_Delay.remaining = projectile.collision_Delay.duration;
 
-	arrow.stop = false;
-	arrow.destroyed = false;
+	projectile.stop = false;
+	projectile.destroyed = false;
 
-	V2 direction_V2 = calculate_Direction_V2(target_Position, spawn_Position);
+	V2 direction_V2 = calculate_Direction_V2(target_Pos, origin_Pos);
 
-	arrow.rigid_Body.velocity.x = direction_V2.x * arrow.speed;
-	arrow.rigid_Body.velocity.y = direction_V2.y * arrow.speed;
+	projectile.rigid_Body.velocity.x = direction_V2.x * projectile.speed;
+	projectile.rigid_Body.velocity.y = direction_V2.y * projectile.speed;
 
-	// Improved readability
-	float radius = get_Sprite_Radius(&arrow.sprite_Sheet_Tracker);
-
-	add_Collider(
-		&arrow.rigid_Body,
-		{ (radius * 0.75f), 0.0f },
-		(radius * 0.25f)
-	);
-
-	game_Data->player_Arrows.push_back(arrow);
+	Collider_Data collider_Data = get_Collider_Data(projectile_Data.type);
+	add_Collider(&projectile.rigid_Body, { collider_Data.position_LS_X, collider_Data.position_LS_Y }, collider_Data.radius);
+	// add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	if (unit_Side == PLAYER) {
+		game_Data.player_Projectiles.push_back(projectile);
+	}
+	else if (unit_Side == ENEMY) {
+		game_Data.enemy_Projectiles.push_back(projectile);
+	}
 }
-
-//void spawn_Unit(Game_Data* game_Data, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
-//
-//}
 
 void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
@@ -335,6 +357,11 @@ void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type
 	unit.rigid_Body.velocity.y = direction_V2.y * unit_Data.speed;
 
 	float radius = get_Sprite_Radius(&unit.sprite_Sheet_Tracker);
+
+	if (unit_Data.projectile_Type != "none") {
+		Projectile_Data projectile_Data = get_Projectile_Data(unit_Data.projectile_Type);
+		unit.projectile_Type = projectile_Data.type;
+	}
 
 	add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
 	add_Collider(&unit.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
@@ -583,6 +610,7 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
 Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_STRING, type),
 	FIELD(Unit_Data, DT_STRING, sprite_Sheet_Name),
+	FIELD(Unit_Data, DT_STRING, projectile_Type),
 	FIELD(Unit_Data, DT_FLOAT, max_HP),
 	FIELD(Unit_Data, DT_FLOAT, damage),
 	FIELD(Unit_Data, DT_FLOAT, speed),
@@ -591,17 +619,60 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	// FIELD(Unit_Data, MT_STRING, spell_Type),
 };
 
-void load_Unit_Data_CSV(std::string file_Name) {
+void load_Unit_Data_CSV(std::string file_Path) {
 	// Each row is one unit_Data
-	int rows = count_CSV_Rows(file_Name);
+	int rows = count_CSV_Rows(file_Path);
 	std::vector<Unit_Data> unit_Data;
 	unit_Data.resize(rows);
 	//					 Data destination		 size of one stride	   descriptors above
 	//					(char*) ptr math
-	load_CSV(file_Name, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, ARRAY_SIZE(unit_Type_Descriptors));
+	load_CSV(file_Path, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, ARRAY_SIZE(unit_Type_Descriptors));
 
 	// Loop through the vector and add the data to the unordered map
 	for (Unit_Data& iterator : unit_Data) {
 		unit_Data_Map[iterator.type] = iterator;
+	}
+}
+
+// Array size will be determined based off total number of initializations
+Type_Descriptor projectile_Type_Descriptors[] = {
+	FIELD(Projectile_Data, DT_STRING, type),
+	FIELD(Projectile_Data, DT_STRING, sprite_Sheet_Name),
+	FIELD(Projectile_Data, DT_STRING, collider),
+	// Treat a bool like an int. 0 is false. 1 is true.
+	FIELD(Projectile_Data, DT_INT, can_Attach),
+	FIELD(Projectile_Data, DT_FLOAT, gravity),
+	FIELD(Projectile_Data, DT_FLOAT, speed),
+	FIELD(Projectile_Data, DT_FLOAT, life_Time),
+};
+
+void load_Projectile_Data_CSV(std::string file_Path) {
+	int rows = count_CSV_Rows(file_Path);
+	std::vector<Projectile_Data> projectile_Data;
+	projectile_Data.resize(rows);
+	
+	load_CSV(file_Path, (char*)projectile_Data.data(), sizeof(projectile_Data[0]), projectile_Type_Descriptors, ARRAY_SIZE(projectile_Type_Descriptors));
+
+	for (Projectile_Data& iterator : projectile_Data) {
+		projectile_Data_Map[iterator.type] = iterator;
+	}
+}
+
+Type_Descriptor collider_Type_Descriptors[] = {
+	FIELD(Collider_Data, DT_STRING, type),
+	FIELD(Collider_Data, DT_FLOAT, position_LS_X),
+	FIELD(Collider_Data, DT_FLOAT, position_LS_Y),
+	FIELD(Collider_Data, DT_FLOAT, radius),
+};
+
+void load_Collider_Data_CSV(std::string file_Path) {
+	int rows = count_CSV_Rows(file_Path);
+	std::vector<Collider_Data> collider_Data;
+	collider_Data.resize(rows);
+
+	load_CSV(file_Path, (char*)collider_Data.data(), sizeof(collider_Data[0]), collider_Type_Descriptors, ARRAY_SIZE(collider_Type_Descriptors));
+
+	for (Collider_Data& iterator : collider_Data) {
+		collider_Data_Map[iterator.type] = iterator;
 	}
 }
