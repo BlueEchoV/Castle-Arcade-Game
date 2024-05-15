@@ -2,6 +2,7 @@
 #include <algorithm> 
 #include "Entity.h"
 #include <assert.h>
+#include <span>
 
 std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 
@@ -246,7 +247,9 @@ void load_Particle_Data_CSV(std::string file_Name) {
 	std::vector<Particle_Data> particle_Data;
 	particle_Data.resize(rows);
 
-	load_CSV(file_Name, (char*)particle_Data.data(), sizeof(particle_Data[0]), particle_Data_Type_Descriptors, ARRAY_SIZE(particle_Data_Type_Descriptors));
+	std::span<Type_Descriptor> span_Array(particle_Data_Type_Descriptors);
+
+	load_CSV(file_Name, (char*)particle_Data.data(), sizeof(particle_Data[0]), span_Array);
 
 	for (Particle_Data& iterator : particle_Data) {
 		particle_Data_Map[iterator.type] = iterator;

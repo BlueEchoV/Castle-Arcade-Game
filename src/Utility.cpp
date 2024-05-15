@@ -156,6 +156,47 @@ void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Desc
 	}
 }
 
+// Overloaded function using std::span
+// Allows us to not lose information about the array
+void load_CSV(std::string file_Name, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors) {
+	std::ifstream file(file_Name);
+
+	if (!file.is_open()) {
+		SDL_Log("Error loading .csv file");
+		return;
+	}
+
+	std::string line;
+	std::getline(file, line);
+	std::vector<std::string> column_Names = split(line, ',');
+
+	int current_Row = 0;
+	while (std::getline(file, line)) {
+		std::vector<std::string> tokens = split(line, ',');
+		char* write_Ptr = destination + (current_Row * stride);
+		current_Row++;
+
+		for (Type_Descriptor type_Descriptor : type_Descriptors) {
+			int column_Index = get_Column_Index(column_Names, type_Descriptor.column_Name);
+			if (column_Index <= -1) {
+				continue;
+			}
+			if (type_Descriptor.variable_Type == DT_INT) {
+				int* destination_Ptr = (int*)(write_Ptr + type_Descriptor.variable_Offset);
+				*destination_Ptr = std::stoi(tokens[column_Index]);
+			}
+			else if (type_Descriptor.variable_Type == DT_FLOAT) {
+				float* destination_Ptr = (float*)(write_Ptr + type_Descriptor.variable_Offset);
+				*destination_Ptr = std::stof(tokens[column_Index]);
+			}
+			else if (type_Descriptor.variable_Type == DT_STRING) {
+				std::string* destination_Ptr = (std::string*)(write_Ptr + type_Descriptor.variable_Offset);
+				*destination_Ptr = tokens[column_Index];
+			}
+		}
+	}
+}
+
 bool can_Open_CSV_File(const std::string& file_Name) {
 	std::ifstream file(file_Name);
 	std::string line;

@@ -5,6 +5,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <span>
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 // Suppress compiler warnings
@@ -90,3 +91,4 @@ int count_CSV_Rows(std::string file_Name);
 int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name);
 std::vector<std::string> split(const std::string& my_String, char delimiter);
 void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors);
+void load_CSV(std::string file_Name, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors);
