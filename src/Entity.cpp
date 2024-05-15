@@ -82,13 +82,12 @@ void draw_Castle(Castle* castle, bool flip) {
 }
 
 void draw_Projectile(Projectile* projectile, bool flip) {
-	SDL_Rect temp = {};
 	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(projectile->sprite_Sheet_Tracker.sprite_Sheet_Name);
 	Sprite* sprite = &sprite_Sheet->sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
 	V2 sprite_Half_Size = { (float)src_Rect->w, (float)src_Rect->h };
 	sprite_Half_Size = sprite_Half_Size / 2;
-	temp = {
+	SDL_Rect temp = {
 		((int)projectile->rigid_Body.position_WS.x - (int)sprite_Half_Size.x),
 		((int)projectile->rigid_Body.position_WS.y - (int)sprite_Half_Size.y),
 		sprite->source_Rect.w,
@@ -302,7 +301,7 @@ void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 }
 
 // The damage of the projectile is based off the unit's damage
-void spawn_Projectile(Game_Data& game_Data, Spawn_For unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos) {
+void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos) {
 	Projectile projectile = {};
 
 	Projectile_Data projectile_Data = get_Projectile_Data(projectile_Type);
@@ -330,15 +329,15 @@ void spawn_Projectile(Game_Data& game_Data, Spawn_For unit_Side, std::string pro
 	Collider_Data collider_Data = get_Collider_Data(projectile_Data.type);
 	add_Collider(&projectile.rigid_Body, { collider_Data.position_LS_X, collider_Data.position_LS_Y }, collider_Data.radius);
 	// add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
-	if (unit_Side == PLAYER) {
+	if (unit_Side == N_PLAYER) {
 		game_Data.player_Projectiles.push_back(projectile);
 	}
-	else if (unit_Side == ENEMY) {
+	else if (unit_Side == N_ENEMY) {
 		game_Data.enemy_Projectiles.push_back(projectile);
 	}
 }
 
-void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
+void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
 	REF(level);
 
@@ -370,9 +369,9 @@ void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type
 	add_Collider(&unit.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
 	unit.ID = game_Data->next_Entity_ID++;
-	if (unit_Side == PLAYER) {
+	if (unit_Side == N_PLAYER) {
 		game_Data->player_Units.push_back(unit);
-	} else if (unit_Side == ENEMY) {
+	} else if (unit_Side == N_ENEMY) {
 		game_Data->enemy_Units.push_back(unit);
 	}
 }

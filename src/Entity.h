@@ -108,9 +108,9 @@ struct Projectile {
 	bool destroyed;
 };
 
-enum Spawn_For {
-	PLAYER,
-	ENEMY
+enum Nation {
+	N_PLAYER,
+	N_ENEMY
 };
 
 // Applies to all units
@@ -189,12 +189,12 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 
 void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level);
 void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level);
-void spawn_Projectile(Game_Data& game_Data, Spawn_For unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
+void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.
 // Anytime something is different in the spawn functions, add it to the .csv file. All units should 
 // be treated the exact same.
-void spawn_Unit(Game_Data* game_Data, Spawn_For unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Projectile_Position(Projectile* projectile, float delta_Time);

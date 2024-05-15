@@ -83,6 +83,8 @@ struct Type_Descriptor {
 // #name: This is a preprocessor operator that turns the name into a string literal.
 #define FIELD(struct_Type, data_Type, name) { data_Type, offsetof(struct_Type, name), #name }
 
+
+bool can_Open_CSV_File(const std::string& file_Name);
 int count_CSV_Rows(std::string file_Name);
 // Making these const refs is MUCH better performance wise because there is a significant amount of memory not being copied in
 int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name);

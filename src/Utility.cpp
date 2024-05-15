@@ -111,6 +111,7 @@ void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Desc
 
 	if (!file.is_open()) {
 		SDL_Log("Error loading .csv file");
+		return;
 	}
 
 	std::string line;
@@ -153,6 +154,19 @@ void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Desc
 			}
 		}
 	}
+}
+
+bool can_Open_CSV_File(const std::string& file_Name) {
+	std::ifstream file(file_Name);
+	std::string line;
+	int total_Rows = 0;
+	while (std::getline(file, line)) {
+		total_Rows++;
+	}
+	if (file.is_open() && total_Rows != 0) {
+		return true;
+	}
+	return false;
 }
 
 int count_CSV_Rows(std::string file_Name) {

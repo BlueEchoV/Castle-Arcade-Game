@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 
     std::string particle_Data_File_Path = "data/Particle_Data.csv";
 	// No hotloading currently
-    // size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
+    size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
     load_Particle_Data_CSV(particle_Data_File_Path);
     load_Unit_Data_CSV("data/Unit_Data.csv");
     load_Projectile_Data_CSV("data/Projectile_Data.csv");
@@ -145,11 +145,13 @@ int main(int argc, char** argv) {
         delta_Time /= 1000;
 
         // Hot loading
-        //size_t current_File_Time = file_Last_Modified(particle_Data_File_Path);
-        //if (current_File_Time != particle_Data_CSV_Last_Modified) {
-        //    particle_Data_CSV_Last_Modified = current_File_Time;
-        //    load_Particle_Data_CSV(particle_Data_File_Path);
-        //}
+        size_t current_File_Time = file_Last_Modified(particle_Data_File_Path);
+        if (current_File_Time != particle_Data_CSV_Last_Modified) {
+            if (can_Open_CSV_File(particle_Data_File_Path)) {
+                load_Particle_Data_CSV(particle_Data_File_Path);
+                particle_Data_CSV_Last_Modified = current_File_Time;
+            }
+        }
 
         if (current_Game_State == GS_GAMELOOP) {
 			for (Particle_System& particle_System : game_Data.particle_Systems) {
@@ -316,7 +318,7 @@ int main(int argc, char** argv) {
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
-                        spawn_Projectile(game_Data, PLAYER, "arrow_Short", 10, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse);
+                        spawn_Projectile(game_Data, N_PLAYER, "arrow_Short", 10, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse);
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
                         if (game_Data.player_Castle.arrow_Ammo > 0) {
                             game_Data.player_Castle.arrow_Ammo--;
@@ -341,7 +343,7 @@ int main(int argc, char** argv) {
                     Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Unit(
                         &game_Data,
-                        PLAYER,
+                        N_PLAYER,
                         "warrior",
                         1,
                         {
@@ -357,7 +359,7 @@ int main(int argc, char** argv) {
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
 					spawn_Unit(
 						&game_Data,
-						PLAYER,
+                        N_PLAYER,
 						"archer",
                         1,
 						{
@@ -373,7 +375,7 @@ int main(int argc, char** argv) {
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
 					spawn_Unit(
 						&game_Data,
-						PLAYER,
+                        N_PLAYER,
 						"necromancer",
 						1,
 						{
@@ -396,7 +398,7 @@ int main(int argc, char** argv) {
 					float y_Pos = terrain_height + radius;
 					spawn_Unit(
 						&game_Data,
-						ENEMY,
+						N_ENEMY,
 						"warrior",
                         1,
                         { x_Pos, y_Pos },
@@ -606,8 +608,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Units that fire projectiles?
-                // Player archers and enemy Warriors colliding with each other
+                // Units that fire projectiles
                 for (int i = 0; i < game_Data.player_Units.size(); i++) {
                     Unit* player_Unit = &game_Data.player_Units[i];
                     for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
@@ -619,11 +620,10 @@ int main(int argc, char** argv) {
                                 if (player_Unit->current_Attack_Cooldown <= 0) {
                                     player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
                                     V2 aim_Head = enemy_Unit->rigid_Body.position_WS;
-                                    std::string sprite_Sheet_Name = enemy_Unit->sprite_Sheet_Tracker.sprite_Sheet_Name;
                                     aim_Head.x += get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
                                     V2 arrow_Spawn_Location = player_Unit->rigid_Body.position_WS;
                                     arrow_Spawn_Location.y -= get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker) / 2;
-                                    spawn_Projectile(game_Data, PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
+                                    spawn_Projectile(game_Data, N_PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
                                 }
                             }
                             else {
@@ -640,7 +640,7 @@ int main(int argc, char** argv) {
 					}
 				}
 
-                // Need to do a attack range collision check for the enemy as well
+                // TODO: Need to do a attack range collision check for the enemy as well
 
 				for (int i = 0; i < game_Data.player_Units.size(); i++) {
 					Unit* player_Unit = &game_Data.player_Units[i];
