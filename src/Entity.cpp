@@ -368,7 +368,7 @@ void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, i
 	add_Collider(&unit.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
 	add_Collider(&unit.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
-	unit.ID = game_Data->next_Entity_ID++;
+	unit.ID = allocate_Entity_ID(*game_Data);
 	if (unit_Side == N_PLAYER) {
 		game_Data->player_Units.push_back(unit);
 	} else if (unit_Side == N_ENEMY) {
@@ -676,4 +676,26 @@ void load_Collider_Data_CSV(std::string file_Path) {
 	for (Collider_Data& iterator : collider_Data) {
 		collider_Data_Map[iterator.type] = iterator;
 	}
+}
+
+void initialize_Entity_Manager(Game_Data& game_Data) {
+	// Starting ID
+	game_Data.next_Entity_ID = 1;
+	// Empty the queue if it has any ids in it
+	while(!game_Data.freed_Entity_IDs.empty()) {
+		game_Data.freed_Entity_IDs.pop();
+	}
+}
+
+int allocate_Entity_ID(Game_Data& game_Data) {
+	if (!game_Data.freed_Entity_IDs.empty()) {
+		int reused_ID = game_Data.freed_Entity_IDs.front();
+		game_Data.freed_Entity_IDs.pop();
+		return reused_ID;
+	}
+	return game_Data.next_Entity_ID++;
+}
+
+void free_Entity_ID(Game_Data& game_Data, int entity_ID) {
+	game_Data.freed_Entity_IDs.push(entity_ID);
 }

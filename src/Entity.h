@@ -1,6 +1,7 @@
 #pragma once
 #include "Sprite.h"
 #include "Particle_System.h"
+#include <queue>
 
 struct Health_Bar {
 	float max_HP;
@@ -151,6 +152,7 @@ struct Unit {
 	bool destroyed;
 	bool stop;
 
+	// This is my handle
 	int ID;
 };
 
@@ -168,7 +170,9 @@ struct Game_Data {
 	
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
+
 	int										next_Entity_ID;
+	std::queue<int>							freed_Entity_IDs;
 };
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
@@ -220,3 +224,7 @@ std::vector<int> create_Height_Map(const char* filename);
 void load_Unit_Data_CSV(std::string file_Name);
 void load_Projectile_Data_CSV(std::string file_Name);
 void load_Collider_Data_CSV(std::string file_Path);
+
+void initialize_Entity_Manager(Game_Data& game_Data);
+int allocate_Entity_ID(Game_Data& game_Data);
+void free_Entity_ID(Game_Data& game_Data, int entity_ID);
