@@ -107,12 +107,27 @@ Type_Descriptor sprite_Sheet_Type_Descriptor[] = {
 	FIELD(Sprite_Sheet_Data, DT_INT, columns),
 };
 
-void load_Sprite_Sheet_Data_CSV(std::string file_Path) {
-	int rows = count_CSV_Rows(file_Path);
+void load_Sprite_Sheet_Data_CSV(CSV_Data* csv_Data) {
+	csv_Data->file.open(csv_Data->file_Path);
+	if (!csv_Data->file.is_open()) {
+		SDL_Log("ERROR: Unable to open CSV file");
+		return;
+	}
+	DEFER{
+		csv_Data->file.close();
+	};
+
+	int rows = count_CSV_Rows(csv_Data);
+	if (rows <= 0) {
+		return;
+	}
+
 	std::vector<Sprite_Sheet_Data> sprite_Sheets;
 	sprite_Sheets.resize(rows);
 
-	load_CSV(file_Path, (char*)sprite_Sheets.data(), sizeof(sprite_Sheets[0]), sprite_Sheet_Type_Descriptor, ARRAY_SIZE(sprite_Sheet_Type_Descriptor));
+	std::span<Type_Descriptor> span_Array(sprite_Sheet_Type_Descriptor);
+
+	load_CSV_Data(csv_Data, (char*)sprite_Sheets.data(), sizeof(sprite_Sheets[0]), span_Array);
 
 	for (Sprite_Sheet_Data& iterator : sprite_Sheets) {
 		std::string sprite_Sheet_File_Path = "images/" + iterator.sprite_Sheet_Name + ".png";

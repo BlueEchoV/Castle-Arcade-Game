@@ -221,9 +221,9 @@ Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name);
 std::vector<int> create_Height_Map(const char* filename);
 
-void load_Unit_Data_CSV(std::string file_Name);
-void load_Projectile_Data_CSV(std::string file_Name);
-void load_Collider_Data_CSV(std::string file_Path);
+void load_Unit_Data_CSV(CSV_Data* csv_Data);
+void load_Projectile_Data_CSV(CSV_Data* csv_Data);
+void load_Collider_Data_CSV(CSV_Data* csv_Data);
 
 void initialize_Entity_Manager(Game_Data& game_Data);
 int allocate_Entity_ID(Game_Data& game_Data);

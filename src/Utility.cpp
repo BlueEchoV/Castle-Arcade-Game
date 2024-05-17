@@ -106,21 +106,34 @@ std::vector<std::string> split(const std::string& my_String, char delimiter) {
 	return tokens;
 }
 
-void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors) {
-	std::ifstream file(file_Name);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-		return;
+void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors) {
+	// Check if the file was open prior to calling the function
+	bool close_File = false;
+	if (!csv_Data->file.is_open()) {
+		// Adds flexibility to the function
+		csv_Data->file.open(csv_Data->file_Path);
+		if (!csv_Data->file.is_open()) {
+			SDL_Log("Error loading .csv file");
+			return;
+		}
+		else {
+			// Set for closing at the end of the function. Defer has issues here 
+			// because defer closes the file when it goes out of scope.
+			close_File = true;
+		}
 	}
 
+	csv_Data->file.seekg(0, std::ios::beg);
 	std::string line;
-	// Don't throw away the first line
-	std::getline(file, line);
+	std::getline(csv_Data->file, line);
+	if (line == "") {
+		// No rows exist
+		return;
+	}
 	std::vector<std::string> column_Names = split(line, ',');
 
 	int current_Row = 0;
-	while (std::getline(file, line)) {
+	while (std::getline(csv_Data->file, line)) {
 		std::vector<std::string> tokens = split(line, ',');
 
 		// Pointer arithmetic: Calculate a pointer 'write_Ptr' to the destination in memory 
@@ -131,7 +144,7 @@ void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Desc
 		char* write_Ptr = destination + (current_Row * stride);
 		current_Row++;
 
-		for (int i = 0; i < total_Descriptors; i++) {
+		for (int i = 0; i < type_Descriptors.size(); i++) {
 			// Grab the descriptor we are currently on in the loop
 			Type_Descriptor* type_Descriptor = &type_Descriptors[i];
 			// This is for finding the correct token
@@ -154,60 +167,9 @@ void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Desc
 			}
 		}
 	}
-}
-
-// Overloaded function using std::span
-// Allows us to not lose information about the array
-void load_CSV(std::string file_Name, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors) {
-	std::ifstream file(file_Name);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-		return;
+	if (close_File) {
+		csv_Data->file.close();
 	}
-
-	std::string line;
-	std::getline(file, line);
-	std::vector<std::string> column_Names = split(line, ',');
-
-	int current_Row = 0;
-	while (std::getline(file, line)) {
-		std::vector<std::string> tokens = split(line, ',');
-		char* write_Ptr = destination + (current_Row * stride);
-		current_Row++;
-
-		for (Type_Descriptor type_Descriptor : type_Descriptors) {
-			int column_Index = get_Column_Index(column_Names, type_Descriptor.column_Name);
-			if (column_Index <= -1) {
-				continue;
-			}
-			if (type_Descriptor.variable_Type == DT_INT) {
-				int* destination_Ptr = (int*)(write_Ptr + type_Descriptor.variable_Offset);
-				*destination_Ptr = std::stoi(tokens[column_Index]);
-			}
-			else if (type_Descriptor.variable_Type == DT_FLOAT) {
-				float* destination_Ptr = (float*)(write_Ptr + type_Descriptor.variable_Offset);
-				*destination_Ptr = std::stof(tokens[column_Index]);
-			}
-			else if (type_Descriptor.variable_Type == DT_STRING) {
-				std::string* destination_Ptr = (std::string*)(write_Ptr + type_Descriptor.variable_Offset);
-				*destination_Ptr = tokens[column_Index];
-			}
-		}
-	}
-}
-
-bool can_Open_CSV_File(const std::string& file_Name) {
-	std::ifstream file(file_Name);
-	std::string line;
-	int total_Rows = 0;
-	while (std::getline(file, line)) {
-		total_Rows++;
-	}
-	if (file.is_open() && total_Rows != 0) {
-		return true;
-	}
-	return false;
 }
 
 int count_CSV_Rows(std::string file_Name) {
@@ -225,7 +187,17 @@ int count_CSV_Rows(std::string file_Name) {
 		total_Rows++;
 	}
 
-	assert(total_Rows > 0);
+	// assert(total_Rows > 0);
+	return total_Rows;
+}
+
+int count_CSV_Rows(CSV_Data* csv_Data) {
+	std::string line;
+	std::getline(csv_Data->file, line);
+	int total_Rows = 0;
+	while (std::getline(csv_Data->file, line)) {
+		total_Rows++;
+	}
 	return total_Rows;
 }
 

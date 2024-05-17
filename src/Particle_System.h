@@ -63,4 +63,6 @@ F_Color HSV_To_RGB(float h, float s, float v);
 
 void draw_Particle_Systems(Game_Data& game_Data);
 
-void load_Particle_Data_CSV(std::string file_Name);
+void load_Particle_Data_CSV(CSV_Data* csv_Data);
+
+void attempt_Reload_Particle_CSV_File(CSV_Data* csv_Data);

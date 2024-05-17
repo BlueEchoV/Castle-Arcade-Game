@@ -36,7 +36,7 @@ Sprite_Sheet create_Sprite_Sheet(const char* file_Path, int rows, int columns);
 
 void draw_Layer(SDL_Texture* texture);
 
-void load_Sprite_Sheet_Data_CSV(std::string file_Path);
+void load_Sprite_Sheet_Data_CSV(CSV_Data* csv_Data);
 
 Sprite_Sheet& get_Sprite_Sheet(std::string key);
 

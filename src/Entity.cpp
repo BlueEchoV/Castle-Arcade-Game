@@ -23,7 +23,7 @@ const Unit_Data& get_Unit_Data(std::string key) {
 static std::unordered_map<std::string, Projectile_Data> projectile_Data_Map = {};
 
 const Projectile_Data bad_Projectile_Data = {
-	//	Type		sprite_Sheet	colllider	can_Attach		gravity		speed	life_Time
+	//	Type		sprite_Sheet	collider	can_Attach		gravity		speed	life_Time
 	   "arrow_Short",		"arrow_Short",		"arrow",	1,				200,		500,	10,       
 };
 
@@ -620,14 +620,29 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	// FIELD(Unit_Data, MT_STRING, spell_Type),
 };
 
-void load_Unit_Data_CSV(std::string file_Path) {
-	// Each row is one unit_Data
-	int rows = count_CSV_Rows(file_Path);
+void load_Unit_Data_CSV(CSV_Data* csv_Data) {
+	csv_Data->file.open(csv_Data->file_Path);
+	if (!csv_Data->file) {
+		SDL_Log("ERROR: Unable to open CSV file");
+		return;
+	}
+	DEFER{
+		csv_Data->file.close();
+	};
+
+	int rows = count_CSV_Rows(csv_Data);
+	if (rows <= 0) {
+		return;
+	}
+	
 	std::vector<Unit_Data> unit_Data;
 	unit_Data.resize(rows);
+
+	std::span<Type_Descriptor> span_Array(unit_Type_Descriptors);
+
 	//					 Data destination		 size of one stride	   descriptors above
 	//					(char*) ptr math
-	load_CSV(file_Path, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Type_Descriptors, ARRAY_SIZE(unit_Type_Descriptors));
+	load_CSV_Data(csv_Data, (char*)unit_Data.data(), sizeof(unit_Data[0]), span_Array);
 
 	// Loop through the vector and add the data to the unordered map
 	for (Unit_Data& iterator : unit_Data) {
@@ -647,12 +662,27 @@ Type_Descriptor projectile_Type_Descriptors[] = {
 	FIELD(Projectile_Data, DT_FLOAT, life_Time),
 };
 
-void load_Projectile_Data_CSV(std::string file_Path) {
-	int rows = count_CSV_Rows(file_Path);
+void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
+	csv_Data->file.open(csv_Data->file_Path);
+	if (!csv_Data->file) {
+		SDL_Log("ERROR: Unable to open CSV file");
+		return;
+	}
+	DEFER{
+		csv_Data->file.close();
+	};
+
+	int rows = count_CSV_Rows(csv_Data);
+	if (rows <= 0) {
+		return;
+	}
+
 	std::vector<Projectile_Data> projectile_Data;
 	projectile_Data.resize(rows);
 	
-	load_CSV(file_Path, (char*)projectile_Data.data(), sizeof(projectile_Data[0]), projectile_Type_Descriptors, ARRAY_SIZE(projectile_Type_Descriptors));
+	std::span<Type_Descriptor> span_Array(unit_Type_Descriptors);
+
+	load_CSV_Data(csv_Data, (char*)projectile_Data.data(), sizeof(projectile_Data[0]), span_Array);
 
 	for (Projectile_Data& iterator : projectile_Data) {
 		projectile_Data_Map[iterator.type] = iterator;
@@ -666,12 +696,26 @@ Type_Descriptor collider_Type_Descriptors[] = {
 	FIELD(Collider_Data, DT_FLOAT, radius),
 };
 
-void load_Collider_Data_CSV(std::string file_Path) {
-	int rows = count_CSV_Rows(file_Path);
+void load_Collider_Data_CSV(CSV_Data* csv_Data) {
+	csv_Data->file.open(csv_Data->file_Path);
+	if (!csv_Data->file) {
+		SDL_Log("ERROR: Unable to open CSV file");
+		return;
+	}
+	DEFER{
+		csv_Data->file.close();
+	};
+
+	int rows = count_CSV_Rows(csv_Data);
+	if (rows <= 0) {
+		return;
+	}
 	std::vector<Collider_Data> collider_Data;
 	collider_Data.resize(rows);
 
-	load_CSV(file_Path, (char*)collider_Data.data(), sizeof(collider_Data[0]), collider_Type_Descriptors, ARRAY_SIZE(collider_Type_Descriptors));
+	std::span<Type_Descriptor> span_Array(unit_Type_Descriptors);
+
+	load_CSV_Data(csv_Data, (char*)collider_Data.data(), sizeof(collider_Data[0]), span_Array);
 
 	for (Collider_Data& iterator : collider_Data) {
 		collider_Data_Map[iterator.type] = iterator;

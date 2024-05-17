@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <span>
+#include <stdint.h>
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 // Suppress compiler warnings
@@ -84,11 +85,15 @@ struct Type_Descriptor {
 // #name: This is a preprocessor operator that turns the name into a string literal.
 #define FIELD(struct_Type, data_Type, name) { data_Type, offsetof(struct_Type, name), #name }
 
+struct CSV_Data {
+	std::string file_Path;
+	size_t last_Modified_Time;
+	std::ifstream file;
+};
 
-bool can_Open_CSV_File(const std::string& file_Name);
 int count_CSV_Rows(std::string file_Name);
+int count_CSV_Rows(CSV_Data* csv_Data);
 // Making these const refs is MUCH better performance wise because there is a significant amount of memory not being copied in
 int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name);
 std::vector<std::string> split(const std::string& my_String, char delimiter);
-void load_CSV(std::string file_Name, char* destination, size_t stride, Type_Descriptor* type_Descriptors, int total_Descriptors);
-void load_CSV(std::string file_Name, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors);
+void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors);

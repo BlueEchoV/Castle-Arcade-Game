@@ -42,7 +42,9 @@ int main(int argc, char** argv) {
 
     Font font_1 = load_Font_Bitmap("images/font_1.png");
 
-	load_Sprite_Sheet_Data_CSV("data/Sprite_Sheet_Data.csv");
+    CSV_Data sprite_Sheet_CSV_Data = {};
+    sprite_Sheet_CSV_Data.file_Path = "data/Sprite_Sheet_Data.csv";
+	load_Sprite_Sheet_Data_CSV(&sprite_Sheet_CSV_Data);
 
     Game_Data game_Data = {};
 
@@ -77,13 +79,22 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-    std::string particle_Data_File_Path = "data/Particle_Data.csv";
-	// No hotloading currently
-    size_t particle_Data_CSV_Last_Modified = file_Last_Modified(particle_Data_File_Path);
-    load_Particle_Data_CSV(particle_Data_File_Path);
-    load_Unit_Data_CSV("data/Unit_Data.csv");
-    load_Projectile_Data_CSV("data/Projectile_Data.csv");
-    load_Collider_Data_CSV("data/Collider_Data.csv");
+	CSV_Data particle_CSV_Data = {};
+    particle_CSV_Data.file_Path = "data/Particle_Data.csv";
+    particle_CSV_Data.last_Modified_Time = file_Last_Modified(particle_CSV_Data.file_Path);
+    load_Particle_Data_CSV(&particle_CSV_Data);
+
+    CSV_Data unit_CSV_Data = {};
+    unit_CSV_Data.file_Path = "data/Unit_Data.csv";
+    load_Unit_Data_CSV(&unit_CSV_Data);
+
+    CSV_Data projectile_CSV_Data = {};
+    projectile_CSV_Data.file_Path = "data/Projectile_Data.csv";
+    load_Projectile_Data_CSV(&projectile_CSV_Data);
+
+    CSV_Data collider_CSV_Data = {};
+    collider_CSV_Data.file_Path = "data/Collider_Data.csv";
+    load_Collider_Data_CSV(&collider_CSV_Data);
 
 	spawn_Particle_System(
 		game_Data,
@@ -145,13 +156,7 @@ int main(int argc, char** argv) {
         delta_Time /= 1000;
 
         // Hot loading
-        size_t current_File_Time = file_Last_Modified(particle_Data_File_Path);
-        if (current_File_Time != particle_Data_CSV_Last_Modified) {
-            if (can_Open_CSV_File(particle_Data_File_Path)) {
-                load_Particle_Data_CSV(particle_Data_File_Path);
-                particle_Data_CSV_Last_Modified = current_File_Time;
-            }
-        }
+        attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
 
         if (current_Game_State == GS_GAMELOOP) {
 			for (Particle_System& particle_System : game_Data.particle_Systems) {

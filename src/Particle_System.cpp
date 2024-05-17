@@ -242,16 +242,38 @@ Type_Descriptor particle_Data_Type_Descriptors[] = {
 	FIELD(Particle_Data, DT_FLOAT, velocity_Max.y),
 };
 
-void load_Particle_Data_CSV(std::string file_Name) {
-	int rows = count_CSV_Rows(file_Name);
+void load_Particle_Data_CSV(CSV_Data* csv_Data) {
+	csv_Data->file.open(csv_Data->file_Path);
+	if (!csv_Data->file) {
+		SDL_Log("ERROR: Unable to open CSV file");
+		return;
+	}
+	DEFER{
+		csv_Data->file.close();
+	};
+
+	int rows = count_CSV_Rows(csv_Data);
+	if (rows <= 0) {
+		return;
+	}
+	// Only set the last_Modified_Time if we get to this point
+	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
+
 	std::vector<Particle_Data> particle_Data;
 	particle_Data.resize(rows);
 
 	std::span<Type_Descriptor> span_Array(particle_Data_Type_Descriptors);
 
-	load_CSV(file_Name, (char*)particle_Data.data(), sizeof(particle_Data[0]), span_Array);
+	load_CSV_Data(csv_Data, (char*)particle_Data.data(), sizeof(particle_Data[0]), span_Array);
 
 	for (Particle_Data& iterator : particle_Data) {
 		particle_Data_Map[iterator.type] = iterator;
+	}
+}
+
+void attempt_Reload_Particle_CSV_File(CSV_Data* csv_Data) {
+	size_t current_File_Time = file_Last_Modified(csv_Data->file_Path);
+	if (current_File_Time != csv_Data->last_Modified_Time) {
+		load_Particle_Data_CSV(csv_Data);
 	}
 }
