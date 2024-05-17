@@ -85,10 +85,16 @@ struct Projectile_Data {
 	std::string type;
 	std::string sprite_Sheet_Name;
 	std::string collider;
+
 	bool can_Attach;
+
 	float gravity;
 	float speed;
 	float life_Time;
+
+	float collider_Pos_LS_X;
+	float collider_Pos_LS_Y;
+	float collider_Radius;
 };
 
 struct Projectile {
@@ -187,7 +193,6 @@ float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos);
 
 const Unit_Data& get_Unit_Data(std::string key);
 const Projectile_Data& get_Projectile_Data(std::string key);
-const Collider_Data& get_Collider_Data(std::string key);
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
@@ -223,7 +228,6 @@ std::vector<int> create_Height_Map(const char* filename);
 
 void load_Unit_Data_CSV(CSV_Data* csv_Data);
 void load_Projectile_Data_CSV(CSV_Data* csv_Data);
-void load_Collider_Data_CSV(CSV_Data* csv_Data);
 
 void initialize_Entity_Manager(Game_Data& game_Data);
 int allocate_Entity_ID(Game_Data& game_Data);

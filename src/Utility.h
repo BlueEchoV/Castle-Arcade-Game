@@ -91,7 +91,6 @@ struct CSV_Data {
 	std::ifstream file;
 };
 
-int count_CSV_Rows(std::string file_Name);
 int count_CSV_Rows(CSV_Data* csv_Data);
 // Making these const refs is MUCH better performance wise because there is a significant amount of memory not being copied in
 int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name);

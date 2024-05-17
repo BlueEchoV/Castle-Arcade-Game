@@ -39,25 +39,6 @@ const Projectile_Data& get_Projectile_Data(std::string key) {
 	return bad_Projectile_Data;
 }
 
-static std::unordered_map<std::string, Collider_Data> collider_Data_Map = {};
-
-const Collider_Data bad_Collider_Data = {
-	//	Type		position_LS_X	position_LS_Y	radius
-	   "arrow",		60,				0,				20,
-};
-
-const Collider_Data& get_Collider_Data(std::string key) {
-	auto it = collider_Data_Map.find(key);
-	if (it != collider_Data_Map.end()) {
-		// Key found
-		return it->second;
-	}
-
-	assert(false);
-	// Return garbage values
-	return bad_Collider_Data;
-}
-
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
 	// assert(rigid_Body->num_Colliders < Globals::MAX_COLLIDERS);
 	Collider* collider = &rigid_Body->colliders[rigid_Body->num_Colliders++];
@@ -326,8 +307,7 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	projectile.gravity = projectile_Data.gravity;
 	projectile.can_Attach = projectile_Data.can_Attach;
 
-	Collider_Data collider_Data = get_Collider_Data(projectile_Data.type);
-	add_Collider(&projectile.rigid_Body, { collider_Data.position_LS_X, collider_Data.position_LS_Y }, collider_Data.radius);
+	add_Collider(&projectile.rigid_Body, { projectile_Data.collider_Pos_LS_X, projectile_Data.collider_Pos_LS_Y }, projectile_Data.collider_Radius);
 	// add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
 	if (unit_Side == N_PLAYER) {
 		game_Data.player_Projectiles.push_back(projectile);
@@ -660,6 +640,9 @@ Type_Descriptor projectile_Type_Descriptors[] = {
 	FIELD(Projectile_Data, DT_FLOAT, gravity),
 	FIELD(Projectile_Data, DT_FLOAT, speed),
 	FIELD(Projectile_Data, DT_FLOAT, life_Time),
+	FIELD(Projectile_Data, DT_FLOAT, collider_Pos_LS_X),
+	FIELD(Projectile_Data, DT_FLOAT, collider_Pos_LS_Y),
+	FIELD(Projectile_Data, DT_FLOAT, collider_Radius),
 };
 
 void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
@@ -680,45 +663,12 @@ void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
 	std::vector<Projectile_Data> projectile_Data;
 	projectile_Data.resize(rows);
 	
-	std::span<Type_Descriptor> span_Array(unit_Type_Descriptors);
+	std::span<Type_Descriptor> span_Array(projectile_Type_Descriptors);
 
 	load_CSV_Data(csv_Data, (char*)projectile_Data.data(), sizeof(projectile_Data[0]), span_Array);
 
 	for (Projectile_Data& iterator : projectile_Data) {
 		projectile_Data_Map[iterator.type] = iterator;
-	}
-}
-
-Type_Descriptor collider_Type_Descriptors[] = {
-	FIELD(Collider_Data, DT_STRING, type),
-	FIELD(Collider_Data, DT_FLOAT, position_LS_X),
-	FIELD(Collider_Data, DT_FLOAT, position_LS_Y),
-	FIELD(Collider_Data, DT_FLOAT, radius),
-};
-
-void load_Collider_Data_CSV(CSV_Data* csv_Data) {
-	csv_Data->file.open(csv_Data->file_Path);
-	if (!csv_Data->file) {
-		SDL_Log("ERROR: Unable to open CSV file");
-		return;
-	}
-	DEFER{
-		csv_Data->file.close();
-	};
-
-	int rows = count_CSV_Rows(csv_Data);
-	if (rows <= 0) {
-		return;
-	}
-	std::vector<Collider_Data> collider_Data;
-	collider_Data.resize(rows);
-
-	std::span<Type_Descriptor> span_Array(unit_Type_Descriptors);
-
-	load_CSV_Data(csv_Data, (char*)collider_Data.data(), sizeof(collider_Data[0]), span_Array);
-
-	for (Collider_Data& iterator : collider_Data) {
-		collider_Data_Map[iterator.type] = iterator;
 	}
 }
 

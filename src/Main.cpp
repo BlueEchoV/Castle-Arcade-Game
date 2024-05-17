@@ -92,10 +92,6 @@ int main(int argc, char** argv) {
     projectile_CSV_Data.file_Path = "data/Projectile_Data.csv";
     load_Projectile_Data_CSV(&projectile_CSV_Data);
 
-    CSV_Data collider_CSV_Data = {};
-    collider_CSV_Data.file_Path = "data/Collider_Data.csv";
-    load_Collider_Data_CSV(&collider_CSV_Data);
-
 	spawn_Particle_System(
 		game_Data,
 		"PT_RAINBOW",

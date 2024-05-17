@@ -123,11 +123,18 @@ void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::sp
 		}
 	}
 
+	// When the file stream reaches the end of the file (EOF), the EOF flag is set, 
+	// which prevents further reading operations until the flag is cleared.
+	csv_Data->file.clear();
 	csv_Data->file.seekg(0, std::ios::beg);
+
 	std::string line;
 	std::getline(csv_Data->file, line);
-	if (line == "") {
+	if (line.empty()) {
 		// No rows exist
+		if (close_File) {
+			csv_Data->file.close();
+		}
 		return;
 	}
 	std::vector<std::string> column_Names = split(line, ',');
@@ -170,25 +177,6 @@ void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::sp
 	if (close_File) {
 		csv_Data->file.close();
 	}
-}
-
-int count_CSV_Rows(std::string file_Name) {
-	// ifstream closes the file automatically
-	std::ifstream file(file_Name);
-
-	if (!file.is_open()) {
-		SDL_Log("Error loading .csv file");
-	}
-
-	std::string line;
-	std::getline(file, line);
-	int total_Rows = 0;
-	while (std::getline(file, line)) {
-		total_Rows++;
-	}
-
-	// assert(total_Rows > 0);
-	return total_Rows;
 }
 
 int count_CSV_Rows(CSV_Data* csv_Data) {
