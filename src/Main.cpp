@@ -79,18 +79,17 @@ int main(int argc, char** argv) {
 
     Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
-	CSV_Data particle_CSV_Data = {};
-    particle_CSV_Data.file_Path = "data/Particle_Data.csv";
-    particle_CSV_Data.last_Modified_Time = file_Last_Modified(particle_CSV_Data.file_Path);
+    CSV_Data particle_CSV_Data = create_Open_CSV_File("data/Particle_Data.csv");
     load_Particle_Data_CSV(&particle_CSV_Data);
+    close_CSV_File(&particle_CSV_Data);
 
-    CSV_Data unit_CSV_Data = {};
-    unit_CSV_Data.file_Path = "data/Unit_Data.csv";
+    CSV_Data unit_CSV_Data = create_Open_CSV_File("data/Unit_Data.csv");
     load_Unit_Data_CSV(&unit_CSV_Data);
+    close_CSV_File(&unit_CSV_Data);
 
-    CSV_Data projectile_CSV_Data = {};
-    projectile_CSV_Data.file_Path = "data/Projectile_Data.csv";
+    CSV_Data projectile_CSV_Data = create_Open_CSV_File("data/Projectile_Data.csv");
     load_Projectile_Data_CSV(&projectile_CSV_Data);
+    close_CSV_File(&projectile_CSV_Data);
 
 	spawn_Particle_System(
 		game_Data,

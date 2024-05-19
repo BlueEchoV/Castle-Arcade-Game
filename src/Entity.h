@@ -2,6 +2,7 @@
 #include "Sprite.h"
 #include "Particle_System.h"
 #include <queue>
+#include <stdint.h>
 
 struct Health_Bar {
 	float max_HP;
@@ -162,6 +163,17 @@ struct Unit {
 	int ID;
 };
 
+// I need stable indices for this to work
+struct Entity_Handle {
+	// Bit fields (unsigned int index : 10;)
+	// uint16_t is just way better
+	uint16_t index;
+	uint16_t generation;
+};
+
+// Setting a max number of units could be the best approach. (Non dynamic arrays)
+// I could use a C array (Chris would use this) or a C++ array
+// If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
 	Castle									player_Castle;
 	std::vector<Projectile>					player_Projectiles;
@@ -176,9 +188,6 @@ struct Game_Data {
 	
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
-
-	int										next_Entity_ID;
-	std::queue<int>							freed_Entity_IDs;
 };
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
@@ -229,6 +238,6 @@ std::vector<int> create_Height_Map(const char* filename);
 void load_Unit_Data_CSV(CSV_Data* csv_Data);
 void load_Projectile_Data_CSV(CSV_Data* csv_Data);
 
-void initialize_Entity_Manager(Game_Data& game_Data);
-int allocate_Entity_ID(Game_Data& game_Data);
-void free_Entity_ID(Game_Data& game_Data, int entity_ID);
+// void initialize_Entity_Manager(Game_Data& game_Data);
+// int allocate_Entity_ID(Game_Data& game_Data);
+// void free_Entity_ID(Game_Data& game_Data, int entity_ID);

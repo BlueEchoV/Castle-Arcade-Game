@@ -89,9 +89,14 @@ struct CSV_Data {
 	std::string file_Path;
 	size_t last_Modified_Time;
 	std::ifstream file;
+	// store the rows here? OR, a return value as well or an out parameter
+	// 65,536 values (rows)
+	uint16_t rows;
 };
 
 int count_CSV_Rows(CSV_Data* csv_Data);
+CSV_Data create_Open_CSV_File(std::string file_Path);
+void close_CSV_File(CSV_Data* csv_Data);
 // Making these const refs is MUCH better performance wise because there is a significant amount of memory not being copied in
 int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name);
 std::vector<std::string> split(const std::string& my_String, char delimiter);

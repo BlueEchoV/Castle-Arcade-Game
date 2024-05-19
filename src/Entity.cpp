@@ -348,7 +348,7 @@ void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, i
 	add_Collider(&unit.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
 	add_Collider(&unit.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
-	unit.ID = allocate_Entity_ID(*game_Data);
+	// unit.ID = allocate_Entity_ID(*game_Data);
 	if (unit_Side == N_PLAYER) {
 		game_Data->player_Units.push_back(unit);
 	} else if (unit_Side == N_ENEMY) {
@@ -601,28 +601,16 @@ Type_Descriptor unit_Type_Descriptors[] = {
 };
 
 void load_Unit_Data_CSV(CSV_Data* csv_Data) {
-	csv_Data->file.open(csv_Data->file_Path);
-	if (!csv_Data->file) {
-		SDL_Log("ERROR: Unable to open CSV file");
-		return;
-	}
-	DEFER{
-		csv_Data->file.close();
-	};
-
-	int rows = count_CSV_Rows(csv_Data);
-	if (rows <= 0) {
-		return;
-	}
+	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
 	
 	std::vector<Unit_Data> unit_Data;
-	unit_Data.resize(rows);
+	unit_Data.resize(csv_Data->rows);
 
-	std::span<Type_Descriptor> span_Array(unit_Type_Descriptors);
+	std::span<Type_Descriptor> unit_Descriptors(unit_Type_Descriptors);
 
 	//					 Data destination		 size of one stride	   descriptors above
 	//					(char*) ptr math
-	load_CSV_Data(csv_Data, (char*)unit_Data.data(), sizeof(unit_Data[0]), span_Array);
+	load_CSV_Data(csv_Data, (char*)unit_Data.data(), sizeof(unit_Data[0]), unit_Descriptors);
 
 	// Loop through the vector and add the data to the unordered map
 	for (Unit_Data& iterator : unit_Data) {
@@ -646,50 +634,38 @@ Type_Descriptor projectile_Type_Descriptors[] = {
 };
 
 void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
-	csv_Data->file.open(csv_Data->file_Path);
-	if (!csv_Data->file) {
-		SDL_Log("ERROR: Unable to open CSV file");
-		return;
-	}
-	DEFER{
-		csv_Data->file.close();
-	};
-
-	int rows = count_CSV_Rows(csv_Data);
-	if (rows <= 0) {
-		return;
-	}
+	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
 
 	std::vector<Projectile_Data> projectile_Data;
-	projectile_Data.resize(rows);
+	projectile_Data.resize(csv_Data->rows);
 	
-	std::span<Type_Descriptor> span_Array(projectile_Type_Descriptors);
+	std::span<Type_Descriptor> projectile_Descriptors(projectile_Type_Descriptors);
 
-	load_CSV_Data(csv_Data, (char*)projectile_Data.data(), sizeof(projectile_Data[0]), span_Array);
+	load_CSV_Data(csv_Data, (char*)projectile_Data.data(), sizeof(projectile_Data[0]), projectile_Descriptors);
 
 	for (Projectile_Data& iterator : projectile_Data) {
 		projectile_Data_Map[iterator.type] = iterator;
 	}
 }
 
-void initialize_Entity_Manager(Game_Data& game_Data) {
-	// Starting ID
-	game_Data.next_Entity_ID = 1;
-	// Empty the queue if it has any ids in it
-	while(!game_Data.freed_Entity_IDs.empty()) {
-		game_Data.freed_Entity_IDs.pop();
-	}
-}
-
-int allocate_Entity_ID(Game_Data& game_Data) {
-	if (!game_Data.freed_Entity_IDs.empty()) {
-		int reused_ID = game_Data.freed_Entity_IDs.front();
-		game_Data.freed_Entity_IDs.pop();
-		return reused_ID;
-	}
-	return game_Data.next_Entity_ID++;
-}
-
-void free_Entity_ID(Game_Data& game_Data, int entity_ID) {
-	game_Data.freed_Entity_IDs.push(entity_ID);
-}
+// void initialize_Entity_Manager(Game_Data& game_Data) {
+// 	// Starting ID
+// 	game_Data.next_Entity_ID = 1;
+// 	// Empty the queue if it has any ids in it
+// 	while(!game_Data.freed_Entity_IDs.empty()) {
+// 		game_Data.freed_Entity_IDs.pop();
+// 	}
+// }
+// 
+// int allocate_Entity_ID(Game_Data& game_Data) {
+// 	if (!game_Data.freed_Entity_IDs.empty()) {
+// 		int reused_ID = game_Data.freed_Entity_IDs.front();
+// 		game_Data.freed_Entity_IDs.pop();
+// 		return reused_ID;
+// 	}
+// 	return game_Data.next_Entity_ID++;
+// }
+// 
+// void free_Entity_ID(Game_Data& game_Data, int entity_ID) {
+// 	game_Data.freed_Entity_IDs.push(entity_ID);
+// }

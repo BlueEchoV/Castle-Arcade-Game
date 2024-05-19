@@ -125,9 +125,9 @@ void load_Sprite_Sheet_Data_CSV(CSV_Data* csv_Data) {
 	std::vector<Sprite_Sheet_Data> sprite_Sheets;
 	sprite_Sheets.resize(rows);
 
-	std::span<Type_Descriptor> span_Array(sprite_Sheet_Type_Descriptor);
+	std::span<Type_Descriptor> sprite_Sheet_Descriptors(sprite_Sheet_Type_Descriptor);
 
-	load_CSV_Data(csv_Data, (char*)sprite_Sheets.data(), sizeof(sprite_Sheets[0]), span_Array);
+	load_CSV_Data(csv_Data, (char*)sprite_Sheets.data(), sizeof(sprite_Sheets[0]), sprite_Sheet_Descriptors);
 
 	for (Sprite_Sheet_Data& iterator : sprite_Sheets) {
 		std::string sprite_Sheet_File_Path = "images/" + iterator.sprite_Sheet_Name + ".png";

@@ -106,23 +106,56 @@ std::vector<std::string> split(const std::string& my_String, char delimiter) {
 	return tokens;
 }
 
-void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors) {
-	// Check if the file was open prior to calling the function
-	bool close_File = false;
-	if (!csv_Data->file.is_open()) {
-		// Adds flexibility to the function
-		csv_Data->file.open(csv_Data->file_Path);
-		if (!csv_Data->file.is_open()) {
-			SDL_Log("Error loading .csv file");
-			return;
-		}
-		else {
-			// Set for closing at the end of the function. Defer has issues here 
-			// because defer closes the file when it goes out of scope.
-			close_File = true;
+int count_CSV_Rows(CSV_Data* csv_Data) {
+	std::string line;
+	std::getline(csv_Data->file, line);
+	int total_Rows = 0;
+	while (std::getline(csv_Data->file, line)) {
+		total_Rows++;
+	}
+	return total_Rows;
+}
+
+CSV_Data create_Open_CSV_File(std::string file_Path) {
+	CSV_Data result;
+
+	result.file_Path = file_Path;
+	result.last_Modified_Time = file_Last_Modified(file_Path);
+	result.file.open(result.file_Path);
+	if (!result.file) {
+		SDL_Log("ERROR: Unable to open CSV file");
+		assert(false);
+	}
+	result.rows = (uint16_t)count_CSV_Rows(&result);
+	if (result.rows <= 0) {
+		SDL_Log("ERROR: CSV file has <= 0 rows");
+		assert(false);
+	}
+	
+	return result;
+}
+
+void close_CSV_File(CSV_Data* csv_Data) {
+	csv_Data->file.close();
+}
+
+int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name) {
+	int result = -1;
+	for (int i = 0; i < column_Names.size(); i++) {
+		if (column_Names[i] == current_Column_Name) {
+			result = i;
+			break;
 		}
 	}
+	assert(result >= 0);
+	return result;
+}
 
+void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::span<Type_Descriptor> type_Descriptors) {
+	if (!csv_Data->file.is_open()) {
+		assert(false);
+		return;
+	}
 	// When the file stream reaches the end of the file (EOF), the EOF flag is set, 
 	// which prevents further reading operations until the flag is cleared.
 	csv_Data->file.clear();
@@ -131,10 +164,6 @@ void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::sp
 	std::string line;
 	std::getline(csv_Data->file, line);
 	if (line.empty()) {
-		// No rows exist
-		if (close_File) {
-			csv_Data->file.close();
-		}
 		return;
 	}
 	std::vector<std::string> column_Names = split(line, ',');
@@ -174,29 +203,4 @@ void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::sp
 			}
 		}
 	}
-	if (close_File) {
-		csv_Data->file.close();
-	}
-}
-
-int count_CSV_Rows(CSV_Data* csv_Data) {
-	std::string line;
-	std::getline(csv_Data->file, line);
-	int total_Rows = 0;
-	while (std::getline(csv_Data->file, line)) {
-		total_Rows++;
-	}
-	return total_Rows;
-}
-
-int get_Column_Index(const std::vector<std::string>& column_Names, const std::string& current_Column_Name) {
-	int result = -1;
-	for (int i = 0; i < column_Names.size(); i++) {
-		if (column_Names[i] == current_Column_Name) {
-			result = i;
-			break;
-		}
-	}
-	assert(result >= 0);
-	return result;
 }

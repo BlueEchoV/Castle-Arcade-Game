@@ -228,7 +228,7 @@ void process(Archive* ar, Game_Data* game_Data) {
 
 	process(ar, game_Data->terrain_Height_Map);
 	process(ar, game_Data->timer);
-	process(ar, game_Data->next_Entity_ID);
+	// process(ar, game_Data->next_Entity_ID);
 }
 
 // Call load game function and save game function that calls process game data
@@ -263,7 +263,7 @@ void start_Game(Game_Data* game_Data) {
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
 		LEVEL_1
 	);
-	initialize_Entity_Manager(*game_Data);
+	// initialize_Entity_Manager(*game_Data);
 }
 
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache) {
