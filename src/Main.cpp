@@ -444,11 +444,12 @@ int main(int argc, char** argv) {
 #endif
 
                 // Update player units
-                for (int i = 0; i < game_Data.player_Units.size(); i++) {
-                    if (game_Data.player_Units[i].destroyed == false) {
+                for (int i = 0; i < game_Data.player_Units_Count; i++) {
+                    Unit* player_Unit = get_Unit_From_Handle(game_Data.player_Units[i].handle);
+                    if (player_Unit->destroyed == false) {
                         update_Unit_Position(
-                            &game_Data.player_Units[i].rigid_Body,
-                            game_Data.player_Units[i].stop,
+                            &player_Unit->rigid_Body,
+                            player_Unit->stop,
                             delta_Time
                         );
                     }
@@ -531,8 +532,8 @@ int main(int argc, char** argv) {
                 }
 
 				// Collision player units with map
-				for (int i = 0; i < game_Data.player_Units.size(); i++) {
-					Unit* player_Unit = &game_Data.player_Units[i];
+				for (int i = 0; i < game_Data.player_Units_Count; i++) {
+					Unit* player_Unit = get_Unit_From_Handle(game_Data.player_Units[i].handle);
 					if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data.terrain_Height_Map)) {
 						float radius = get_Sprite_Radius(&player_Unit->sprite_Sheet_Tracker);
 						float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)player_Unit->rigid_Body.position_WS.x];
@@ -553,7 +554,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Initialize default values before collision check
-                for (int i = 0; i < game_Data.player_Units.size(); i++) {
+                for (int i = 0; i < game_Data.player_Units_Count; i++) {
                     Unit* player_Unit = &game_Data.player_Units[i];
                     player_Unit->stop = false;
                     player_Unit->current_Attack_Cooldown -= delta_Time;
@@ -565,8 +566,8 @@ int main(int argc, char** argv) {
                 }
 
                 // Rigid Body Collision: Player units with enemy castle
-                for (int i = 0; i < game_Data.player_Units.size(); i++) {
-                    Unit* player_Unit = &game_Data.player_Units[i];
+                for (int i = 0; i < game_Data.player_Units_Count; i++) {
+                    Unit* player_Unit = get_Unit_From_Handle(game_Data.player_Units->handle);
                     Castle* castle = &game_Data.enemy_Castle;
                     if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
                         player_Unit->stop = true;
@@ -589,8 +590,8 @@ int main(int argc, char** argv) {
                     }
                 }
                 // Rigid Body Collision: Player units with enemy units
-                for (int i = 0; i < game_Data.player_Units.size(); i++) {
-                    Unit* player_Unit = &game_Data.player_Units[i];
+                for (int i = 0; i < game_Data.player_Units_Count; i++) {
+                    Unit* player_Unit = get_Unit_From_Handle(game_Data.player_Units->handle);
                     for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
                         Unit* enemy_Unit = &game_Data.enemy_Units[j];
                         if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
@@ -609,8 +610,8 @@ int main(int argc, char** argv) {
                 }
 
                 // Units that fire projectiles
-                for (int i = 0; i < game_Data.player_Units.size(); i++) {
-                    Unit* player_Unit = &game_Data.player_Units[i];
+                for (int i = 0; i < game_Data.player_Units_Count; i++) {
+                    Unit* player_Unit = get_Unit_From_Handle(game_Data.player_Units[i].handle);
                     for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
                         Unit* enemy_Unit = &game_Data.enemy_Units[j];
                         if (player_Unit->projectile_Type != "") {
@@ -642,8 +643,8 @@ int main(int argc, char** argv) {
 
                 // TODO: Need to do a attack range collision check for the enemy as well
 
-				for (int i = 0; i < game_Data.player_Units.size(); i++) {
-					Unit* player_Unit = &game_Data.player_Units[i];
+				for (int i = 0; i < game_Data.player_Units_Count; i++) {
+					Unit* player_Unit = get_Unit_From_Handle(game_Data.player_Units[i].handle);
 					float speed = player_Unit->speed;
 					if (!player_Unit->stop) {
 						update_Animation(&player_Unit->sprite_Sheet_Tracker, speed, delta_Time);
@@ -708,8 +709,8 @@ int main(int argc, char** argv) {
 			}
 
             // Draw player units
-            for (int i = 0; i < game_Data.player_Units.size(); i++) {
-                Unit* player_Unit = &game_Data.player_Units[i];
+            for (int i = 0; i < game_Data.player_Units_Count; i++) {
+                Unit* player_Unit = get_Unit_From_Handle(game_Data.player_Units[i].handle);
                 /*
                 // Debugging circles for colliders
                 for (int j = 0; j < player_Warrior->animation_Tracker.animations_Array[game_Data.player_Warriors[i].animation_Tracker.type].sprite_Sheet.sprites.size(); j++) {
@@ -869,15 +870,25 @@ int main(int argc, char** argv) {
 			std::erase_if(game_Data.enemy_Projectiles, [](Projectile& projectile) {
 				return projectile.destroyed || projectile.life_Time <= 0;
 				});
-			std::erase_if(game_Data.player_Units, [](Unit& unit) {
-				return unit.destroyed || unit.health_Bar.current_HP <= 0;
-				});
+			// std::erase_if(game_Data.player_Units, [](Unit& unit) {
+			// 	return unit.destroyed || unit.health_Bar.current_HP <= 0;
+			// 	});
             std::erase_if(game_Data.enemy_Units, [](Unit& unit) {
                 return unit.destroyed || unit.health_Bar.current_HP <= 0;
                 });
 			std::erase_if(game_Data.particle_Systems, [](Particle_System& particle_System) {
 				return particle_System.destroyed && particle_System.particles.size() == 0;
 				});
+
+            // Could move to a functions
+            // Only loop through the total allocations to save cpu more operations
+            for (uint16_t i = 0; i < game_Data.player_Units_Count; i++) {
+                Unit* unit = get_Unit_From_Handle(game_Data.player_Units[i].handle);
+                if (unit[i].destroyed || unit[i].health_Bar.current_HP <= 0) {
+                    delete_Unit_Handle(unit->handle);
+                    unit = {};
+                }
+            }
         }
         SDL_RenderPresent(Globals::renderer);
     }

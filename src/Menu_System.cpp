@@ -229,9 +229,9 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font*
 	std::string total_Arrows_String = "Player Ammo: " + std::to_string(total_Arrows);
 	const char* total_Arrows_Ptr = total_Arrows_String.c_str();
 
-	int total_Player_Units = (int)selected_Game_Data.player_Units.size();
-	std::string total_Player_Units_String = "Player Units: " + std::to_string(total_Player_Units);
-	const char* total_Player_Units_Ptr = total_Player_Units_String.c_str();
+	// int total_Player_Units = (int)selected_Game_Data.player_Units.size();
+	// std::string total_Player_Units_String = "Player Units: " + std::to_string(total_Player_Units);
+	// const char* total_Player_Units_Ptr = total_Player_Units_String.c_str();
 
 	int total_Enemies = (int)selected_Game_Data.enemy_Units.size();
 	std::string total_Enemies_String = "Enemy Units: " + std::to_string(total_Enemies);
@@ -245,8 +245,8 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font*
 	y_Offset += font->char_Height * string_Size;
 	draw_String(font, total_Arrows_Ptr, x_Offset, y_Offset, string_Size, false);
 	y_Offset += font->char_Height * string_Size;
-	draw_String(font, total_Player_Units_Ptr, x_Offset, y_Offset, string_Size, false);
-	y_Offset += font->char_Height * string_Size;
+	// draw_String(font, total_Player_Units_Ptr, x_Offset, y_Offset, string_Size, false);
+	// y_Offset += font->char_Height * string_Size;
 	draw_String(font, total_Enemies_Ptr, x_Offset, y_Offset, string_Size, false);
 	y_Offset += font->char_Height * string_Size;
 

@@ -18,4 +18,6 @@ namespace Globals {
 	const int MAX_COLLIDERS = 100;
 
 	const int MAX_PARTICLES = 1000;
+
+	const int MAX_UNITS = 1024;
 }

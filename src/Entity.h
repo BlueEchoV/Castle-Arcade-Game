@@ -4,6 +4,19 @@
 #include <queue>
 #include <stdint.h>
 
+// I need stable indices for this to work
+struct Unit_Handle {
+	// Bit fields (unsigned int index : 10;)
+	// uint16_t is just way better
+	uint16_t index;
+	uint16_t generation;
+};
+
+struct Generations {
+	bool slot_Free;
+	uint16_t generation;
+};
+
 struct Health_Bar {
 	float max_HP;
 	float current_HP;
@@ -159,16 +172,9 @@ struct Unit {
 	bool destroyed;
 	bool stop;
 
-	// This is my handle
-	int ID;
-};
+	Unit_Handle handle;
 
-// I need stable indices for this to work
-struct Entity_Handle {
-	// Bit fields (unsigned int index : 10;)
-	// uint16_t is just way better
-	uint16_t index;
-	uint16_t generation;
+	int ID;
 };
 
 // Setting a max number of units could be the best approach. (Non dynamic arrays)
@@ -178,17 +184,25 @@ struct Game_Data {
 	Castle									player_Castle;
 	std::vector<Projectile>					player_Projectiles;
 	// std::vector<Spells>						player_Spells;
-	std::vector<Unit>						player_Units;
-	
+	// std::vector<Unit>						player_Units;
+
+	Generations								player_Unit_Generations[Globals::MAX_UNITS] = {};
+	uint16_t								player_Units_Count = 0;
+	Unit									player_Units[Globals::MAX_UNITS] = {};
+
 	Castle									enemy_Castle;
 	std::vector<Projectile>					enemy_Projectiles;
 	std::vector<Unit>						enemy_Units;
 
 	std::vector<Particle_System>			particle_Systems;
-	
+
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
 };
+
+Unit_Handle create_Unit_Handle(Game_Data& game_Data);
+void delete_Unit_Handle(Unit_Handle unit_Handle);
+Unit* get_Unit_From_Handle(Unit_Handle unit_Handle);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
@@ -237,7 +251,3 @@ std::vector<int> create_Height_Map(const char* filename);
 
 void load_Unit_Data_CSV(CSV_Data* csv_Data);
 void load_Projectile_Data_CSV(CSV_Data* csv_Data);
-
-// void initialize_Entity_Manager(Game_Data& game_Data);
-// int allocate_Entity_ID(Game_Data& game_Data);
-// void free_Entity_ID(Game_Data& game_Data, int entity_ID);
