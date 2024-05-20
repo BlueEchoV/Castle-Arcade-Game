@@ -229,7 +229,7 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font*
 	std::string total_Arrows_String = "Player Ammo: " + std::to_string(total_Arrows);
 	const char* total_Arrows_Ptr = total_Arrows_String.c_str();
 
-	// int total_Player_Units = (int)selected_Game_Data.player_Units.size();
+	// int total_Player_Units = (int)selected_game_Data->player_Units.size();
 	// std::string total_Player_Units_String = "Player Units: " + std::to_string(total_Player_Units);
 	// const char* total_Player_Units_Ptr = total_Player_Units_String.c_str();
 

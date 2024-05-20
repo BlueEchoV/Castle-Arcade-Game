@@ -105,8 +105,8 @@ void process(Archive* ar, Castle& castle);
 void process(Archive* ar, Projectile& projectile);
 void process(Archive* ar, Game_Data* game_Data);
 
-void load_Game(Game_Data* game_Data, Saved_Games save_Game);
-void save_Game(Game_Data* game_Data, Saved_Games save_Game);
+void load_Game(Game_Data& game_Data, Saved_Games save_Game);
+void save_Game(Game_Data& game_Data, Saved_Games save_Game);
 void start_Game(Game_Data* game_Data);
 
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache);

@@ -6,12 +6,12 @@ Unit_Handle create_Unit_Handle(Game_Data& game_Data) {
 	Unit_Handle result = {};
 	uint16_t i = 0;
 	for (i = 0; i < Globals::MAX_UNITS; i++) {
-		if (game_Data.player_Unit_Generations[i].slot_Free) {
+		if (!game_Data.player_Unit_Generations[i].slot_Taken) {
 			// Having a flag to check if the slot is available or not 
 			// has merit. One being that it allows for me to create 
 			// multiple handles at the same location and still allow 
 			// for unique ids (generation counter)
-			game_Data.player_Unit_Generations[i].slot_Free = false;
+			game_Data.player_Unit_Generations[i].slot_Taken = true;
 			game_Data.player_Units_Count++;
 			// 0 is invalid. All empty generations start at 0
 			// Add to the generation
@@ -21,27 +21,29 @@ Unit_Handle create_Unit_Handle(Game_Data& game_Data) {
 		}
 	}
 	// If we reach this condition, that means the entire array is full (Extremely unlikely)
-	assert(i < Globals::MAX_UNITS);
+ 	assert(i < Globals::MAX_UNITS);
 
 	// Returns nothing
 	return result;
 }
 
 // For deleting the handle, not the actual unit
-void delete_Unit_Handle(Game_Data& game_Data, Unit_Handle& handle) {
+void delete_Unit_Handle(Game_Data& game_Data, const Unit_Handle& handle) {
 	uint16_t index = handle.index;
 	if (index < Globals::MAX_UNITS && handle.generation == game_Data.player_Unit_Generations[index].generation) {
 		game_Data.player_Unit_Generations[handle.index].generation++;
-		game_Data.player_Unit_Generations[handle.index].slot_Free = false;
+		game_Data.player_Unit_Generations[handle.index].slot_Taken = false;
 	}
 }
 
-Unit* get_Unit_From_Handle(Game_Data& game_Data, Unit_Handle& handle) {
+Unit* get_Unit_From_Handle(Game_Data& game_Data, const Unit_Handle& handle) {
 	uint16_t index = handle.index;
 	if (index < Globals::MAX_UNITS && handle.generation == game_Data.player_Unit_Generations[index].generation) {
 		return &game_Data.player_Units[handle.index];
 	}
 	// Return nullptr if the handle isn't found
+	// Could return a garbage unit so the game doesn't crash?
+	// assert(false);
 	return nullptr;
 }
 

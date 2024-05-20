@@ -13,7 +13,7 @@ struct Unit_Handle {
 };
 
 struct Generations {
-	bool slot_Free;
+	bool slot_Taken;
 	uint16_t generation;
 };
 
@@ -77,7 +77,7 @@ struct Castle_Stats {
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
 	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
-	{  100.0f,    {0.01f, 0.0f},     {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
+	{  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
 	{  100.0f,    {1.0f, 0.0f},      {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
 
@@ -186,9 +186,9 @@ struct Game_Data {
 	// std::vector<Spells>						player_Spells;
 	// std::vector<Unit>						player_Units;
 
-	Generations								player_Unit_Generations[Globals::MAX_UNITS] = {};
-	uint16_t								player_Units_Count = 0;
-	Unit									player_Units[Globals::MAX_UNITS] = {};
+	Generations								player_Unit_Generations[Globals::MAX_UNITS];
+	uint16_t								player_Units_Count;
+	Unit									player_Units[Globals::MAX_UNITS];
 
 	Castle									enemy_Castle;
 	std::vector<Projectile>					enemy_Projectiles;
@@ -201,8 +201,8 @@ struct Game_Data {
 };
 
 Unit_Handle create_Unit_Handle(Game_Data& game_Data);
-void delete_Unit_Handle(Unit_Handle unit_Handle);
-Unit* get_Unit_From_Handle(Unit_Handle unit_Handle);
+void delete_Unit_Handle(Game_Data& game_Data, const Unit_Handle& unit_Handle);
+Unit* get_Unit_From_Handle(Game_Data& game_Data, const Unit_Handle& unit_Handle);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 

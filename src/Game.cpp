@@ -232,26 +232,25 @@ void process(Archive* ar, Game_Data* game_Data) {
 }
 
 // Call load game function and save game function that calls process game data
-void load_Game(Game_Data* game_Data, Saved_Games save_Game) {
+void load_Game(Game_Data& game_Data, Saved_Games save_Game) {
 	std::string file_Name = create_Save_Game_File_Name(save_Game);
 	Archive ar = create_Archive(file_Name, GDO_LOAD);
 	if (ar.file != NULL) {
-		process(&ar, game_Data);
+		process(&ar, &game_Data);
 		close_Archive(&ar);
 	}
 }
 
-void save_Game(Game_Data* game_Data, Saved_Games save_Game) {
+void save_Game(Game_Data& game_Data, Saved_Games save_Game) {
 	std::string file_Name = create_Save_Game_File_Name(save_Game);
 	Archive ar = create_Archive(file_Name, GDO_SAVE);
 	if (ar.file != NULL) {
-		process(&ar, game_Data);
+		process(&ar, &game_Data);
 		close_Archive(&ar);
 	}
 }
 
 void start_Game(Game_Data* game_Data) {
-	*game_Data = {};
 	game_Data->terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 	spawn_Player_Castle(
 		game_Data,
@@ -280,7 +279,7 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 			const char* ptr = current_Save_Game.c_str();
 			if (check_If_File_Exists(ptr)) {
 				// Casting to the enum seems to work like a charm
-				load_Game(&game_Data, (Saved_Games)(i));
+				load_Game(game_Data, (Saved_Games)(i));
 				cache_Data.cache[current_Save_Game] = game_Data;
 				int j = 0;
 				j++;
@@ -291,7 +290,7 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 }
 
 void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_Data& cache_Data) {
-	save_Game(&game_Data, save_Game_enum);
+	save_Game(game_Data, save_Game_enum);
 	std::string save_Game_File_Name = create_Save_Game_File_Name(save_Game_enum);
 	cache_Data.cache[save_Game_File_Name] = game_Data;
 }
