@@ -5,17 +5,29 @@
 #include <stdint.h>
 
 // I need stable indices for this to work
-struct Unit_Handle {
+struct Handle {
 	// Bit fields (unsigned int index : 10;)
 	// uint16_t is just way better
 	uint16_t index;
 	uint16_t generation;
 };
 
-struct Generations {
-	bool slot_Taken;
-	uint16_t generation;
+struct Generation {
+	bool slot_Taken = false;
+	// Default generation 1
+	uint16_t generation = 1;
 };
+
+struct Entity_Storage {
+	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
+	uint64_t index_One_Past_Last;
+	// Pointer to the array of entities
+	void* entity_Array;
+	// Pointer arthmetic
+	uint64_t size_Of_One_Entity;
+};
+
+void init_Entity_Storage(Entity_Storage& entity_Storage, uint64_t entity_Size);
 
 struct Health_Bar {
 	float max_HP;
@@ -172,7 +184,7 @@ struct Unit {
 	bool destroyed;
 	bool stop;
 
-	Unit_Handle handle;
+	Handle handle;
 
 	int ID;
 };
@@ -186,9 +198,11 @@ struct Game_Data {
 	// std::vector<Spells>						player_Spells;
 	// std::vector<Unit>						player_Units;
 
-	Generations								player_Unit_Generations[Globals::MAX_UNITS];
-	uint16_t								player_Units_Count;
-	Unit									player_Units[Globals::MAX_UNITS];
+	// Think about code re usability 
+	//uint16_t								player_Units_One_Past_The_Last;
+	//Unit									player_Units[Globals::MAX_UNITS];
+	//Generation							player_Unit_Generations[Globals::MAX_UNITS];
+	Entity_Storage							player_Units;
 
 	Castle									enemy_Castle;
 	std::vector<Projectile>					enemy_Projectiles;
@@ -200,9 +214,12 @@ struct Game_Data {
 	float									timer;
 };
 
-Unit_Handle create_Unit_Handle(Game_Data& game_Data);
-void delete_Unit_Handle(Game_Data& game_Data, const Unit_Handle& unit_Handle);
-Unit* get_Unit_From_Handle(Game_Data& game_Data, const Unit_Handle& unit_Handle);
+Handle create_Handle(Entity_Storage& entity_Storage);
+void delete_Handle(Entity_Storage& entity_Storage, const Handle handle);
+void* get_Ptr_From_Handle(Entity_Storage& entity_Storage, const Handle handle);
+int count_Active_Handles(Generation generations[], int size);
+
+void add_Entity_To_Entity_Storage(Entity_Storage& entity_Storage, const Handle handle, void* entity);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 

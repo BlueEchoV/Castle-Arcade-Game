@@ -91,6 +91,7 @@ struct CSV_Data {
 	std::ifstream file;
 	// store the rows here? OR, a return value as well or an out parameter
 	// 65,536 values (rows)
+	// 64 bit registers
 	uint16_t rows;
 };
 

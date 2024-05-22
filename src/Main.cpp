@@ -46,9 +46,12 @@ int main(int argc, char** argv) {
     sprite_Sheet_CSV_Data.file_Path = "data/Sprite_Sheet_Data.csv";
 	load_Sprite_Sheet_Data_CSV(&sprite_Sheet_CSV_Data);
 
-    Game_Data* game_Data = new Game_Data();
+	Game_Data* game_Data = new Game_Data();
+    init_Entity_Storage(game_Data->player_Units, sizeof(Unit));
+    // Game_Data* p_Game_Data = new Game_Data();
+    // Game_Data& game_Data = *p_Game_Data;
 
-    start_Game(game_Data);
+	start_Game(game_Data);
 
     // Buttons
     SDL_Rect test = {};
@@ -342,7 +345,7 @@ int main(int argc, char** argv) {
                     Castle* player_Castle = &game_Data->player_Castle;
                     Castle* enemy_Castle = &game_Data->enemy_Castle;
                     spawn_Unit(
-                        &*game_Data,
+                        game_Data,
                         N_PLAYER,
                         "warrior",
                         1,
@@ -358,7 +361,7 @@ int main(int argc, char** argv) {
 					Castle* player_Castle = &game_Data->player_Castle;
 					Castle* enemy_Castle = &game_Data->enemy_Castle;
 					spawn_Unit(
-						&*game_Data,
+						game_Data,
                         N_PLAYER,
 						"archer",
                         1,
@@ -374,7 +377,7 @@ int main(int argc, char** argv) {
 					Castle* player_Castle = &game_Data->player_Castle;
 					Castle* enemy_Castle = &game_Data->enemy_Castle;
 					spawn_Unit(
-						&*game_Data,
+						game_Data,
                         N_PLAYER,
 						"necromancer",
 						1,
@@ -397,7 +400,7 @@ int main(int argc, char** argv) {
 					float radius = get_Sprite_Radius(&enemy_Castle->sprite_Sheet_Tracker);
 					float y_Pos = terrain_height + radius;
 					spawn_Unit(
-						&*game_Data,
+						game_Data,
 						N_ENEMY,
 						"warrior",
                         1,
@@ -444,8 +447,14 @@ int main(int argc, char** argv) {
 #endif
 
                 // Update player units
-                for (int i = 0; i < game_Data->player_Units_Count; i++) {
-                    Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
+                    Unit* player_Unit = (Unit*)get_Ptr_From_Handle(
+                        *&game_Data->player_Unit_Generations, 
+                        ARRAY_SIZE(*&game_Data->player_Unit_Generations),
+                        *&game_Data->player_Units,
+                        sizeof(*&game_Data->player_Units[0]),
+                        game_Data->player_Units[i].handle
+                    );
                     if (player_Unit != nullptr) {
                         if (player_Unit->destroyed == false) {
                             update_Unit_Position(
@@ -534,7 +543,7 @@ int main(int argc, char** argv) {
                 }
 
 				// Collision player units with map
-				for (int i = 0; i < game_Data->player_Units_Count; i++) {
+				for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
 					Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                     if (player_Unit != nullptr) {
                         if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data->terrain_Height_Map)) {
@@ -558,7 +567,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Initialize default values before collision check
-                for (int i = 0; i < game_Data->player_Units_Count; i++) {
+                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
                     Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                     if (player_Unit != nullptr) {
                         player_Unit->stop = false;
@@ -572,7 +581,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Rigid Body Collision: Player units with enemy castle
-                for (int i = 0; i < game_Data->player_Units_Count; i++) {
+                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
                     Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                     if (player_Unit != nullptr) {
                         Castle* castle = &game_Data->enemy_Castle;
@@ -598,7 +607,7 @@ int main(int argc, char** argv) {
                     }
                 }
                 // Rigid Body Collision: Player units with enemy units
-                for (int i = 0; i < game_Data->player_Units_Count; i++) {
+                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
                     Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                     if (player_Unit != nullptr) {
                         for (int j = 0; j < game_Data->enemy_Units.size(); j++) {
@@ -620,7 +629,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Units that fire projectiles
-                for (int i = 0; i < game_Data->player_Units_Count; i++) {
+                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
                     Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                     if (player_Unit != nullptr) {
                         for (int j = 0; j < game_Data->enemy_Units.size(); j++) {
@@ -655,7 +664,7 @@ int main(int argc, char** argv) {
 
                 // TODO: Need to do a attack range collision check for the enemy as well
 
-				for (int i = 0; i < game_Data->player_Units_Count; i++) {
+				for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
 					Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                     if (player_Unit != nullptr) {
                         float speed = player_Unit->speed;
@@ -723,7 +732,7 @@ int main(int argc, char** argv) {
 			}
 
             // Draw player units
-            for (int i = 0; i < game_Data->player_Units_Count; i++) {
+            for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
                 Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                 if (player_Unit != nullptr) {
                     /*
@@ -898,7 +907,7 @@ int main(int argc, char** argv) {
 
             // Could move to a functions
             // Only loop through the total allocations to save cpu more operations
-            for (uint16_t i = 0; i < game_Data->player_Units_Count; i++) {
+            for (uint16_t i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
                 Unit* unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
                 if (unit != nullptr) {
                     if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
