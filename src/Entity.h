@@ -3,13 +3,14 @@
 #include "Particle_System.h"
 #include <queue>
 #include <stdint.h>
+#include <assert.h>
 
 // I need stable indices for this to work
 struct Handle {
 	// Bit fields (unsigned int index : 10;)
 	// uint16_t is just way better
-	uint16_t index;
-	uint16_t generation;
+	uint64_t index;
+	uint64_t generation;
 };
 
 struct Generation {
@@ -178,12 +179,55 @@ struct Unit {
 	int ID;
 };
 
-struct Unit_Storage {
+//struct Unit_Storage {
+//	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
+//	uint64_t index_One_Past_Last = 0;
+//	// Array of units
+//	Unit arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
+//};
+
+template <typename T>
+struct Storage {
 	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
 	uint64_t index_One_Past_Last = 0;
-	// Array of units
-	Unit arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
+	T arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
 };
+
+template <typename T>
+Handle create_Handle(Storage<T>& storage) {
+	Handle result = {};
+	for (uint64_t i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
+		if (!storage.generations[i].slot_Taken) {
+			storage.generations[i].slot_Taken = true;
+			if (storage.index_One_Past_Last < (i + 1)) {
+				storage.index_One_Past_Last = i + 1;
+			}
+			result.generation = storage.generations[i].generation;
+			result.index = i;
+			break;
+		}
+	}
+	assert(result.index < Globals::MAX_ENTITY_ARRAY_LENGTH);
+	return result;
+}
+
+template <typename T>
+void delete_Handle(Storage<T>& storage, const Handle handle) {
+	uint64_t index = handle.index;
+	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == storage.generations[index].generation) {
+		storage.generations[index].generation++;
+		storage.generations[index].slot_Taken = false;
+	}
+}
+
+template <typename T>
+T* get_Ptr_From_Handle(Storage<T>& storage, const Handle handle) {
+	uint64_t index = handle.index;
+	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == storage.generations[index].generation) {
+		return &storage.arr[index];
+	}
+	return nullptr;
+}
 
 // Setting a max number of units could be the best approach. (Non dynamic arrays)
 // I could use a C array (Chris would use this) or a C++ array
@@ -195,7 +239,7 @@ struct Game_Data {
 	// std::vector<Unit>						player_Units;
 
 	// Think about code re usability 
-	Unit_Storage							player_Units;
+	Storage<Unit>							player_Units;
 
 	Castle									enemy_Castle;
 	std::vector<Projectile>					enemy_Projectiles;
@@ -207,12 +251,7 @@ struct Game_Data {
 	float									timer;
 };
 
-Handle create_Handle(Entity_Storage& entity_Storage);
-void delete_Handle(Entity_Storage& entity_Storage, const Handle handle);
-void* get_Ptr_From_Handle(Entity_Storage& entity_Storage, const Handle handle);
 int count_Active_Handles(Generation generations[], int size);
-
-void add_Entity_To_Entity_Storage(Entity_Storage& entity_Storage, const Handle handle, void* entity);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 

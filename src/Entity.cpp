@@ -1,45 +1,45 @@
 #include "Entity.h"
 #include <assert.h>
 
-Handle create_Handle(Generation generations[], uint64_t length, uint64_t& index_One_Past_Last) {
-	Handle result = {};
-	uint64_t i = 0;
-	for (i = 0; i < length; i++) {
-		if (!generations[i].slot_Taken) {
-			generations[i].slot_Taken = true;
-			if (index_One_Past_Last < (i + 1)) {
-				index_One_Past_Last = i + 1;
-			}
-			result.generation = generations[i].generation;
-			result.index = i;
-			break;
-		}
-	}
- 	assert(i < length);
-	return result;
-}
-Handle create_Handle(Unit_Storage& unit_Storage) {
-	return create_Handle(unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations), unit_Storage.index_One_Past_Last);
-}
-
-void delete_Handle(const Handle handle, Generation generations[], uint64_t length) {
-	uint16_t index = handle.index;
-	if (index < length && handle.generation == generations[index].generation) {
-		generations[handle.index].generation++;
-		generations[handle.index].slot_Taken = false;
-	}
-}
-void delete_Handle(const Handle handle, Unit_Storage& unit_Storage) {
-	delete_Handle(handle, unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations));
-}
-
-Unit* get_Unit_From_Handle(const Handle handle, Unit_Storage& unit_Storage, uint64_t length) {
-	uint16_t index = handle.index;
-	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == unit_Storage.generations[index].generation) {
-		return &unit_Storage.arr[index];
-	}
-	return nullptr;
-}
+//Handle create_Handle(Generation generations[], uint64_t length, uint64_t& index_One_Past_Last) {
+//	Handle result = {};
+//	uint64_t i = 0;
+//	for (i = 0; i < length; i++) {
+//		if (!generations[i].slot_Taken) {
+//			generations[i].slot_Taken = true;
+//			if (index_One_Past_Last < (i + 1)) {
+//				index_One_Past_Last = i + 1;
+//			}
+//			result.generation = generations[i].generation;
+//			result.index = i;
+//			break;
+//		}
+//	}
+// 	assert(i < length);
+//	return result;
+//}
+//Handle create_Handle(Unit_Storage& unit_Storage) {
+//	return create_Handle(unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations), unit_Storage.index_One_Past_Last);
+//}
+//
+//void delete_Handle(const Handle handle, Generation generations[], uint64_t length) {
+//	uint16_t index = handle.index;
+//	if (index < length && handle.generation == generations[index].generation) {
+//		generations[handle.index].generation++;
+//		generations[handle.index].slot_Taken = false;
+//	}
+//}
+//void delete_Handle(const Handle handle, Unit_Storage& unit_Storage) {
+//	delete_Handle(handle, unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations));
+//}
+//
+//Unit* get_Unit_From_Handle(const Handle handle, Unit_Storage& unit_Storage, uint64_t length) {
+//	uint16_t index = handle.index;
+//	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == unit_Storage.generations[index].generation) {
+//		return &unit_Storage.arr[index];
+//	}
+//	return nullptr;
+//}
 
 int count_Active_Handles(Generation generations[], int size) {
 	int result = 0;
@@ -401,19 +401,9 @@ void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, i
 	// unit.ID = allocate_Entity_ID(*game_Data);
 	if (unit_Side == N_PLAYER) {
 		unit.handle = create_Handle(game_Data->player_Units);
-		add_Entity_To_Entity_Storage(game_Data->player_Units, unit.handle, &unit);
+		game_Data->player_Units.arr[unit.handle.index] = unit;;
 	} else if (unit_Side == N_ENEMY) {
 		game_Data->enemy_Units.push_back(unit);
-	}
-}
-
-void add_Entity_To_Entity_Storage(Entity_Storage* entity_Storage, const Handle handle, const void* entity) {
-	uint16_t index = handle.index;
-	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == entity_Storage->generations[index].generation) {
-		// Calculate address
-		void* destination = (char*)entity_Storage->entity_Array + (index * entity_Storage->size_Of_One_Entity);
-		// Copy memory to the destination
-		memcpy(destination, entity, entity_Storage->size_Of_One_Entity);
 	}
 }
 
@@ -617,8 +607,7 @@ bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_
 
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 	for (int i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
-		Handle* handle = (Unit*)game_Data.player_Units.entity_Array[i].handle;
-		Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.entity_Array[i]->handle);
+		Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
 		Castle* castle = &game_Data.enemy_Castle;
 		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
 			player_Unit->stop = true;

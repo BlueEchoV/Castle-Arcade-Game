@@ -218,7 +218,7 @@ void process(Archive* ar, Projectile& projectile) {
 void process(Archive* ar, Game_Data* game_Data) {
 	process(ar, game_Data->player_Castle);
 	process(ar, game_Data->player_Projectiles);
-	process(ar, game_Data->player_Units);
+	// process(ar, game_Data->player_Units);
 
 	process(ar, game_Data->enemy_Castle);
 	process(ar, game_Data->enemy_Projectiles);

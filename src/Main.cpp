@@ -447,14 +447,7 @@ int main(int argc, char** argv) {
 
                 // Update player units
                 for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                    Unit* player_Unit = (Unit*)get_Ptr_From_Handle(game_Data->player_Units, );
-                    Unit* player_Unit = (Unit*)get_Ptr_From_Handle(
-                        *&game_Data->player_Unit_Generations, 
-                        ARRAY_SIZE(*&game_Data->player_Unit_Generations),
-                        *&game_Data->player_Units,
-                        sizeof(*&game_Data->player_Units[0]),
-                        game_Data->player_Units[i].handle
-                    );
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         if (player_Unit->destroyed == false) {
                             update_Unit_Position(
@@ -543,8 +536,8 @@ int main(int argc, char** argv) {
                 }
 
 				// Collision player units with map
-				for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-					Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+				for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+					Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data->terrain_Height_Map)) {
                             float radius = get_Sprite_Radius(&player_Unit->sprite_Sheet_Tracker);
@@ -567,8 +560,8 @@ int main(int argc, char** argv) {
                 }
 
                 // Initialize default values before collision check
-                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-                    Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         player_Unit->stop = false;
                         player_Unit->current_Attack_Cooldown -= delta_Time;
@@ -581,8 +574,8 @@ int main(int argc, char** argv) {
                 }
 
                 // Rigid Body Collision: Player units with enemy castle
-                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-                    Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         Castle* castle = &game_Data->enemy_Castle;
                         if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
@@ -607,8 +600,8 @@ int main(int argc, char** argv) {
                     }
                 }
                 // Rigid Body Collision: Player units with enemy units
-                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-                    Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         for (int j = 0; j < game_Data->enemy_Units.size(); j++) {
                             Unit* enemy_Unit = &game_Data->enemy_Units[j];
@@ -629,8 +622,8 @@ int main(int argc, char** argv) {
                 }
 
                 // Units that fire projectiles
-                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-                    Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         for (int j = 0; j < game_Data->enemy_Units.size(); j++) {
                             Unit* enemy_Unit = &game_Data->enemy_Units[j];
@@ -664,8 +657,8 @@ int main(int argc, char** argv) {
 
                 // TODO: Need to do a attack range collision check for the enemy as well
 
-				for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-					Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+				for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+					Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         float speed = player_Unit->speed;
                         if (!player_Unit->stop) {
@@ -732,8 +725,8 @@ int main(int argc, char** argv) {
 			}
 
             // Draw player units
-            for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-                Unit* player_Unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+            for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+                Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                 if (player_Unit != nullptr) {
                     /*
                     // Debugging circles for colliders
@@ -907,11 +900,11 @@ int main(int argc, char** argv) {
 
             // Could move to a functions
             // Only loop through the total allocations to save cpu more operations
-            for (uint16_t i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
-                Unit* unit = get_Unit_From_Handle(*game_Data, game_Data->player_Units[i].handle);
+            for (uint16_t i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+                Unit* unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
                 if (unit != nullptr) {
                     if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-                        delete_Unit_Handle(*game_Data, unit->handle);
+                        delete_Handle(game_Data->player_Units, unit->handle);
                         unit = {};
                     }
                 }
