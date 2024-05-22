@@ -18,17 +18,6 @@ struct Generation {
 	uint16_t generation = 1;
 };
 
-struct Entity_Storage {
-	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
-	uint64_t index_One_Past_Last;
-	// Pointer to the array of entities
-	void* entity_Array;
-	// Pointer arthmetic
-	uint64_t size_Of_One_Entity;
-};
-
-void init_Entity_Storage(Entity_Storage& entity_Storage, uint64_t entity_Size);
-
 struct Health_Bar {
 	float max_HP;
 	float current_HP;
@@ -189,6 +178,13 @@ struct Unit {
 	int ID;
 };
 
+struct Unit_Storage {
+	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
+	uint64_t index_One_Past_Last = 0;
+	// Array of units
+	Unit arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
+};
+
 // Setting a max number of units could be the best approach. (Non dynamic arrays)
 // I could use a C array (Chris would use this) or a C++ array
 // If I started with a vector, it would just be for allocation and NO deleting
@@ -199,10 +195,7 @@ struct Game_Data {
 	// std::vector<Unit>						player_Units;
 
 	// Think about code re usability 
-	//uint16_t								player_Units_One_Past_The_Last;
-	//Unit									player_Units[Globals::MAX_UNITS];
-	//Generation							player_Unit_Generations[Globals::MAX_UNITS];
-	Entity_Storage							player_Units;
+	Unit_Storage							player_Units;
 
 	Castle									enemy_Castle;
 	std::vector<Projectile>					enemy_Projectiles;

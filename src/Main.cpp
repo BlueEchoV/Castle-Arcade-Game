@@ -47,7 +47,6 @@ int main(int argc, char** argv) {
 	load_Sprite_Sheet_Data_CSV(&sprite_Sheet_CSV_Data);
 
 	Game_Data* game_Data = new Game_Data();
-    init_Entity_Storage(game_Data->player_Units, sizeof(Unit));
     // Game_Data* p_Game_Data = new Game_Data();
     // Game_Data& game_Data = *p_Game_Data;
 
@@ -447,7 +446,8 @@ int main(int argc, char** argv) {
 #endif
 
                 // Update player units
-                for (int i = 0; i < game_Data->player_Units_One_Past_The_Last; i++) {
+                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = (Unit*)get_Ptr_From_Handle(game_Data->player_Units, );
                     Unit* player_Unit = (Unit*)get_Ptr_From_Handle(
                         *&game_Data->player_Unit_Generations, 
                         ARRAY_SIZE(*&game_Data->player_Unit_Generations),

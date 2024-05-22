@@ -1,51 +1,43 @@
 #include "Entity.h"
 #include <assert.h>
 
-// Pass unit generations array into here? Make sure to pass in size as well.
-Handle create_Handle(Entity_Storage& entity_Storage) {
+Handle create_Handle(Generation generations[], uint64_t length, uint64_t& index_One_Past_Last) {
 	Handle result = {};
-	uint16_t i = 0;
-	for (i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
-		if (!entity_Storage.generations[i].slot_Taken) {
-			// Having a flag to check if the slot is available or not 
-			// has merit. One being that it allows for me to create 
-			// multiple handles at the same location and still allow 
-			// for unique ids (generation counter)
-			entity_Storage.generations[i].slot_Taken = true;
-			if (entity_Storage.index_One_Past_Last < (i + 1)) {
-				entity_Storage.index_One_Past_Last = i + 1;
+	uint64_t i = 0;
+	for (i = 0; i < length; i++) {
+		if (!generations[i].slot_Taken) {
+			generations[i].slot_Taken = true;
+			if (index_One_Past_Last < (i + 1)) {
+				index_One_Past_Last = i + 1;
 			}
-			// 0 is invalid. All empty generations start at 0
-			result.generation = entity_Storage.generations[i].generation;
+			result.generation = generations[i].generation;
 			result.index = i;
 			break;
 		}
 	}
-	// If we reach this condition, that means the entire array is full (Extremely unlikely)
- 	assert(i < Globals::MAX_ENTITY_ARRAY_LENGTH);
-
-	// Returns nothing (if i >= Globals::MAX_UNITS)
+ 	assert(i < length);
 	return result;
 }
-
-// For deleting the handle, not the actual unit
-void delete_Handle(Entity_Storage& entity_Storage, const Handle handle) {
-	uint16_t index = handle.index;
-	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == entity_Storage.generations[index].generation) {
-		entity_Storage.generations[handle.index].generation++;
-		entity_Storage.generations[handle.index].slot_Taken = false;
-	}
+Handle create_Handle(Unit_Storage& unit_Storage) {
+	return create_Handle(unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations), unit_Storage.index_One_Past_Last);
 }
 
-void* get_Ptr_From_Handle(Entity_Storage& entity_Storage, const Handle handle) {
+void delete_Handle(const Handle handle, Generation generations[], uint64_t length) {
 	uint16_t index = handle.index;
-	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == entity_Storage.generations[index].generation) {
-		// Pointer arithmetic
-		return (char*)entity_Storage.entity_Array + (index * entity_Storage.size_Of_One_Entity);
+	if (index < length && handle.generation == generations[index].generation) {
+		generations[handle.index].generation++;
+		generations[handle.index].slot_Taken = false;
 	}
-	// Return nullptr if the handle isn't found
-	// Could return a garbage unit so the game doesn't crash?
-	// assert(false);
+}
+void delete_Handle(const Handle handle, Unit_Storage& unit_Storage) {
+	delete_Handle(handle, unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations));
+}
+
+Unit* get_Unit_From_Handle(const Handle handle, Unit_Storage& unit_Storage, uint64_t length) {
+	uint16_t index = handle.index;
+	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == unit_Storage.generations[index].generation) {
+		return &unit_Storage.arr[index];
+	}
 	return nullptr;
 }
 
@@ -57,11 +49,6 @@ int count_Active_Handles(Generation generations[], int size) {
 		}
 	}
 	return result;
-}
-
-void init_Entity_Storage(Entity_Storage& entity_Storage, uint64_t entity_Size) {
-	entity_Storage.index_One_Past_Last = 0;
-	entity_Storage.size_Of_One_Entity = entity_Size;
 }
 
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
@@ -630,7 +617,8 @@ bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_
 
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 	for (int i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
-		Unit* player_Unit = (Unit*)&game_Data.player_Units.entity_Array[i];
+		Handle* handle = (Unit*)game_Data.player_Units.entity_Array[i].handle;
+		Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.entity_Array[i]->handle);
 		Castle* castle = &game_Data.enemy_Castle;
 		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
 			player_Unit->stop = true;
