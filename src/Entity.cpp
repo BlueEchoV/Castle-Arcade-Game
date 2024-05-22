@@ -403,7 +403,8 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 		unit.handle = create_Handle(game_Data.player_Units);
 		game_Data.player_Units.arr[unit.handle.index] = unit;;
 	} else if (unit_Side == N_ENEMY) {
-		game_Data.enemy_Units.push_back(unit);
+		unit.handle = create_Handle(game_Data.enemy_Units);
+		game_Data.enemy_Units.arr[unit.handle.index] = unit;
 	}
 }
 

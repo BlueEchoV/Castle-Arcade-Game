@@ -240,8 +240,8 @@ struct Game_Data {
 
 	// Think about code re usability 
 	Storage<Unit>							player_Units;
-	std::vector<Unit>						enemy_Units;
-	// Storage<Unit>							enemy_Units;
+	// std::vector<Unit>						enemy_Units;
+	Storage<Unit>							enemy_Units;
 
 	Castle									enemy_Castle;
 	std::vector<Projectile>					enemy_Projectiles;
