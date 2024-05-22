@@ -240,10 +240,11 @@ struct Game_Data {
 
 	// Think about code re usability 
 	Storage<Unit>							player_Units;
+	std::vector<Unit>						enemy_Units;
+	// Storage<Unit>							enemy_Units;
 
 	Castle									enemy_Castle;
 	std::vector<Projectile>					enemy_Projectiles;
-	std::vector<Unit>						enemy_Units;
 
 	std::vector<Particle_System>			particle_Systems;
 
@@ -261,21 +262,21 @@ bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data);
 
 V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
-float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos);
+float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos);
 
 const Unit_Data& get_Unit_Data(std::string key);
 const Projectile_Data& get_Projectile_Data(std::string key);
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
-void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level);
-void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level);
+void spawn_Player_Castle(Game_Data& game_Data, V2 position_WS, Level level);
+void spawn_Enemy_Castle(Game_Data& game_Data, V2 position_WS, Level level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.
 // Anytime something is different in the spawn functions, add it to the .csv file. All units should 
 // be treated the exact same.
-void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Projectile_Position(Projectile* projectile, float delta_Time);

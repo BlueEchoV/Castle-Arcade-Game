@@ -45,7 +45,7 @@ void draw_String(Font* font, const char* string, int position_X, int position_Y,
 void draw_String_With_Background(Font* font, const char* string, int position_X, int position_Y, int size, bool center, Color_Index color, int outline_Padding);
 void draw_Arrow_Ammo_Tracker(Font* font, int ammo, V2 pos, int size);
 void draw_Time_Scalar(Font* font, float time_Scalar, int pos_X, int pos_Y, int size);
-void draw_Timer(Game_Data* game_Data, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding);
+void draw_Timer(Game_Data& game_Data, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding);
 
 bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int string_Size);
 bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, const char* string, V2 pos, int w, int h, int string_Size);

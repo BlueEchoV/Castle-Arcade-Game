@@ -292,7 +292,7 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	return tokens[0];
 }
 
-void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
+void spawn_Player_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
@@ -308,10 +308,10 @@ void spawn_Player_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 
 	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 
-	game_Data->player_Castle = castle;
+	game_Data.player_Castle = castle;
 }
 
-void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
+void spawn_Enemy_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
 	Castle castle = {};
 
 	// Would be the appropriate way to do it but it breaks the serialization
@@ -328,7 +328,7 @@ void spawn_Enemy_Castle(Game_Data* game_Data, V2 position_WS, Level level) {
 
 	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 
-	game_Data->enemy_Castle = castle;
+	game_Data.enemy_Castle = castle;
 }
 
 // The damage of the projectile is based off the unit's damage
@@ -367,7 +367,7 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	}
 }
 
-void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
+void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
 	REF(level);
 
@@ -400,10 +400,10 @@ void spawn_Unit(Game_Data* game_Data, Nation unit_Side, std::string unit_Type, i
 
 	// unit.ID = allocate_Entity_ID(*game_Data);
 	if (unit_Side == N_PLAYER) {
-		unit.handle = create_Handle(game_Data->player_Units);
-		game_Data->player_Units.arr[unit.handle.index] = unit;;
+		unit.handle = create_Handle(game_Data.player_Units);
+		game_Data.player_Units.arr[unit.handle.index] = unit;;
 	} else if (unit_Side == N_ENEMY) {
-		game_Data->enemy_Units.push_back(unit);
+		game_Data.enemy_Units.push_back(unit);
 	}
 }
 
@@ -628,14 +628,14 @@ void cast_Spell() {
 }
 
 // Doesn't account for empty height map
-float get_Height_Map_Pos_Y(Game_Data* game_Data, int x_Pos) {
+float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos) {
 	if (x_Pos < 0) {
 		x_Pos = 0;
 	}
-	if (x_Pos >= game_Data->terrain_Height_Map.size()) {
-		x_Pos = (int)(game_Data->terrain_Height_Map.size() - 1);
+	if (x_Pos >= game_Data.terrain_Height_Map.size()) {
+		x_Pos = (int)(game_Data.terrain_Height_Map.size() - 1);
 	}
-	return (float)game_Data->terrain_Height_Map[x_Pos];
+	return (float)game_Data.terrain_Height_Map[x_Pos];
 }
 
 // Array size will be determined based off total number of initializations

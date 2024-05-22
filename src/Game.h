@@ -107,7 +107,7 @@ void process(Archive* ar, Game_Data* game_Data);
 
 void load_Game(Game_Data& game_Data, Saved_Games save_Game);
 void save_Game(Game_Data& game_Data, Saved_Games save_Game);
-void start_Game(Game_Data* game_Data);
+void start_Game(Game_Data& game_Data);
 
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache);
 void load_Game_Data_Cache(Cache_Data& cache_Data);

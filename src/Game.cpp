@@ -216,19 +216,21 @@ void process(Archive* ar, Projectile& projectile) {
 }
 
 void process(Archive* ar, Game_Data* game_Data) {
-	process(ar, game_Data->player_Castle);
-	process(ar, game_Data->player_Projectiles);
-	// process(ar, game_Data->player_Units);
+	REF(ar);
+	REF(game_Data);
+	//process(ar, game_Data.player_Castle);
+	//process(ar, game_Data.player_Projectiles);
+	//process(ar, game_Data.player_Units);
 
-	process(ar, game_Data->enemy_Castle);
-	process(ar, game_Data->enemy_Projectiles);
-	process(ar, game_Data->enemy_Units);
-
-	process(ar, game_Data->particle_Systems);
-
-	process(ar, game_Data->terrain_Height_Map);
-	process(ar, game_Data->timer);
-	// process(ar, game_Data->next_Entity_ID);
+	//process(ar, game_Data.enemy_Castle);
+	//process(ar, game_Data.enemy_Projectiles);
+	//process(ar, game_Data.enemy_Units);
+	//
+	//process(ar, game_Data.particle_Systems);
+	//
+	//process(ar, game_Data.terrain_Height_Map);
+	//process(ar, game_Data.timer);
+	// process(ar, game_Data.next_Entity_ID);
 }
 
 // Call load game function and save game function that calls process game data
@@ -250,8 +252,8 @@ void save_Game(Game_Data& game_Data, Saved_Games save_Game) {
 	}
 }
 
-void start_Game(Game_Data* game_Data) {
-	game_Data->terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
+void start_Game(Game_Data& game_Data) {
+	game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 	spawn_Player_Castle(
 		game_Data,
 		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) + 25.0f },
@@ -262,7 +264,7 @@ void start_Game(Game_Data* game_Data) {
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
 		LEVEL_1
 	);
-	// initialize_Entity_Manager(*game_Data);
+	// initialize_Entity_Manager(game_Data);
 }
 
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache) {

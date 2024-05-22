@@ -14,6 +14,9 @@
 // Engine core
 SoLoud::Soloud soloud;
 
+// Allocates on the heap
+Game_Data game_Data = {};
+
 int main(int argc, char** argv) {
     REF(argc);
     REF(argv);
@@ -45,10 +48,6 @@ int main(int argc, char** argv) {
     CSV_Data sprite_Sheet_CSV_Data = {};
     sprite_Sheet_CSV_Data.file_Path = "data/Sprite_Sheet_Data.csv";
 	load_Sprite_Sheet_Data_CSV(&sprite_Sheet_CSV_Data);
-
-	Game_Data* game_Data = new Game_Data();
-    // Game_Data* p_Game_Data = new Game_Data();
-    // Game_Data& game_Data = *p_Game_Data;
 
 	start_Game(game_Data);
 
@@ -94,7 +93,7 @@ int main(int argc, char** argv) {
     close_CSV_File(&projectile_CSV_Data);
 
 	// spawn_Particle_System(
-    //     *game_Data,
+    //     game_Data,
 	// 	"PT_RAINBOW",
     //     { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 4 },
 	// 	1000,
@@ -152,12 +151,12 @@ int main(int argc, char** argv) {
         delta_Time *= time_Scalar;
         delta_Time /= 1000;
 
-        // Hot loading
+        // Hot loadinggame_Data.
         attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
 
         if (current_Game_State == GS_GAMELOOP) {
-			for (Particle_System& particle_System : game_Data->particle_Systems) {
-				for (Unit& unit : game_Data->enemy_Units) {
+			for (Particle_System& particle_System : game_Data.particle_Systems) {
+				for (Unit& unit : game_Data.enemy_Units) {
 					if (particle_System.target_ID == unit.ID) {
 						particle_System.rect.x = (int)unit.rigid_Body.position_WS.x;
 						particle_System.rect.y = (int)unit.rigid_Body.position_WS.y;
@@ -169,7 +168,7 @@ int main(int argc, char** argv) {
         }
 
 		if (current_Game_State == GS_GAMELOOP) {
-			game_Data->timer += delta_Time;
+			game_Data.timer += delta_Time;
 		}
 
 		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
@@ -184,13 +183,13 @@ int main(int argc, char** argv) {
             if (check_If_File_Exists(save_Game_1_Ptr)) {
                 remove(save_Game_1_Ptr);
             }
-            save_Game_To_Cache(SG_SAVE_GAME_1, *game_Data, save_Game_Cache_Data);
+            save_Game_To_Cache(SG_SAVE_GAME_1, game_Data, save_Game_Cache_Data);
 		}
 
 		if (key_States[SDLK_F2].pressed_This_Frame) {
 			std::string save_Game_1_String = create_Save_Game_File_Name(SG_SAVE_GAME_1);
             if (save_Game_Cache_Data.cache.find(save_Game_1_String) != save_Game_Cache_Data.cache.end()) {
-                *game_Data = save_Game_Cache_Data.cache[save_Game_1_String];
+                game_Data = save_Game_Cache_Data.cache[save_Game_1_String];
             }
 		}
 
@@ -254,17 +253,17 @@ int main(int argc, char** argv) {
             button_Pos.y += offset;
 
             if (load_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
-                load_Game(*game_Data, SG_SAVE_GAME_1);
+                load_Game(game_Data, SG_SAVE_GAME_1);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
 			if (load_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
-                load_Game(*game_Data, SG_SAVE_GAME_2);
+                load_Game(game_Data, SG_SAVE_GAME_2);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
 			if (load_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
-                load_Game(*game_Data, SG_SAVE_GAME_3);
+                load_Game(game_Data, SG_SAVE_GAME_3);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
@@ -314,35 +313,35 @@ int main(int argc, char** argv) {
            
             if (current_Game_State == GS_GAMELOOP && time_Scalar > 0) {
                 // Spawn Arrows and update lifetime
-                if (key_States[SDLK_SPACE].held_Down == true && game_Data->player_Castle.arrow_Ammo > 0) {
-                    if (game_Data->player_Castle.fire_Cooldown.remaining < 0) {
+                if (key_States[SDLK_SPACE].held_Down == true && game_Data.player_Castle.arrow_Ammo > 0) {
+                    if (game_Data.player_Castle.fire_Cooldown.remaining < 0) {
                         V2 target_Mouse = {};
                         int x, y = 0;
                         SDL_GetMouseState(&x, &y);
                         target_Mouse = { (float)x,(float)y };
-                        spawn_Projectile(*game_Data, N_PLAYER, "arrow_Short", 10, game_Data->player_Castle.rigid_Body.position_WS, target_Mouse);
-                        game_Data->player_Castle.fire_Cooldown.remaining = game_Data->player_Castle.fire_Cooldown.duration;
-                        if (game_Data->player_Castle.arrow_Ammo > 0) {
-                            game_Data->player_Castle.arrow_Ammo--;
+                        spawn_Projectile(game_Data, N_PLAYER, "arrow_Short", 10, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse);
+                        game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
+                        if (game_Data.player_Castle.arrow_Ammo > 0) {
+                            game_Data.player_Castle.arrow_Ammo--;
                         } else {
-                            game_Data->player_Castle.arrow_Ammo = 0;
+                            game_Data.player_Castle.arrow_Ammo = 0;
                         }
                     }
                 }
-                game_Data->player_Castle.fire_Cooldown.remaining -= delta_Time;
+                game_Data.player_Castle.fire_Cooldown.remaining -= delta_Time;
                 
-                if (game_Data->player_Castle.arrow_Ammo_Cooldown.remaining < 0) {
-                    Castle* player_Castle = &game_Data->player_Castle;
+                if (game_Data.player_Castle.arrow_Ammo_Cooldown.remaining < 0) {
+                    Castle* player_Castle = &game_Data.player_Castle;
 
                     player_Castle->arrow_Ammo++;
                     player_Castle->arrow_Ammo_Cooldown.remaining = player_Castle->arrow_Ammo_Cooldown.duration;
                 }
-                game_Data->player_Castle.arrow_Ammo_Cooldown.remaining -= delta_Time;
+                game_Data.player_Castle.arrow_Ammo_Cooldown.remaining -= delta_Time;
 
                 // Spawn Player Warriors
                 if (spawn_Warrior_Pressed) {
-                    Castle* player_Castle = &game_Data->player_Castle;
-                    Castle* enemy_Castle = &game_Data->enemy_Castle;
+                    Castle* player_Castle = &game_Data.player_Castle;
+                    Castle* enemy_Castle = &game_Data.enemy_Castle;
                     spawn_Unit(
                         game_Data,
                         N_PLAYER,
@@ -350,15 +349,15 @@ int main(int argc, char** argv) {
                         1,
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
-							((float)game_Data->terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
+							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
                         },
                         enemy_Castle->rigid_Body.position_WS
                     );
                     spawn_Warrior_Pressed = false;
                 }
                 if (spawn_Archer_Pressed) {
-					Castle* player_Castle = &game_Data->player_Castle;
-					Castle* enemy_Castle = &game_Data->enemy_Castle;
+					Castle* player_Castle = &game_Data.player_Castle;
+					Castle* enemy_Castle = &game_Data.enemy_Castle;
 					spawn_Unit(
 						game_Data,
                         N_PLAYER,
@@ -366,15 +365,15 @@ int main(int argc, char** argv) {
                         1,
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
-							((float)game_Data->terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
+							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
 						},
                         enemy_Castle->rigid_Body.position_WS
                     );
                     spawn_Archer_Pressed = false;
                 }
                 if (spawn_Necromancer_Pressed) {
-					Castle* player_Castle = &game_Data->player_Castle;
-					Castle* enemy_Castle = &game_Data->enemy_Castle;
+					Castle* player_Castle = &game_Data.player_Castle;
+					Castle* enemy_Castle = &game_Data.enemy_Castle;
 					spawn_Unit(
 						game_Data,
                         N_PLAYER,
@@ -382,7 +381,7 @@ int main(int argc, char** argv) {
 						1,
 						{
 							(float)player_Castle->rigid_Body.position_WS.x,
-							((float)game_Data->terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
+							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
 						},
 						enemy_Castle->rigid_Body.position_WS
 					);
@@ -390,12 +389,12 @@ int main(int argc, char** argv) {
                 }
 
                 // Spawn enemy Warriors
-                if (game_Data->enemy_Castle.spawn_Cooldown.remaining < 0) {
-					Castle* player_Castle = &game_Data->player_Castle;
-					Castle* enemy_Castle = &game_Data->enemy_Castle;
+                if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
+					Castle* player_Castle = &game_Data.player_Castle;
+					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     // Readability
 					float x_Pos = enemy_Castle->rigid_Body.position_WS.x;
-					float terrain_height = (float)game_Data->terrain_Height_Map[(int)x_Pos];
+					float terrain_height = (float)game_Data.terrain_Height_Map[(int)x_Pos];
 					float radius = get_Sprite_Radius(&enemy_Castle->sprite_Sheet_Tracker);
 					float y_Pos = terrain_height + radius;
 					spawn_Unit(
@@ -409,19 +408,19 @@ int main(int argc, char** argv) {
                     enemy_Castle->spawn_Cooldown.remaining = enemy_Castle->spawn_Cooldown.duration;
                 }
                 else {
-                    game_Data->enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
+                    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
                 }
 
                 // Update player arrow positions
-                for (int i = 0; i < game_Data->player_Projectiles.size(); i++) {
-                    Projectile* projectile = &game_Data->player_Projectiles[i];
+                for (int i = 0; i < game_Data.player_Projectiles.size(); i++) {
+                    Projectile* projectile = &game_Data.player_Projectiles[i];
                     if (!projectile->destroyed) {
                         update_Projectile_Position(projectile, delta_Time);
                     }
                 }
 				// Update enemy arrow positions
-				for (int i = 0; i < game_Data->enemy_Projectiles.size(); i++) {
-					Projectile* projectile = &game_Data->enemy_Projectiles[i];
+				for (int i = 0; i < game_Data.enemy_Projectiles.size(); i++) {
+					Projectile* projectile = &game_Data.enemy_Projectiles[i];
 					if (!projectile->destroyed) {
 						update_Projectile_Position(projectile, delta_Time);
 					}
@@ -430,8 +429,8 @@ int main(int argc, char** argv) {
 #if 0
 				if (arrow->stuck_To_Unit.is_Sticking) {
 					bool arrow_Currently_Stuck = false;
-					for (int j = 0; j < game_Data->enemy_Warriors.size(); j++) {
-						Warrior* warrior = &game_Data->enemy_Warriors[j];
+					for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
+						Warrior* warrior = &game_Data.enemy_Warriors[j];
 						if (arrow->stuck_To_Unit.ID == warrior->ID) {
 							arrow->rigid_Body.position_WS.x = warrior->rigid_Body.position_WS.x + arrow->stuck_To_Unit.offset.x;
 							arrow->rigid_Body.position_WS.y = warrior->rigid_Body.position_WS.y + arrow->stuck_To_Unit.offset.y;
@@ -446,8 +445,8 @@ int main(int argc, char** argv) {
 #endif
 
                 // Update player units
-                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         if (player_Unit->destroyed == false) {
                             update_Unit_Position(
@@ -460,38 +459,38 @@ int main(int argc, char** argv) {
                 }
 
                 // Update enemy units
-                for (int i = 0; i < game_Data->enemy_Units.size(); i++) {
-                    if (game_Data->enemy_Units[i].destroyed == false) {
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    if (game_Data.enemy_Units[i].destroyed == false) {
                         update_Unit_Position(
-                            &game_Data->enemy_Units[i].rigid_Body,
-                            game_Data->enemy_Units[i].stop,
+                            &game_Data.enemy_Units[i].rigid_Body,
+                            game_Data.enemy_Units[i].stop,
                             delta_Time
                         );
                     }
                 }
 
                 // Player Projectile Collision
-                for (int i = 0; i < game_Data->player_Projectiles.size(); i++) {
-                    Projectile* projectile = &game_Data->player_Projectiles[i];
-                    Castle* enemy_Castle = &game_Data->enemy_Castle;
+                for (int i = 0; i < game_Data.player_Projectiles.size(); i++) {
+                    Projectile* projectile = &game_Data.player_Projectiles[i];
+                    Castle* enemy_Castle = &game_Data.enemy_Castle;
                     if (check_RB_Collision(&projectile->rigid_Body, &enemy_Castle->rigid_Body)) {
                         enemy_Castle->health_Bar.current_HP -= projectile->damage;
                         projectile->destroyed = true;
                     }
                     // Collision with map
-					if (check_Height_Map_Collision(&projectile->rigid_Body, game_Data->terrain_Height_Map))
+					if (check_Height_Map_Collision(&projectile->rigid_Body, game_Data.terrain_Height_Map))
                     {
                         projectile->stop= true;
                     }
                     // Collision with Warriors and arrows
-                    for (int j = 0; j < game_Data->enemy_Units.size(); j++) {
-                        Unit* enemy_Unit = &game_Data->enemy_Units[j];
+                    for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
+                        Unit* enemy_Unit = &game_Data.enemy_Units[j];
                         if (check_RB_Collision(&projectile->rigid_Body, &enemy_Unit->rigid_Body)) {
 							if (!projectile->stop) {
                                 // On first hit, proc the damage
                                 if (projectile->collision_Delay.remaining == projectile->collision_Delay.duration) {
                                     spawn_Particle_System(
-                                        *game_Data,
+                                        game_Data,
                                         "PT_BLOOD",
                                         enemy_Unit->rigid_Body.position_WS,
                                         0.5,
@@ -504,8 +503,8 @@ int main(int argc, char** argv) {
                                     projectile->target_ID = enemy_Unit->ID;
                                 }
                                 bool targeted_Unit_Still_Alive = false;
-                                for (int e = 0; e < game_Data->enemy_Units.size(); e++) {
-                                    if (projectile->target_ID == game_Data->enemy_Units[e].ID) {
+                                for (int e = 0; e < game_Data.enemy_Units.size(); e++) {
+                                    if (projectile->target_ID == game_Data.enemy_Units[e].ID) {
                                         targeted_Unit_Still_Alive = true;
                                     }
                                 }
@@ -536,12 +535,12 @@ int main(int argc, char** argv) {
                 }
 
 				// Collision player units with map
-				for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-					Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+				for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+					Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
-                        if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data->terrain_Height_Map)) {
+                        if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data.terrain_Height_Map)) {
                             float radius = get_Sprite_Radius(&player_Unit->sprite_Sheet_Tracker);
-                            float pos_Y_HM = (float)game_Data->terrain_Height_Map[(int)player_Unit->rigid_Body.position_WS.x];
+                            float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)player_Unit->rigid_Body.position_WS.x];
 
                             player_Unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
                         }
@@ -549,35 +548,35 @@ int main(int argc, char** argv) {
 				}
 
                 // Collision enemy units with map
-                for (int i = 0; i < game_Data->enemy_Units.size(); i++) {
-                    Unit* unit = &game_Data->enemy_Units[i];
-                    if (check_Height_Map_Collision(&unit->rigid_Body, game_Data->terrain_Height_Map)) {
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* unit = &game_Data.enemy_Units[i];
+                    if (check_Height_Map_Collision(&unit->rigid_Body, game_Data.terrain_Height_Map)) {
                         float radius = get_Sprite_Radius(&unit->sprite_Sheet_Tracker);
-                        float pos_Y_HM = (float)game_Data->terrain_Height_Map[(int)unit->rigid_Body.position_WS.x];
+                        float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)unit->rigid_Body.position_WS.x];
 
                         unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
                     }
                 }
 
                 // Initialize default values before collision check
-                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         player_Unit->stop = false;
                         player_Unit->current_Attack_Cooldown -= delta_Time;
                     }
                 }
-                for (int i = 0; i < game_Data->enemy_Units.size(); i++) {
-                    Unit* enemy_Unit = &game_Data->enemy_Units[i];
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* enemy_Unit = &game_Data.enemy_Units[i];
                     enemy_Unit->stop = false;
                     enemy_Unit->current_Attack_Cooldown -= delta_Time;
                 }
 
                 // Rigid Body Collision: Player units with enemy castle
-                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
-                        Castle* castle = &game_Data->enemy_Castle;
+                        Castle* castle = &game_Data.enemy_Castle;
                         if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
                             player_Unit->stop = true;
                             if (player_Unit->current_Attack_Cooldown < 0) {
@@ -588,9 +587,9 @@ int main(int argc, char** argv) {
                     }
                 }
                 // Rigid Body Collision: Enemy units with player castle
-                for (int i = 0; i < game_Data->enemy_Units.size(); i++) {
-                    Unit* enemy_Unit = &game_Data->enemy_Units[i];
-                    Castle* castle = &game_Data->player_Castle;
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* enemy_Unit = &game_Data.enemy_Units[i];
+                    Castle* castle = &game_Data.player_Castle;
                     if (check_RB_Collision(&enemy_Unit->rigid_Body, &castle->rigid_Body)) {
                         enemy_Unit->stop = true;
                         if (enemy_Unit->current_Attack_Cooldown < 0) {
@@ -600,11 +599,11 @@ int main(int argc, char** argv) {
                     }
                 }
                 // Rigid Body Collision: Player units with enemy units
-                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
-                        for (int j = 0; j < game_Data->enemy_Units.size(); j++) {
-                            Unit* enemy_Unit = &game_Data->enemy_Units[j];
+                        for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
+                            Unit* enemy_Unit = &game_Data.enemy_Units[j];
                             if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
                                 player_Unit->stop = true;
                                 enemy_Unit->stop = true;
@@ -622,11 +621,11 @@ int main(int argc, char** argv) {
                 }
 
                 // Units that fire projectiles
-                for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                    Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                    Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
-                        for (int j = 0; j < game_Data->enemy_Units.size(); j++) {
-                            Unit* enemy_Unit = &game_Data->enemy_Units[j];
+                        for (int j = 0; j < game_Data.enemy_Units.size(); j++) {
+                            Unit* enemy_Unit = &game_Data.enemy_Units[j];
                             if (player_Unit->projectile_Type != "") {
                                 if (check_Attack_Range_Collision(player_Unit->attack_Range, &player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
                                     // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
@@ -637,7 +636,7 @@ int main(int argc, char** argv) {
                                         aim_Head.x += get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
                                         V2 arrow_Spawn_Location = player_Unit->rigid_Body.position_WS;
                                         arrow_Spawn_Location.y -= get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker) / 2;
-                                        spawn_Projectile(*game_Data, N_PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
+                                        spawn_Projectile(game_Data, N_PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
                                     }
                                 }
                                 else {
@@ -657,8 +656,8 @@ int main(int argc, char** argv) {
 
                 // TODO: Need to do a attack range collision check for the enemy as well
 
-				for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-					Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+				for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+					Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         float speed = player_Unit->speed;
                         if (!player_Unit->stop) {
@@ -666,8 +665,8 @@ int main(int argc, char** argv) {
                         }
                     }
 				}
-                for (int i = 0; i < game_Data->enemy_Units.size(); i++) {
-                    Unit* enemy_Unit = &game_Data->enemy_Units[i];
+                for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                    Unit* enemy_Unit = &game_Data.enemy_Units[i];
                     float speed = enemy_Unit->speed;
                     if (!enemy_Unit->stop) {
                         update_Animation(&enemy_Unit->sprite_Sheet_Tracker, speed, delta_Time);
@@ -675,37 +674,37 @@ int main(int argc, char** argv) {
                 }
             }
 
-            if (game_Data->player_Castle.health_Bar.current_HP <= 0) {
+            if (game_Data.player_Castle.health_Bar.current_HP <= 0) {
                 current_Game_State = GS_GAMEOVER;
             }
-			if (game_Data->enemy_Castle.health_Bar.current_HP <= 0) {
+			if (game_Data.enemy_Castle.health_Bar.current_HP <= 0) {
 				current_Game_State = GS_VICTORY;
 			}
 
             // ***Rendering happens here***
             draw_Layer(get_Sprite_Sheet_Texture("bkg_Gameloop"));
             draw_Layer(get_Sprite_Sheet_Texture("collision_Terrain_1"));
-            draw_Castle(&game_Data->player_Castle, false);
-            draw_Castle(&game_Data->enemy_Castle, true);
+            draw_Castle(&game_Data.player_Castle, false);
+            draw_Castle(&game_Data.enemy_Castle, true);
 
             SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
             draw_Circle(
-                game_Data->enemy_Castle.rigid_Body.position_WS.x, 
-                (float)(game_Data->enemy_Castle.rigid_Body.position_WS.y), 
-                (float)get_Sprite_Radius(&game_Data->enemy_Castle.sprite_Sheet_Tracker), 
+                game_Data.enemy_Castle.rigid_Body.position_WS.x, 
+                (float)(game_Data.enemy_Castle.rigid_Body.position_WS.y), 
+                (float)get_Sprite_Radius(&game_Data.enemy_Castle.sprite_Sheet_Tracker), 
                 CI_GREEN
             );
             draw_Circle(
-                game_Data->player_Castle.rigid_Body.position_WS.x, 
-                (float)(game_Data->player_Castle.rigid_Body.position_WS.y),
-                (float)get_Sprite_Radius(&game_Data->player_Castle.sprite_Sheet_Tracker), 
+                game_Data.player_Castle.rigid_Body.position_WS.x, 
+                (float)(game_Data.player_Castle.rigid_Body.position_WS.y),
+                (float)get_Sprite_Radius(&game_Data.player_Castle.sprite_Sheet_Tracker), 
                 CI_GREEN
             );
 
             // Draw player projectiles
-            for (int i = 0; i < game_Data->player_Projectiles.size(); i++) {
-                Projectile* projectile = &game_Data->player_Projectiles[i];
+            for (int i = 0; i < game_Data.player_Projectiles.size(); i++) {
+                Projectile* projectile = &game_Data.player_Projectiles[i];
                 draw_RigidBody_Colliders(&projectile->rigid_Body, CI_GREEN);
                 if (projectile->life_Time > 0) {
                     // draw_Circle(projectile->rigid_Body.position_WS.x, projectile->rigid_Body.position_WS.y, get_Sprite_Radius(&projectile->sprite_Sheet_Tracker), CI_RED);
@@ -714,8 +713,8 @@ int main(int argc, char** argv) {
                 }
             }
 			// Draw enemy projectiles
-			for (int i = 0; i < game_Data->enemy_Projectiles.size(); i++) {
-				Projectile* projectile = &game_Data->enemy_Projectiles[i];
+			for (int i = 0; i < game_Data.enemy_Projectiles.size(); i++) {
+				Projectile* projectile = &game_Data.enemy_Projectiles[i];
 				// draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
 				if (projectile->life_Time > 0) {
 					// draw_Circle(projectile->rigid_Body.position_WS.x, projectile->rigid_Body.position_WS.y, get_Sprite_Radius(&projectile->sprite_Sheet_Tracker), CI_RED);
@@ -725,17 +724,17 @@ int main(int argc, char** argv) {
 			}
 
             // Draw player units
-            for (int i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                Unit* player_Unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+            for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                 if (player_Unit != nullptr) {
                     /*
                     // Debugging circles for colliders
-                    for (int j = 0; j < player_Warrior->animation_Tracker.animations_Array[game_Data->player_Warriors[i].animation_Tracker.type].sprite_Sheet.sprites.size(); j++) {
-                        Animation_Type type = game_Data->player_Warriors[i].animation_Tracker.type;
+                    for (int j = 0; j < player_Warrior->animation_Tracker.animations_Array[game_Data.player_Warriors[i].animation_Tracker.type].sprite_Sheet.sprites.size(); j++) {
+                        Animation_Type type = game_Data.player_Warriors[i].animation_Tracker.type;
                         draw_Circle(
-                            game_Data->player_Warriors[i].rigid_Body.position_WS.x,
-                            game_Data->player_Warriors[i].rigid_Body.position_WS.y,
-                            game_Data->player_Warriors[i].animation_Tracker.animations_Array[type].sprite_Sheet.sprites[j].radius,
+                            game_Data.player_Warriors[i].rigid_Body.position_WS.x,
+                            game_Data.player_Warriors[i].rigid_Body.position_WS.y,
+                            game_Data.player_Warriors[i].animation_Tracker.animations_Array[type].sprite_Sheet.sprites[j].radius,
                             CI_Color_Index::RED
                         );
                     }
@@ -751,8 +750,8 @@ int main(int argc, char** argv) {
             }
 
             // Draw enemy Units
-            for (int i = 0; i < game_Data->enemy_Units.size(); i++) {
-                Unit* enemy_Unit = &game_Data->enemy_Units[i];
+            for (int i = 0; i < game_Data.enemy_Units.size(); i++) {
+                Unit* enemy_Unit = &game_Data.enemy_Units[i];
                 // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 5, CI_RED);
                 // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 6, CI_RED);
                 // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 7, CI_RED);
@@ -768,12 +767,12 @@ int main(int argc, char** argv) {
 				}
 			}
 
-            draw_HP_Bar(&game_Data->player_Castle.rigid_Body.position_WS, &game_Data->player_Castle.health_Bar);
-            draw_HP_Bar(&game_Data->enemy_Castle.rigid_Body.position_WS, &game_Data->enemy_Castle.health_Bar);
+            draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
+            draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
             
             // UI
             draw_Timer(
-                &*game_Data,
+                game_Data,
                 &font_1, 
                 { RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 }, 
                 6, 
@@ -791,7 +790,7 @@ int main(int argc, char** argv) {
 
 			draw_Arrow_Ammo_Tracker(
 				&font_1,
-				game_Data->player_Castle.arrow_Ammo,
+				game_Data.player_Castle.arrow_Ammo,
 				{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
 				3
 			);
@@ -852,15 +851,15 @@ int main(int argc, char** argv) {
                 // This is a loop
                 if (save_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
                     // Put this in the save_Game_Button
-                    save_Game_To_Cache(SG_SAVE_GAME_1, *game_Data, save_Game_Cache_Data);
+                    save_Game_To_Cache(SG_SAVE_GAME_1, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
 				if (save_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-                    save_Game_To_Cache(SG_SAVE_GAME_2, *game_Data, save_Game_Cache_Data);
+                    save_Game_To_Cache(SG_SAVE_GAME_2, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
 				if (save_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-                    save_Game_To_Cache(SG_SAVE_GAME_3, *game_Data, save_Game_Cache_Data);
+                    save_Game_To_Cache(SG_SAVE_GAME_3, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
                 /*
@@ -871,7 +870,7 @@ int main(int argc, char** argv) {
 
             }
 
-            draw_Particle_Systems(*game_Data);
+            draw_Particle_Systems(game_Data);
 
 #if 0
 			if (button_Text(&font_1, "Play", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 150, 100, 3)) {
@@ -882,29 +881,29 @@ int main(int argc, char** argv) {
 			}
 #endif
 
-            std::erase_if(game_Data->player_Projectiles, [](Projectile& projectile) {
+            std::erase_if(game_Data.player_Projectiles, [](Projectile& projectile) {
                 return projectile.destroyed || projectile.life_Time <= 0;
                 });
-			std::erase_if(game_Data->enemy_Projectiles, [](Projectile& projectile) {
+			std::erase_if(game_Data.enemy_Projectiles, [](Projectile& projectile) {
 				return projectile.destroyed || projectile.life_Time <= 0;
 				});
-			// std::erase_if(game_Data->player_Units, [](Unit& unit) {
+			// std::erase_if(game_Data.player_Units, [](Unit& unit) {
 			// 	return unit.destroyed || unit.health_Bar.current_HP <= 0;
 			// 	});
-            std::erase_if(game_Data->enemy_Units, [](Unit& unit) {
+            std::erase_if(game_Data.enemy_Units, [](Unit& unit) {
                 return unit.destroyed || unit.health_Bar.current_HP <= 0;
                 });
-			std::erase_if(game_Data->particle_Systems, [](Particle_System& particle_System) {
+			std::erase_if(game_Data.particle_Systems, [](Particle_System& particle_System) {
 				return particle_System.destroyed && particle_System.particles.size() == 0;
 				});
 
             // Could move to a functions
             // Only loop through the total allocations to save cpu more operations
-            for (uint16_t i = 0; i < game_Data->player_Units.index_One_Past_Last; i++) {
-                Unit* unit = get_Ptr_From_Handle(game_Data->player_Units, game_Data->player_Units.arr[i].handle);
+            for (uint16_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                Unit* unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                 if (unit != nullptr) {
                     if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-                        delete_Handle(game_Data->player_Units, unit->handle);
+                        delete_Handle(game_Data.player_Units, unit->handle);
                         unit = {};
                     }
                 }
@@ -914,8 +913,6 @@ int main(int argc, char** argv) {
     }
 
     free_Pixel_Data_In_Sprite_Sheet_Map();
-    delete game_Data;
     soloud.deinit();
     return 0;
-
 }

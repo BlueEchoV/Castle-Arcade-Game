@@ -252,10 +252,10 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font*
 
 }
 
-void draw_Timer(Game_Data* game_Data, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
+void draw_Timer(Game_Data& game_Data, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
 	SDL_Rect temp = {};
 
-	std::string str = std::to_string((int)game_Data->timer);
+	std::string str = std::to_string((int)game_Data.timer);
 	const char* ptr = str.c_str();
 	draw_String_With_Background(font, ptr, (int)(position.x - (font->char_Width / 2)), (int)(position.y - (font->char_Height / 2)), timer_Size, true, color, outline_Padding);
 }
