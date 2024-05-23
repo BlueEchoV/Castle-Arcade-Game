@@ -149,6 +149,14 @@ CSV_Data create_Open_CSV_File(std::string file_Path) {
 	return result;
 }
 
+void open_CSV_File(CSV_Data* csv_Data) {
+	csv_Data->file.open(csv_Data->file_Path);
+	if (!csv_Data->file) {
+		SDL_Log("ERROR: Unable to open CSV file");
+		assert(false);
+	}
+}
+
 void close_CSV_File(CSV_Data* csv_Data) {
 	csv_Data->file.close();
 }
@@ -178,12 +186,16 @@ void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::sp
 	std::string line;
 	std::getline(csv_Data->file, line);
 	if (line.empty()) {
+		assert(false);
 		return;
 	}
 	std::vector<std::string> column_Names = split(line, ',');
 
+	// Set this if we are inside the function
+	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
+
 	int current_Row = 0;
-	while (std::getline(csv_Data->file, line)) {
+ 	while (std::getline(csv_Data->file, line)) {
 		std::vector<std::string> tokens = split(line, ',');
 
 		// Pointer arithmetic: Calculate a pointer 'write_Ptr' to the destination in memory 

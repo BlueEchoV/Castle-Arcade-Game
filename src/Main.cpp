@@ -90,16 +90,17 @@ int main(int argc, char** argv) {
     load_Projectile_Data_CSV(&projectile_CSV_Data);
     close_CSV_File(&projectile_CSV_Data);
 
-	// spawn_Particle_System(
-    //     game_Data,
-	// 	"PT_RAINBOW",
-    //     { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 4 },
-	// 	1000,
-	// 	500,
-	// 	100,
-    //     -1,
-    //     false
-	// );
+    Handle test_Handle = { (uint64_t)-1,(uint64_t)-1 };
+	spawn_Particle_System(
+        game_Data,
+		"PT_RAINBOW",
+        { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 4 },
+		1000,
+		500,
+		100,
+        test_Handle,
+        false
+	);
 
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
@@ -159,8 +160,7 @@ int main(int argc, char** argv) {
                     for (int j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
                         Unit* enemy_Unit = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[j].handle);
                         if (enemy_Unit != nullptr) {
-                            if (particle_System->handle.index == enemy_Unit->handle.index 
-                                && particle_System->handle.generation == enemy_Unit->handle.generation) {
+                            if (compare_Handles(particle_System->target_Handle, enemy_Unit->handle)) {
                                 particle_System->rect.x = (int)enemy_Unit->rigid_Body.position_WS.x;
                                 particle_System->rect.y = (int)enemy_Unit->rigid_Body.position_WS.y;
                                 break;

@@ -26,8 +26,7 @@ struct Particle_Data {
 	std::string type;
 	std::string sprite_Sheet_Name;
 	int size;
-	float time_Between_Spawns;
-
+	float particles_Per_Second;
 	float max_Fade;
 	float lifetime_Min;
 	float lifetime_Max;
@@ -52,13 +51,13 @@ struct Particle_System {
 	float lifetime;
 	bool destroyed;
 	// Default initialization
-	Handle target_Handle = { (uint64_t)-1, (uint64_t)0 };
+	Handle target_Handle;
 	bool flip_Horizontally = false;
 	std::vector<Particle> particles;
 	Handle handle;
 };
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle target_Handle, bool flip_Horizontally = false);
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle target_Handle = { (uint64_t)-1, (uint64_t)0 }, bool flip_Horizontally = false);
 
 void update_Particle_System(Particle_System& particle_System, float delta_Time);
 

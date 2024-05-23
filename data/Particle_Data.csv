@@ -1,3 +1,3 @@
-type,sprite_Sheet_Name,size,time_Between_Spawns,max_Fade,lifetime_Min,lifetime_Max,velocity_Min.x,velocity_Min.y,velocity_Max.x,velocity_Max.y
-PT_RAINBOW,basic_Particle_1,20,0.001,0.5,5,5,-100,-100,100,100
-PT_BLOOD,basic_Particle_1,6,0.1,0.5,3,3,0,0,0,0
+type,sprite_Sheet_Name,size,particles_Per_Second,max_Fade,lifetime_Min,lifetime_Max,velocity_Min.x,velocity_Min.y,velocity_Max.x,velocity_Max.y
+PT_RAINBOW,basic_Particle_1,20,10,0.5,5,5,-100,-100,100,100
+PT_BLOOD,basic_Particle_1,6,100,0.5,3,3,0,0,0,0

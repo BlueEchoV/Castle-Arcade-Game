@@ -7,8 +7,8 @@
 std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 
 const Particle_Data bad_Particle_Data = {
-	// type,		sprite_Sheet,		size	 time_Between_Spawns  max_Fade_In  lifetime_Min		lifetime_Max  velocity_Min  velocity_Max  
-	  "PT_RAINBOW", "basic_Particle_1", 20,		 0.01f,				  0.5f,		   3.0f,			3.0f,		 {0.0f, 0.0f}, {0.0f, 0.0f}
+	// type,		sprite_Sheet,		size	  particles_Per_Second max_Fade_In  lifetime_Min	lifetime_Max  velocity_Min		velocity_Max
+	  "PT_RAINBOW", "basic_Particle_1", 20,		  1.0f,					0.5f,		3.0f,			3.0f,			{0.0f, 0.0f},	{0.0f, 0.0f}
 };
 
 const Particle_Data& get_Particle_Data(std::string key) {
@@ -102,7 +102,8 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 			particle_System.particles.push_back(particle);
 
 			// Adding it binds it to the frames
-			particle_System.time_Between_Spawns += data->time_Between_Spawns;
+
+			particle_System.time_Between_Spawns += (1.0f / data->particles_Per_Second);
 			current_Spawn++;
 		}
 	}
@@ -238,8 +239,7 @@ Type_Descriptor particle_Data_Type_Descriptors[] = {
 	FIELD(Particle_Data, DT_STRING, type),
 	FIELD(Particle_Data, DT_STRING, sprite_Sheet_Name),
 	FIELD(Particle_Data, DT_INT, size),
-	FIELD(Particle_Data, DT_FLOAT, time_Between_Spawns),
-						 
+	FIELD(Particle_Data, DT_FLOAT, particles_Per_Second),
 	FIELD(Particle_Data, DT_FLOAT, max_Fade),
 	FIELD(Particle_Data, DT_FLOAT, lifetime_Min),
 	FIELD(Particle_Data, DT_FLOAT, lifetime_Max),
@@ -250,9 +250,6 @@ Type_Descriptor particle_Data_Type_Descriptors[] = {
 };
 
 void load_Particle_Data_CSV(CSV_Data* csv_Data) {
-	// Only set the last_Modified_Time if we get to this point
-	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
-
 	std::vector<Particle_Data> particle_Data;
 	particle_Data.resize(csv_Data->rows);
 
@@ -268,6 +265,21 @@ void load_Particle_Data_CSV(CSV_Data* csv_Data) {
 void attempt_Reload_Particle_CSV_File(CSV_Data* csv_Data) {
 	size_t current_File_Time = file_Last_Modified(csv_Data->file_Path);
 	if (current_File_Time != csv_Data->last_Modified_Time) {
-		load_Particle_Data_CSV(csv_Data);
+		bool close_File = false;
+		if (!csv_Data->file.is_open()) {
+			open_CSV_File(csv_Data);
+			close_File = true;
+		}
+		if (csv_Data->file.is_open()) {
+			SDL_Log("About to call load_Particle");
+			load_Particle_Data_CSV(csv_Data);
+			// Only set the last_Modified_Time if we get to this point
+			if (close_File) {
+				close_CSV_File(csv_Data);
+			}
+		}
+		else {
+			SDL_Log("ERROR: Unable to open file");
+		}
 	}
 }
