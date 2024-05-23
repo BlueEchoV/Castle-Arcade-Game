@@ -39,6 +39,22 @@ const Projectile_Data& get_Projectile_Data(std::string key) {
 	return bad_Projectile_Data;
 }
 
+void* get_Any_Ptr_From_Handle(Game_Data& game_Data, Handle handle) {
+	switch(handle.storage_Type) {
+		// We are returning so breaks are pointless
+		case ST_Player_Unit:
+			return get_Ptr_From_Handle(game_Data.player_Units, handle);
+		case ST_Player_Projectile:
+			return get_Ptr_From_Handle(game_Data.player_Projectiles, handle);
+		case ST_Enemy_Unit:
+			return get_Ptr_From_Handle(game_Data.enemy_Units, handle);
+		case ST_Enemy_Projectile:
+			return get_Ptr_From_Handle(game_Data.enemy_Projectiles, handle);
+		default:
+			return nullptr;
+	}
+}
+
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
 	// assert(rigid_Body->num_Colliders < Globals::MAX_COLLIDERS);
 	Collider* collider = &rigid_Body->colliders[rigid_Body->num_Colliders++];
@@ -311,10 +327,12 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	// add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
 	if (unit_Side == N_PLAYER) {
 		projectile.handle = create_Handle(game_Data.player_Projectiles);
+		projectile.handle.storage_Type = ST_Player_Projectile;
 		game_Data.player_Projectiles.arr[projectile.handle.index] = projectile;
 	}
 	else if (unit_Side == N_ENEMY) {
 		projectile.handle = create_Handle(game_Data.enemy_Projectiles);
+		projectile.handle.storage_Type = ST_Player_Projectile;
 		game_Data.enemy_Projectiles.arr[projectile.handle.index] = projectile;
 	}
 }
@@ -353,11 +371,18 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	// unit.ID = allocate_Entity_ID(*game_Data);
 	if (unit_Side == N_PLAYER) {
 		unit.handle = create_Handle(game_Data.player_Units);
-		game_Data.player_Units.arr[unit.handle.index] = unit;;
+		unit.handle.storage_Type = ST_Player_Unit;
+		game_Data.player_Units.arr[unit.handle.index] = unit;
+
+		game_Data.active_Entities.push_back(unit.handle);
 	} else if (unit_Side == N_ENEMY) {
 		unit.handle = create_Handle(game_Data.enemy_Units);
+		unit.handle.storage_Type = ST_Enemy_Unit;
 		game_Data.enemy_Units.arr[unit.handle.index] = unit;
+
+		game_Data.active_Entities.push_back(unit.handle);
 	}
+	// Could push onto the active_Entites vector here as well
 }
 
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color) {

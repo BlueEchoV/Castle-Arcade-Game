@@ -786,7 +786,8 @@ int main(int argc, char** argv) {
 
             // Draw enemy Units
 			for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
-				Unit* enemy_Unit = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
+				Unit* enemy_Unit = (Unit*)get_Any_Ptr_From_Handle(game_Data, game_Data.enemy_Units.arr[i].handle);
+				//Unit* enemy_Unit = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
                 if (enemy_Unit != nullptr) {
                     // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 5, CI_RED);
                     // draw_Circle(warrior->rigid_Body.position_WS.x, warrior->rigid_Body.position_WS.y, 6, CI_RED);
@@ -917,10 +918,9 @@ int main(int argc, char** argv) {
 				soloud.stopAll();
 			}
 #endif
-
             // Could move to a function
             // Only loop through the total allocations to save cpu more operations
-            for (uint16_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+            for (uint64_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
                 Unit* unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                 if (unit != nullptr) {
                     if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
@@ -929,7 +929,7 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-			for (uint16_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+			for (uint64_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 				Unit* unit = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
 				if (unit != nullptr) {
 					if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
@@ -938,7 +938,7 @@ int main(int argc, char** argv) {
 					}
 				}
 			}
-			for (uint16_t i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
+			for (uint64_t i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
 				Projectile* projectile = get_Ptr_From_Handle(game_Data.player_Projectiles, game_Data.player_Projectiles.arr[i].handle);
 				if (projectile != nullptr) {
 					if (projectile->destroyed || projectile->life_Time <= 0) {
@@ -947,7 +947,7 @@ int main(int argc, char** argv) {
 					}
 				}
 			}
-			for (uint16_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
+			for (uint64_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
 				Projectile* projectile = get_Ptr_From_Handle(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
 				if (projectile != nullptr) {
 					if (projectile->destroyed || projectile->life_Time <= 0) {
@@ -956,7 +956,7 @@ int main(int argc, char** argv) {
 					}
 				}
 			}
-			for (uint16_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
+			for (uint64_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
 				Particle_System* particle_System = get_Ptr_From_Handle(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
 				if (particle_System != nullptr) {
 					if (particle_System->destroyed && particle_System->particles.size() == 0) {
@@ -965,6 +965,11 @@ int main(int argc, char** argv) {
 					}
 				}
 			}
+		    //std::erase_if(game_Data.active_Entities, [](const Handle& handle) {
+		    //	return handle.slot_Taken == false;
+		    //	}
+		    //);
+
         }
         SDL_RenderPresent(Globals::renderer);
     }

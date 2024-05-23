@@ -8,12 +8,21 @@
 #include <span>
 #include <stdint.h>
 
+enum Storage_Type {
+	ST_Not_Specified,
+	ST_Player_Unit,
+	ST_Player_Projectile,
+	ST_Enemy_Unit,
+	ST_Enemy_Projectile
+};
+
 // I need stable indices for this to work
 struct Handle {
 	// Bit fields (unsigned int index : 10;)
 	// uint16_t is just way better
 	uint64_t index;
 	uint64_t generation;
+	Storage_Type storage_Type;
 };
 struct Generation {
 	bool slot_Taken = false;

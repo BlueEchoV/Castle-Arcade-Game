@@ -234,11 +234,15 @@ struct Game_Data {
 	Storage<Projectile>						enemy_Projectiles;
 	// Storage<Spell>						enemy_Spells;
 
+	std::vector<Handle>						active_Entities;
+
 	Storage<Particle_System>				particle_Systems;
 
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
 };
+
+void* get_Any_Ptr_From_Handle(Game_Data& game_Data, Handle handle);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
