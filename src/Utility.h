@@ -8,6 +8,21 @@
 #include <span>
 #include <stdint.h>
 
+// I need stable indices for this to work
+struct Handle {
+	// Bit fields (unsigned int index : 10;)
+	// uint16_t is just way better
+	uint64_t index;
+	uint64_t generation;
+};
+
+struct Generation {
+	bool slot_Taken = false;
+	// Default generation 1
+	uint16_t generation = 1;
+};
+
+
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 // Suppress compiler warnings
 #define REF(V) ((void)V)

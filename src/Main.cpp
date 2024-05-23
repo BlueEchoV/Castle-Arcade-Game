@@ -155,18 +155,22 @@ int main(int argc, char** argv) {
         attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
 
         if (current_Game_State == GS_GAMELOOP) {
-			for (Particle_System& particle_System : game_Data.particle_Systems) {
-                for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
-                    Unit* enemy_Unit = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
-                    if (enemy_Unit != nullptr) {
-                        if (particle_System.target_ID == enemy_Unit->ID) {
-							particle_System.rect.x = (int)enemy_Unit->rigid_Body.position_WS.x;
-							particle_System.rect.y = (int)enemy_Unit->rigid_Body.position_WS.y;
-                            break;
+            for (int i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
+                Particle_System* particle_System = get_Ptr_From_Handle(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
+                if (particle_System != nullptr) {
+                    for (int j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
+                        Unit* enemy_Unit = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[j].handle);
+                        if (enemy_Unit != nullptr) {
+                            if (particle_System->handle.index == enemy_Unit->handle.index 
+                                && particle_System->handle.generation == enemy_Unit->handle.generation) {
+                                particle_System->rect.x = (int)enemy_Unit->rigid_Body.position_WS.x;
+                                particle_System->rect.y = (int)enemy_Unit->rigid_Body.position_WS.y;
+                                break;
+                            }
                         }
                     }
-				}
-				update_Particle_System(particle_System, delta_Time);
+                    update_Particle_System(*particle_System, delta_Time);
+                }
 			}
         }
 
@@ -508,7 +512,7 @@ int main(int argc, char** argv) {
                                                 0.5,
                                                 15,
                                                 15,
-                                                enemy_Unit->ID,
+                                                enemy_Unit->handle,
                                                 false
                                             );
                                             enemy_Unit->health_Bar.current_HP -= projectile->damage;
@@ -916,9 +920,6 @@ int main(int argc, char** argv) {
 				soloud.stopAll();
 			}
 #endif
-			std::erase_if(game_Data.particle_Systems, [](Particle_System& particle_System) {
-				return particle_System.destroyed && particle_System.particles.size() == 0;
-				});
 
             // Could move to a function
             // Only loop through the total allocations to save cpu more operations
@@ -955,6 +956,15 @@ int main(int argc, char** argv) {
 					if (projectile->destroyed || projectile->life_Time <= 0) {
 						delete_Handle(game_Data.enemy_Projectiles, projectile->handle);
 						projectile = {};
+					}
+				}
+			}
+			for (uint16_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
+				Particle_System* particle_System = get_Ptr_From_Handle(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
+				if (particle_System != nullptr) {
+					if (particle_System->destroyed && particle_System->particles.size() == 0) {
+						delete_Handle(game_Data.particle_Systems, particle_System->handle);
+                        particle_System = {};
 					}
 				}
 			}

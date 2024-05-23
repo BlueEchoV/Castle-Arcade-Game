@@ -5,20 +5,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-// I need stable indices for this to work
-struct Handle {
-	// Bit fields (unsigned int index : 10;)
-	// uint16_t is just way better
-	uint64_t index;
-	uint64_t generation;
-};
-
-struct Generation {
-	bool slot_Taken = false;
-	// Default generation 1
-	uint16_t generation = 1;
-};
-
 struct Health_Bar {
 	float max_HP;
 	float current_HP;
@@ -245,7 +231,7 @@ struct Game_Data {
 	Storage<Projectile>						enemy_Projectiles;
 	// Storage<Spell>						enemy_Spells;
 
-	std::vector<Particle_System>			particle_Systems;
+	Storage<Particle_System>				particle_Systems;
 
 	std::vector<int>						terrain_Height_Map;
 	float									timer;

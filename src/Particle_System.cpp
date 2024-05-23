@@ -23,7 +23,7 @@ const Particle_Data& get_Particle_Data(std::string key) {
 	return bad_Particle_Data;
 }
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, int target_ID, bool flip_Horizontally) {
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle target_Handle, bool flip_Horizontally) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
@@ -35,10 +35,11 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 	particle_System.time_Between_Spawns = 0.0f;
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
-	particle_System.target_ID = target_ID;
+	particle_System.target_Handle = target_Handle;
 	particle_System.flip_Horizontally = flip_Horizontally;
 
-	game_Data.particle_Systems.push_back(particle_System);
+	particle_System.handle = create_Handle(game_Data.particle_Systems);
+	game_Data.particle_Systems.arr[particle_System.handle.index] = particle_System;
 }
 
 // Update 
@@ -176,54 +177,60 @@ F_Color HSV_To_RGB(float h,		float s,		float v) {
 
 // Render
 void draw_Particle_Systems(Game_Data& game_Data) {
-	for (const Particle_System& particle_System : game_Data.particle_Systems) {
-		const Particle_Data* particle_Data = &get_Particle_Data(particle_System.particle_Type);
-		const Sprite_Sheet* sprite_Sheet_Data = &get_Sprite_Sheet(particle_Data->sprite_Sheet_Name);
-		SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
-		// Chris' trick for rendering backwards
-		for (size_t i = particle_System.particles.size(); i--;) {
-			SDL_Rect src_Rect = {};
-			src_Rect.w = particle_System.particles[i].size;
-			src_Rect.h = particle_System.particles[i].size;
-			src_Rect.x = (int)particle_System.particles[i].position.x;
-			src_Rect.y = (int)particle_System.particles[i].position.y;
+	for (int i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
+		Particle_System* particle_System = get_Ptr_From_Handle(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
+		if (particle_System != nullptr) {
+			const Particle_Data* particle_Data = &get_Particle_Data(particle_System->particle_Type);
+			const Sprite_Sheet* sprite_Sheet_Data = &get_Sprite_Sheet(particle_Data->sprite_Sheet_Name);
+			SDL_Texture* texture = sprite_Sheet_Data->sprites[0].image.texture;
+			// Chris' trick for rendering backwards
+			for (size_t j = particle_System->particles.size(); j--;) {
+				SDL_Rect src_Rect = {};
+				src_Rect.w = particle_System->particles[j].size;
+				src_Rect.h = particle_System->particles[j].size;
+				src_Rect.x = (int)particle_System->particles[j].position.x;
+				src_Rect.y = (int)particle_System->particles[j].position.y;
 
-			const Particle* particle = &particle_System.particles[i];
+				const Particle* particle = &particle_System->particles[j];
 
-			F_Color color = {};
-			float lifetime_Delta = particle->lifetime_Max - particle->lifetime;
-			float fade_Percent = 0.0f;
-			if (lifetime_Delta <= particle_Data->max_Fade) {
-				fade_Percent = lifetime_Delta / particle_Data->max_Fade;
-				color.a = linear_Interpolation(0, 1.0, fade_Percent);
+				F_Color color = {};
+				float lifetime_Delta = particle->lifetime_Max - particle->lifetime;
+				float fade_Percent = 0.0f;
+				if (lifetime_Delta <= particle_Data->max_Fade) {
+					fade_Percent = lifetime_Delta / particle_Data->max_Fade;
+					color.a = linear_Interpolation(0, 1.0, fade_Percent);
 
-			} else if (lifetime_Delta >= (particle->lifetime_Max - particle_Data->max_Fade)) {
-				fade_Percent = (particle_Data->lifetime_Max - lifetime_Delta) / particle_Data->max_Fade;
-				color.a = linear_Interpolation(0, 1.0, fade_Percent);
-			} else {
-				color.a = 1.0f;
+				}
+				else if (lifetime_Delta >= (particle->lifetime_Max - particle_Data->max_Fade)) {
+					fade_Percent = (particle_Data->lifetime_Max - lifetime_Delta) / particle_Data->max_Fade;
+					color.a = linear_Interpolation(0, 1.0, fade_Percent);
+				}
+				else {
+					color.a = 1.0f;
+				}
+
+				SDL_SetTextureAlphaMod(texture, (Uint8)(255 * (color.a)));
+
+				float percent_Life_time = particle_System->particles[j].lifetime / particle->lifetime_Max;
+
+				if (particle_System->particle_Type == "PT_RAINBOW") {
+					float hue = 360.0f * (1.0f - percent_Life_time);
+					float saturation = 1.0f;
+					float value = 1.0f;
+
+					color = HSV_To_RGB(hue, saturation, value);
+				}
+				else if (particle_System->particle_Type == "PT_BLOOD") {
+					color.r = 1.0f;
+				}
+				SDL_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
+
+
+				SDL_RenderCopyEx(Globals::renderer, texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
 			}
-
-			SDL_SetTextureAlphaMod(texture, (Uint8)(255 * (color.a)));
-
-			float percent_Life_time = particle_System.particles[i].lifetime / particle->lifetime_Max;
-
-			if (particle_System.particle_Type == "PT_RAINBOW") {
-				float hue = 360.0f * (1.0f - percent_Life_time);
-				float saturation = 1.0f;
-				float value = 1.0f;
-
-				color = HSV_To_RGB(hue, saturation, value);
-			} else if (particle_System.particle_Type == "PT_BLOOD") {
-				color.r = 1.0f;
-			}
-			SDL_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
-			
-
-			SDL_RenderCopyEx(Globals::renderer, texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
+			SDL_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
+			SDL_SetTextureColorMod(texture, 0, 0, 0);
 		}
-		SDL_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
-		SDL_SetTextureColorMod(texture, 0, 0, 0);
 	}
 }
 
