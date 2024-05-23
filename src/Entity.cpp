@@ -379,11 +379,15 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 		projectile.handle = create_Handle(game_Data.player_Projectiles);
 		projectile.handle.storage_Type = ST_Player_Projectile;
 		game_Data.player_Projectiles.arr[projectile.handle.index] = projectile;
+
+		game_Data.active_Entities.push_back(projectile.handle);
 	}
 	else if (unit_Side == N_ENEMY) {
 		projectile.handle = create_Handle(game_Data.enemy_Projectiles);
 		projectile.handle.storage_Type = ST_Player_Projectile;
 		game_Data.enemy_Projectiles.arr[projectile.handle.index] = projectile;
+
+		game_Data.active_Entities.push_back(projectile.handle);
 	}
 }
 

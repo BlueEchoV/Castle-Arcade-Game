@@ -498,7 +498,7 @@ int main(int argc, char** argv) {
                                 projectile->destroyed = true;
                             }
                         }
-                        // Collision with Warriors and projectils
+                        // Collision with Warriors and projectiles
                         for (int j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
                             Unit* enemy_Unit = get_Ptr_From_Handle_In_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[j].handle);
                             if (enemy_Unit != nullptr) {
@@ -547,6 +547,8 @@ int main(int argc, char** argv) {
                                                     projectile->destroyed = true;
                                                 }
                                             }
+                                        } else {
+                                            projectile->destroyed = true;
                                         }
                                     }
                                 }
