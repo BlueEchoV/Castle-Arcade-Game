@@ -19,5 +19,5 @@ namespace Globals {
 
 	const int MAX_PARTICLES = 1000;
 
-	const int MAX_ENTITY_ARRAY_LENGTH = 100;
+	const int MAX_ENTITY_ARRAY_LENGTH = 1000;
 }

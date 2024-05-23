@@ -212,7 +212,7 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 }
 
 template <typename T>
-T* get_Ptr_From_Handle(Storage<T>& storage, const Handle handle) {
+T* get_Ptr_From_Handle_In_Storage(Storage<T>& storage, const Handle handle) {
 	uint64_t index = handle.index;
 	if (index < ARRAY_SIZE(storage.generations) && handle.generation == storage.generations[index].generation) {
 		return &storage.arr[index];
@@ -242,7 +242,8 @@ struct Game_Data {
 	float									timer;
 };
 
-void* get_Any_Ptr_From_Handle(Game_Data& game_Data, Handle handle);
+void* get_Ptr_From_Handle(Game_Data& game_Data, Handle handle);
+void delete_Entity_From_Handle(Game_Data& game_Data, Handle handle);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 

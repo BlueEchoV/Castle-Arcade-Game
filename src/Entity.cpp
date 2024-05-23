@@ -39,19 +39,69 @@ const Projectile_Data& get_Projectile_Data(std::string key) {
 	return bad_Projectile_Data;
 }
 
-void* get_Any_Ptr_From_Handle(Game_Data& game_Data, Handle handle) {
+void* get_Ptr_From_Handle(Game_Data& game_Data, Handle handle) {
 	switch(handle.storage_Type) {
 		// We are returning so breaks are pointless
 		case ST_Player_Unit:
-			return get_Ptr_From_Handle(game_Data.player_Units, handle);
+			return get_Ptr_From_Handle_In_Storage(game_Data.player_Units, handle);
 		case ST_Player_Projectile:
-			return get_Ptr_From_Handle(game_Data.player_Projectiles, handle);
+			return get_Ptr_From_Handle_In_Storage(game_Data.player_Projectiles, handle);
 		case ST_Enemy_Unit:
-			return get_Ptr_From_Handle(game_Data.enemy_Units, handle);
+			return get_Ptr_From_Handle_In_Storage(game_Data.enemy_Units, handle);
 		case ST_Enemy_Projectile:
-			return get_Ptr_From_Handle(game_Data.enemy_Projectiles, handle);
+			return get_Ptr_From_Handle_In_Storage(game_Data.enemy_Projectiles, handle);
 		default:
 			return nullptr;
+	}
+}
+
+void delete_Entity_From_Handle(Game_Data& game_Data, Handle handle) {
+	switch (handle.storage_Type) {
+	case ST_Player_Unit: {
+		Unit* unit = (Unit*)get_Ptr_From_Handle(game_Data, handle);
+		if (unit != nullptr) {
+			if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
+				delete_Handle(game_Data.player_Units, unit->handle);
+				unit = {};
+			}
+		}
+		break;
+	}
+	case ST_Player_Projectile: {
+		Projectile* projectile = (Projectile*)get_Ptr_From_Handle(game_Data, handle);
+		if (projectile != nullptr) {
+			if (projectile->destroyed || projectile->life_Time <= 0) {
+				delete_Handle(game_Data.player_Projectiles, projectile->handle);
+				projectile = {};
+			}
+		}
+		break;
+	}
+	case ST_Enemy_Unit: {
+		Unit* unit = (Unit*)get_Ptr_From_Handle(game_Data, handle);
+		if (unit != nullptr) {
+			if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
+				delete_Handle(game_Data.enemy_Units, unit->handle);
+				unit = {};
+			}
+		}
+		break;
+	}
+	case ST_Enemy_Projectile: {
+		Projectile* projectile = (Projectile*)get_Ptr_From_Handle(game_Data, handle);
+		if (projectile != nullptr) {
+			if (projectile->destroyed || projectile->life_Time <= 0) {
+				delete_Handle(game_Data.enemy_Projectiles, projectile->handle);
+				projectile = {};
+			}
+		}
+		break;
+	}
+	default: {
+		// Handle doesn't exists or isn't specified above (invalid deletion)
+		assert(false);
+		break;
+	}
 	}
 }
 
@@ -585,7 +635,7 @@ bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_
 
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 	for (int i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
-		Unit* player_Unit = get_Ptr_From_Handle(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
+		Unit* player_Unit = get_Ptr_From_Handle_In_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
 		Castle* castle = &game_Data.enemy_Castle;
 		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
 			player_Unit->stop = true;
