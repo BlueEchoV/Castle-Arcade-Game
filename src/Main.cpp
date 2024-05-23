@@ -102,6 +102,8 @@ int main(int argc, char** argv) {
         false
 	);
 
+    int warrior_Level = 1;
+    
     Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
@@ -351,7 +353,7 @@ int main(int argc, char** argv) {
                         game_Data,
                         N_PLAYER,
                         "warrior",
-                        1,
+                        warrior_Level,
                         {
                             (float)player_Castle->rigid_Body.position_WS.x,
 							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
@@ -843,6 +845,17 @@ int main(int argc, char** argv) {
             if (button_Image(get_Sprite_Sheet_Texture("warrior_Stop"), "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
                 spawn_Warrior_Pressed = true;
             } 
+            // Debugging button
+            int level_Up_Button_Height = 30;
+			V2 level_Up_Button_Pos = { button_Pos.x, (button_Pos.y - (button_Height_Unit_Spawn / 2)) - level_Up_Button_Height / 2 };
+			if (button_Text(&font_1, "Level Up+", level_Up_Button_Pos, button_Height_Unit_Spawn, 30, 2)) {
+                // Defined as global for now
+                warrior_Level++; 
+			}
+            V2 debug_Level_Up_Button_Pos = level_Up_Button_Pos;
+            debug_Level_Up_Button_Pos.y -= level_Up_Button_Height;
+            std::string debug_String = std::to_string(warrior_Level);
+            draw_String(&font_1, debug_String.c_str(), (int)debug_Level_Up_Button_Pos.x, (int)debug_Level_Up_Button_Pos.y, 2, true);
             button_Pos.x += button_Height_Unit_Spawn;
             if (button_Image(get_Sprite_Sheet_Texture("archer_Stop"), "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
 				spawn_Archer_Pressed = true;
