@@ -237,13 +237,13 @@ T* get_Ptr_From_Handle(Storage<T>& storage, const Handle handle) {
 struct Game_Data {
 	Castle									player_Castle;
 	Storage<Unit>							player_Units;
-	// std::vector<Projectile>					player_Projectiles;
 	Storage<Projectile>						player_Projectiles;
-	// player_Spells;
+	// Storage<Spell>						player_Spells;
 
 	Castle									enemy_Castle;
 	Storage<Unit>							enemy_Units;
-	std::vector<Projectile>					enemy_Projectiles;
+	Storage<Projectile>						enemy_Projectiles;
+	// Storage<Spell>						enemy_Spells;
 
 	std::vector<Particle_System>			particle_Systems;
 

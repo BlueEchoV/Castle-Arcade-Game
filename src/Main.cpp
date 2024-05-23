@@ -424,11 +424,13 @@ int main(int argc, char** argv) {
                     }
                 }
 				// Update enemy arrow positions
-				for (int i = 0; i < game_Data.enemy_Projectiles.size(); i++) {
-					Projectile* projectile = &game_Data.enemy_Projectiles[i];
-					if (!projectile->destroyed) {
-						update_Projectile_Position(projectile, delta_Time);
-					}
+				for (int i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
+					Projectile* projectile = get_Ptr_From_Handle(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
+                    if (projectile != nullptr) {
+                        if (!projectile->destroyed) {
+                            update_Projectile_Position(projectile, delta_Time);
+                        }
+                    }
 				}
 
 #if 0
@@ -743,14 +745,16 @@ int main(int argc, char** argv) {
                 }
             }
 			// Draw enemy projectiles
-			for (int i = 0; i < game_Data.enemy_Projectiles.size(); i++) {
-				Projectile* projectile = &game_Data.enemy_Projectiles[i];
-				// draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
-				if (projectile->life_Time > 0) {
-					// draw_Circle(projectile->rigid_Body.position_WS.x, projectile->rigid_Body.position_WS.y, get_Sprite_Radius(&projectile->sprite_Sheet_Tracker), CI_RED);
-					draw_Projectile(projectile, false);
-                    projectile->life_Time -= delta_Time;
-				}
+			for (int i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
+				Projectile* projectile = get_Ptr_From_Handle(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
+                if (projectile != nullptr) {
+                    // draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
+                    if (projectile->life_Time > 0) {
+                        // draw_Circle(projectile->rigid_Body.position_WS.x, projectile->rigid_Body.position_WS.y, get_Sprite_Radius(&projectile->sprite_Sheet_Tracker), CI_RED);
+                        draw_Projectile(projectile, false);
+                        projectile->life_Time -= delta_Time;
+                    }
+                }
 			}
 
             // Draw player units
@@ -912,10 +916,6 @@ int main(int argc, char** argv) {
 				soloud.stopAll();
 			}
 #endif
-
-			std::erase_if(game_Data.enemy_Projectiles, [](Projectile& projectile) {
-				return projectile.destroyed || projectile.life_Time <= 0;
-				});
 			std::erase_if(game_Data.particle_Systems, [](Particle_System& particle_System) {
 				return particle_System.destroyed && particle_System.particles.size() == 0;
 				});
@@ -946,6 +946,15 @@ int main(int argc, char** argv) {
 					if (projectile->destroyed || projectile->life_Time <= 0) {
 						delete_Handle(game_Data.player_Projectiles, projectile->handle);
                         projectile = {};
+					}
+				}
+			}
+			for (uint16_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
+				Projectile* projectile = get_Ptr_From_Handle(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
+				if (projectile != nullptr) {
+					if (projectile->destroyed || projectile->life_Time <= 0) {
+						delete_Handle(game_Data.enemy_Projectiles, projectile->handle);
+						projectile = {};
 					}
 				}
 			}
