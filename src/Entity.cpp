@@ -1,56 +1,6 @@
 #include "Entity.h"
 #include <assert.h>
 
-//Handle create_Handle(Generation generations[], uint64_t length, uint64_t& index_One_Past_Last) {
-//	Handle result = {};
-//	uint64_t i = 0;
-//	for (i = 0; i < length; i++) {
-//		if (!generations[i].slot_Taken) {
-//			generations[i].slot_Taken = true;
-//			if (index_One_Past_Last < (i + 1)) {
-//				index_One_Past_Last = i + 1;
-//			}
-//			result.generation = generations[i].generation;
-//			result.index = i;
-//			break;
-//		}
-//	}
-// 	assert(i < length);
-//	return result;
-//}
-//Handle create_Handle(Unit_Storage& unit_Storage) {
-//	return create_Handle(unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations), unit_Storage.index_One_Past_Last);
-//}
-//
-//void delete_Handle(const Handle handle, Generation generations[], uint64_t length) {
-//	uint16_t index = handle.index;
-//	if (index < length && handle.generation == generations[index].generation) {
-//		generations[handle.index].generation++;
-//		generations[handle.index].slot_Taken = false;
-//	}
-//}
-//void delete_Handle(const Handle handle, Unit_Storage& unit_Storage) {
-//	delete_Handle(handle, unit_Storage.generations, ARRAY_SIZE(unit_Storage.generations));
-//}
-//
-//Unit* get_Unit_From_Handle(const Handle handle, Unit_Storage& unit_Storage, uint64_t length) {
-//	uint16_t index = handle.index;
-//	if (index < Globals::MAX_ENTITY_ARRAY_LENGTH && handle.generation == unit_Storage.generations[index].generation) {
-//		return &unit_Storage.arr[index];
-//	}
-//	return nullptr;
-//}
-
-int count_Active_Handles(Generation generations[], int size) {
-	int result = 0;
-	for (int i = 0; i < size; i++) {
-		if (generations[i].slot_Taken) {
-			result++;
-		}
-	}
-	return result;
-}
-
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_Unit_Data = {

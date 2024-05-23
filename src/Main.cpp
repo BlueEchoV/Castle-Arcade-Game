@@ -520,10 +520,9 @@ int main(int argc, char** argv) {
                                         }
                                         bool targeted_Unit_Still_Alive = false;
                                         for (int e = 0; e < game_Data.enemy_Units.index_One_Past_Last; e++) {
-                                            Unit* enemy_Unit_Second = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[e].handle);
-                                            if (enemy_Unit_Second != nullptr) {
-                                                if (projectile->handle.index == enemy_Unit_Second->handle.index 
-                                                    && projectile->handle.generation == enemy_Unit_Second->handle.generation) {
+                                            Unit* enemy_Unit_Second_Check = get_Ptr_From_Handle(game_Data.enemy_Units, game_Data.enemy_Units.arr[e].handle);
+                                            if (enemy_Unit_Second_Check != nullptr) {
+                                                if (compare_Handles(projectile->target_Handle, enemy_Unit_Second_Check->handle)) {
                                                     targeted_Unit_Still_Alive = true;
                                                 }
                                             }

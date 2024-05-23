@@ -3,6 +3,20 @@
 #include <string>
 #include <assert.h>
 
+int count_Active_Handles(Generation generations[], int size) {
+	int result = 0;
+	for (int i = 0; i < size; i++) {
+		if (generations[i].slot_Taken) {
+			result++;
+		}
+	}
+	return result;
+}
+
+bool compare_Handles(Handle handle_1, Handle handle_2) {
+	return (handle_1.index == handle_2.index && handle_1.generation == handle_2.generation);
+}
+
 V2 operator+(const V2& a, const V2& b) {
 	V2 result = {};
 	result.x = a.x + b.x;

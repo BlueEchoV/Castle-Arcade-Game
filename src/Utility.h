@@ -15,13 +15,13 @@ struct Handle {
 	uint64_t index;
 	uint64_t generation;
 };
-
 struct Generation {
 	bool slot_Taken = false;
 	// Default generation 1
 	uint16_t generation = 1;
 };
-
+int count_Active_Handles(Generation generations[], int size);
+bool compare_Handles(Handle handle_1, Handle handle_2);
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 // Suppress compiler warnings
