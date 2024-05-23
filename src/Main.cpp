@@ -16,6 +16,9 @@ SoLoud::Soloud soloud;
 
 // Allocates on the heap
 Game_Data game_Data = {};
+// This could just be an array
+std::unordered_map<std::string, Game_Data> saved_Games_Cache = {};
+Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
 int main(int argc, char** argv) {
     REF(argc);
@@ -74,11 +77,6 @@ int main(int argc, char** argv) {
     bool spawn_Necromancer_Pressed = false;
 
     bool running = true;
-
-    // This could just be an array
-    std::unordered_map<std::string, Game_Data> saved_Games_Cache = {};
-
-    Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 
     CSV_Data particle_CSV_Data = create_Open_CSV_File("data/Particle_Data.csv");
     load_Particle_Data_CSV(&particle_CSV_Data);

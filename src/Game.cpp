@@ -62,6 +62,15 @@ void process(Archive* ar, int& my_Int) {
 	}
 }
 
+void process(Archive* ar, uint64_t& my_Int) {
+	if (ar->operation == GDO_SAVE) {
+		fwrite(&my_Int, sizeof(my_Int), 1, ar->file);
+	}
+	else if (ar->operation == GDO_LOAD) {
+		fread(&my_Int, sizeof(my_Int), 1, ar->file);
+	}
+}
+
 // Process the primitive (float, int, double)
 void process(Archive* ar, float& my_Float) {
 	if (ar->operation == GDO_SAVE) {
@@ -70,6 +79,11 @@ void process(Archive* ar, float& my_Float) {
 	else if (ar->operation == GDO_LOAD) {
 		fread(&my_Float, sizeof(my_Float), 1, ar->file);
 	}
+}
+
+void process(Archive* ar, Handle& handle) {
+	process(ar, handle.index);
+	process(ar, handle.generation);
 }
 
 void process(Archive* ar, SDL_Rect& rect) {
@@ -190,49 +204,74 @@ void process(Archive* ar, Unit& unit) {
 	process(ar, unit.sprite_Sheet_Tracker);
 	process(ar, unit.rigid_Body);
 	process(ar, unit.health_Bar);
+
 	process(ar, unit.speed);
 	process(ar, unit.damage);
 	process(ar, unit.attack_Cooldown);
 	process(ar, unit.current_Attack_Cooldown);
 	process(ar, unit.attack_Range);
+
 	process(ar, unit.attached_Entities);
 	process(ar, unit.attached_Entities_Size);
+
 	process(ar, unit.destroyed);
 	process(ar, unit.stop);
-	process(ar, unit.ID);
+
+	process(ar, unit.handle);
 }
 
 void process(Archive* ar, Projectile& projectile) {
-	REF(ar);
-	REF(projectile);
-	//process(ar, projectile.sprite_Sheet_Tracker);
-	//process(ar, projectile.rigid_Body);
-	//process(ar, projectile.damage);
-	//process(ar, projectile.speed);
-	//process(ar, projectile.life_Time);
-	//process(ar, projectile.collision_Delay);
-	//process(ar, projectile.target_ID);
-	//process(ar, projectile.gravity);
-	//process(ar, projectile.stop);
-	//process(ar, projectile.destroyed);
+	process(ar, projectile.type);
+	process(ar, projectile.sprite_Sheet_Tracker);
+	process(ar, projectile.rigid_Body);
+	process(ar, projectile.damage);
+	process(ar, projectile.speed);
+	process(ar, projectile.life_Time);
+	process(ar, projectile.collision_Delay);
+	process(ar, projectile.handle);
+	process(ar, projectile.target_Handle);
+	process(ar, projectile.can_Attach);
+	process(ar, projectile.gravity);
+	process(ar, projectile.stop);
+	process(ar, projectile.destroyed);
+}
+
+void process(Archive* ar, Generation& gen) {
+	process(ar, gen.generation);
+	process(ar, gen.slot_Taken);
+}
+
+void process(Archive* ar, Storage<Unit>& storage) {
+	process(ar, storage.generations, storage.index_One_Past_Last);
+	process(ar, storage.index_One_Past_Last);
+	process(ar, storage.arr, storage.index_One_Past_Last);
+}
+
+void process(Archive* ar, Storage<Projectile>& storage) {
+	process(ar, storage.generations, storage.index_One_Past_Last);
+	process(ar, storage.index_One_Past_Last);
+	process(ar, storage.arr, storage.index_One_Past_Last);
+}
+
+void process(Archive* ar, Storage<Particle_System>& storage) {
+	process(ar, storage.generations, storage.index_One_Past_Last);
+	process(ar, storage.index_One_Past_Last);
+	process(ar, storage.arr, storage.index_One_Past_Last);
 }
 
 void process(Archive* ar, Game_Data* game_Data) {
-	REF(ar);
-	REF(game_Data);
-	//process(ar, game_Data.player_Castle);
-	//process(ar, game_Data.player_Projectiles);
-	//process(ar, game_Data.player_Units);
+	process(ar, game_Data->player_Castle);
+	process(ar, game_Data->player_Units);
+	process(ar, game_Data->player_Projectiles);
 
-	//process(ar, game_Data.enemy_Castle);
-	//process(ar, game_Data.enemy_Projectiles);
-	//process(ar, game_Data.enemy_Units);
-	//
-	//process(ar, game_Data.particle_Systems);
-	//
-	//process(ar, game_Data.terrain_Height_Map);
-	//process(ar, game_Data.timer);
-	// process(ar, game_Data.next_Entity_ID);
+	process(ar, game_Data->enemy_Castle);
+	process(ar, game_Data->enemy_Units);
+	process(ar, game_Data->enemy_Projectiles);
+
+	process(ar, game_Data->particle_Systems);
+
+	process(ar, game_Data->terrain_Height_Map);
+	process(ar, game_Data->timer);
 }
 
 // Call load game function and save game function that calls process game data

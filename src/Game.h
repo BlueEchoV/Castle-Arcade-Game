@@ -82,8 +82,17 @@ void process(Archive* ar, std::vector<T>& vector) {
 // good for documenting the number I expect, but it's STILL a pointer
 // int size is creating a new function for different sizes (more code)
 template <typename T, int size>
+//										Deduces the size of the array at compile time
 void process(Archive* ar, T (&my_Array)[size]) {
 	for (int i = 0; i < size; i++) {
+		process(ar, my_Array[i]);
+	}
+}
+
+// Only loop through the active units of the indices
+template <typename T, int size>
+void process(Archive* ar, T (&my_Array)[size], uint64_t active_Indicies) {
+	for (uint64_t i = 0; i < active_Indicies; i++) {
 		process(ar, my_Array[i]);
 	}
 }
@@ -92,6 +101,7 @@ void process(Archive* ar, bool& my_Bool);
 void process(Archive* ar, int& my_Int);
 void process(Archive* ar, float& my_Float);
 void process(Archive* ar, SDL_Rect& rect);
+void process(Archive* ar, Handle& handle);
 void process(Archive* ar, std::string& string);
 void process(Archive* ar, Sprite_Sheet_Tracker& sprite_Sheet_Tracker);
 void process(Archive* ar, Particle& particle);
@@ -103,6 +113,9 @@ void process(Archive* ar, Health_Bar& health_Bar);
 void process(Archive* ar, Cooldown& cooldown);
 void process(Archive* ar, Castle& castle);
 void process(Archive* ar, Projectile& projectile);
+void process(Archive* ar, Storage<Unit>& storage);
+void process(Archive* ar, Storage<Projectile>& storage);
+void process(Archive* ar, Storage<Particle_System>& storage);
 void process(Archive* ar, Game_Data* game_Data);
 
 void load_Game(Game_Data& game_Data, Saved_Games save_Game);

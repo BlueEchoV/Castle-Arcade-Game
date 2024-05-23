@@ -202,15 +202,16 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 	return button_Pressed;
 }
 
+// Allocated in global/static memory area. This is different from the heap but it does solve the problem of stack overflow.
+Game_Data selected_Game_Data;
+
 // Have this display an image?
 void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, V2 pos, int w, int h) {
 	std::string save_Game_String = create_Save_Game_File_Name(save_Game);
-	Game_Data selected_Game_Data = cache_Data.cache[save_Game_String];
+	selected_Game_Data = cache_Data.cache[save_Game_String];
 
 	SDL_Rect button_Area = {};
-	int outline_Thickness = 5;
-	REF(outline_Thickness);
-	REF(cache_Data);
+	//int outline_Thickness = 5;
 
 	// Centers the button
 	button_Area.x = ((int)(pos.x - w) - (w / 2));
@@ -389,13 +390,11 @@ void display_Load_Game_Info() {
 
 }
 
-
 bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, V2 pos, int w, int h, int size) {
 	bool result = false;
 	std::string file_Name_String = create_Save_Game_File_Name(save_Game);
 	const char* file_Name = file_Name_String.c_str();
 	if (check_If_File_Exists(file_Name)) {
-
 		std::string file_String = file_Name;
 		std::string file_String_Trimmed;
 

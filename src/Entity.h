@@ -163,8 +163,6 @@ struct Unit {
 	bool stop;
 
 	Handle handle;
-
-	int ID;
 };
 
 //struct Unit_Storage {
