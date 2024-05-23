@@ -360,7 +360,8 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	add_Collider(&projectile.rigid_Body, { projectile_Data.collider_Pos_LS_X, projectile_Data.collider_Pos_LS_Y }, projectile_Data.collider_Radius);
 	// add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
 	if (unit_Side == N_PLAYER) {
-		game_Data.player_Projectiles.push_back(projectile);
+		projectile.handle = create_Handle(game_Data.player_Projectiles);
+		game_Data.player_Projectiles.arr[projectile.handle.index] = projectile;
 	}
 	else if (unit_Side == N_ENEMY) {
 		game_Data.enemy_Projectiles.push_back(projectile);

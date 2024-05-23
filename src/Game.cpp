@@ -203,16 +203,18 @@ void process(Archive* ar, Unit& unit) {
 }
 
 void process(Archive* ar, Projectile& projectile) {
-	process(ar, projectile.sprite_Sheet_Tracker);
-	process(ar, projectile.rigid_Body);
-	process(ar, projectile.damage);
-	process(ar, projectile.speed);
-	process(ar, projectile.life_Time);
-	process(ar, projectile.collision_Delay);
-	process(ar, projectile.target_ID);
-	process(ar, projectile.gravity);
-	process(ar, projectile.stop);
-	process(ar, projectile.destroyed);
+	REF(ar);
+	REF(projectile);
+	//process(ar, projectile.sprite_Sheet_Tracker);
+	//process(ar, projectile.rigid_Body);
+	//process(ar, projectile.damage);
+	//process(ar, projectile.speed);
+	//process(ar, projectile.life_Time);
+	//process(ar, projectile.collision_Delay);
+	//process(ar, projectile.target_ID);
+	//process(ar, projectile.gravity);
+	//process(ar, projectile.stop);
+	//process(ar, projectile.destroyed);
 }
 
 void process(Archive* ar, Game_Data* game_Data) {

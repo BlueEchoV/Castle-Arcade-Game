@@ -123,7 +123,9 @@ struct Projectile {
 	float speed;
 	float life_Time;
 	Cooldown collision_Delay;
-	int target_ID;
+
+	Handle handle;
+	Handle target_Handle;
 
 	bool can_Attach;
 	float gravity;
@@ -234,16 +236,13 @@ T* get_Ptr_From_Handle(Storage<T>& storage, const Handle handle) {
 // If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
 	Castle									player_Castle;
-	std::vector<Projectile>					player_Projectiles;
-	// std::vector<Spells>						player_Spells;
-	// std::vector<Unit>						player_Units;
-
-	// Think about code re usability 
 	Storage<Unit>							player_Units;
-	// std::vector<Unit>						enemy_Units;
-	Storage<Unit>							enemy_Units;
+	// std::vector<Projectile>					player_Projectiles;
+	Storage<Projectile>						player_Projectiles;
+	// player_Spells;
 
 	Castle									enemy_Castle;
+	Storage<Unit>							enemy_Units;
 	std::vector<Projectile>					enemy_Projectiles;
 
 	std::vector<Particle_System>			particle_Systems;
