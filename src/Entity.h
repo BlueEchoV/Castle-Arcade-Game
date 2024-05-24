@@ -69,6 +69,18 @@ const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
 	{  100.0f,    {1.0f, 0.0f},      {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
 
+//enum Unit_Type {
+//	UT_Warrior,
+//	UT_Archer,
+//	UT_Necromancer
+//};
+
+struct Unit_Level_Tracker {
+	int warrior = 1;
+	int archer = 1;
+	int necromancer = 1;
+};
+
 struct Castle {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
@@ -79,6 +91,9 @@ struct Castle {
 
 	int arrow_Ammo;
 	Cooldown arrow_Ammo_Cooldown;
+
+	//int unit_Level_Tracker[Globals::TOTAL_AVAILABLE_UNITS];
+	Unit_Level_Tracker unit_Level_Tracker;
 
 	Stored_Units stored_Units;
 };
@@ -242,6 +257,8 @@ struct Game_Data {
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
 };
+
+void clear_Game_Data(Game_Data* game_Data);
 
 void* get_Ptr_From_Handle(Game_Data& game_Data, Handle handle);
 void delete_Entity_From_Handle(Game_Data& game_Data, Handle handle);

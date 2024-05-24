@@ -305,7 +305,6 @@ void start_Game(Game_Data& game_Data) {
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
 		LEVEL_1
 	);
-	// initialize_Entity_Manager(game_Data);
 }
 
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache) {
