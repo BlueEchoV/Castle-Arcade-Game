@@ -23,8 +23,8 @@ const Unit_Data& get_Unit_Data(std::string key) {
 static std::unordered_map<std::string, Projectile_Data> projectile_Data_Map = {};
 
 const Projectile_Data bad_Projectile_Data = {
-	//	Type		sprite_Sheet	collider	can_Attach		gravity		speed	life_Time
-	   "arrow_Short",		"arrow_Short",		"arrow",	1,				200,		500,	10,       
+	//	Type			sprite_Sheet	collider	can_Attach		gravity_Multiplier	speed	life_Time
+	   "arrow_Short",	"arrow_Short",	"arrow",	1,				1,					500,	10,       
 };
 
 const Projectile_Data& get_Projectile_Data(std::string key) {
@@ -370,7 +370,7 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 
 	projectile.rigid_Body.velocity.x = direction_V2.x * projectile.speed;
 	projectile.rigid_Body.velocity.y = direction_V2.y * projectile.speed;
-	projectile.gravity = projectile_Data.gravity;
+	projectile.gravity = Globals::GRAVITY * projectile_Data.gravity_Multiplier;
 	projectile.can_Attach = projectile_Data.can_Attach;
 
 	add_Collider(&projectile.rigid_Body, { projectile_Data.collider_Pos_LS_X, projectile_Data.collider_Pos_LS_Y }, projectile_Data.collider_Radius);
@@ -713,7 +713,7 @@ Type_Descriptor projectile_Type_Descriptors[] = {
 	FIELD(Projectile_Data, DT_STRING, collider),
 	// Treat a bool like an int. 0 is false. 1 is true.
 	FIELD(Projectile_Data, DT_INT, can_Attach),
-	FIELD(Projectile_Data, DT_FLOAT, gravity),
+	FIELD(Projectile_Data, DT_FLOAT, gravity_Multiplier),
 	FIELD(Projectile_Data, DT_FLOAT, speed),
 	FIELD(Projectile_Data, DT_FLOAT, life_Time),
 	FIELD(Projectile_Data, DT_FLOAT, collider_Pos_LS_X),

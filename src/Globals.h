@@ -11,7 +11,7 @@ struct SDL_Renderer;
 namespace Globals {
 	extern SDL_Renderer* renderer;
 
-	const float GRAVITY = 300;
+	const float GRAVITY = 100;
 	const float ARCHER_ARROW_GRAVITY = 50;
 
 	const int MAX_ATTACHED_ENTITIES = 100;

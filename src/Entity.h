@@ -105,7 +105,7 @@ struct Projectile_Data {
 
 	bool can_Attach;
 
-	float gravity;
+	float gravity_Multiplier;
 	float speed;
 	float life_Time;
 
