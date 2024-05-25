@@ -13,10 +13,6 @@ int count_Active_Handles(Generation generations[], int size) {
 	return result;
 }
 
-bool compare_Handles(Handle handle_1, Handle handle_2) {
-	return (handle_1.index == handle_2.index && handle_1.generation == handle_2.generation);
-}
-
 V2 operator+(const V2& a, const V2& b) {
 	V2 result = {};
 	result.x = a.x + b.x;
@@ -186,7 +182,6 @@ void load_CSV_Data(CSV_Data* csv_Data, char* destination, size_t stride, std::sp
 	std::string line;
 	std::getline(csv_Data->file, line);
 	if (line.empty()) {
-		assert(false);
 		return;
 	}
 	std::vector<std::string> column_Names = split(line, ',');

@@ -3,7 +3,11 @@
 
 static std::unordered_map<std::string, Sprite_Sheet> sprite_Sheet_Map = {};
 
-Sprite_Sheet bad_Sprite_Sheet = create_Sprite_Sheet("images/unit_Skeleton.png", 1, 1);
+Sprite_Sheet bad_Sprite_Sheet;
+
+void init_Sprites() {
+	bad_Sprite_Sheet = create_Sprite_Sheet("images/unit_Skeleton.png", 1, 1);
+}
 
 Sprite_Sheet& get_Sprite_Sheet(std::string key) {
 	auto it = sprite_Sheet_Map.find(key);

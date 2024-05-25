@@ -24,6 +24,9 @@ struct Sprite_Sheet_Tracker {
 	int current_Frame = 0;
 };
 
+// Chris returns bools if something fails
+void init_Sprites();
+
 Sprite_Sheet_Tracker create_Sprite_Sheet_Tracker(std::string sprite_Sheet_Name);
 
 float return_Sprite_Radius(Sprite sprite);

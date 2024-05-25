@@ -65,7 +65,7 @@ struct Castle_Stats {
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
 	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
-	{  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
+	{  100.0f,    {0.01f, 0.0f},     {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
 	{  100.0f,    {1.0f, 0.0f},      {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
 
@@ -193,6 +193,7 @@ struct Storage {
 	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
 	uint64_t index_One_Past_Last = 0;
 	T arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
+	// Storage_Type st;
 };
 
 template <typename T>
@@ -200,17 +201,14 @@ Handle create_Handle(Storage<T>& storage) {
 	Handle result = {};
 	uint64_t length = ARRAY_SIZE(storage.generations);
 	// For wrapping. We start at the last known open handle position.
-	uint64_t start_Index = storage.index_One_Past_Last % length;
 	for (uint64_t i = 0; i < length; i++) {
-		// Wrapping
-		uint64_t index = (start_Index + i) % length;
-		if (!storage.generations[index].slot_Taken) {
-			storage.generations[index].slot_Taken = true;
-			if (storage.index_One_Past_Last < (index + 1)) {
-				storage.index_One_Past_Last = index + 1;
+		if (!storage.generations[i].slot_Taken) {
+			storage.generations[i].slot_Taken = true;
+			if (storage.index_One_Past_Last < (i + 1)) {
+				storage.index_One_Past_Last = i + 1;
 			}
-			result.generation = storage.generations[index].generation;
-			result.index = index;
+			result.generation = storage.generations[i].generation;
+			result.index = i;
 			break;
 		}
 	}
@@ -222,18 +220,10 @@ template <typename T>
 void delete_Handle(Storage<T>& storage, const Handle handle) {
 	uint64_t index = handle.index;
 	if (index < ARRAY_SIZE(storage.generations) && handle.generation == storage.generations[index].generation) {
+		// This wraps
 		storage.generations[index].generation++;
 		storage.generations[index].slot_Taken = false;
 	}
-}
-
-template <typename T>
-T* get_Ptr_From_Handle_In_Storage(Storage<T>& storage, const Handle handle) {
-	uint64_t index = handle.index;
-	if (index < ARRAY_SIZE(storage.generations) && handle.generation == storage.generations[index].generation) {
-		return &storage.arr[index];
-	}
-	return nullptr;
 }
 
 // Setting a max number of units could be the best approach. (Non dynamic arrays)
@@ -241,7 +231,7 @@ T* get_Ptr_From_Handle_In_Storage(Storage<T>& storage, const Handle handle) {
 // If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
 	Castle									player_Castle;
-	Storage<Unit>							player_Units;
+	Storage<Unit>							player_Units; // = { .st = ST_Player_Unit };
 	Storage<Projectile>						player_Projectiles;
 	// Storage<Spell>						player_Spells;
 
@@ -251,6 +241,8 @@ struct Game_Data {
 	// Storage<Spell>						enemy_Spells;
 
 	std::vector<Handle>						active_Entities;
+	// std::vector<Handle>						player_Entities;
+	// std::vector<Handle>						enemy_Entities;
 
 	Storage<Particle_System>				particle_Systems;
 
@@ -260,8 +252,10 @@ struct Game_Data {
 
 void clear_Game_Data(Game_Data* game_Data);
 
-void* get_Ptr_From_Handle(Game_Data& game_Data, Handle handle);
-void delete_Entity_From_Handle(Game_Data& game_Data, Handle handle);
+Unit* get_Ptr_From_Unit_Storage(Storage<Unit>& storage, Handle handle);
+Projectile* get_Ptr_From_Projectile_Storage(Storage<Projectile>& storage, Handle handle);
+Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& storage, Handle handle);
+void maybe_Delete_Entity_From_Handle(Game_Data& game_Data, Handle handle);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
@@ -299,9 +293,6 @@ void draw_Circle(float center_X, float center_Y, float radius, Color_Index color
 void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Color_Index color);
 
 void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Name);
-
-void outline_Rect(SDL_Rect* rect, int outline_Thickness);
-void draw_HP_Bar(V2* position, Health_Bar* health_Bar);
 
 Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness, float hp);
 Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);

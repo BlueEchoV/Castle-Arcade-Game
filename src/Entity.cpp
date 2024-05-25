@@ -38,24 +38,40 @@ const Projectile_Data& get_Projectile_Data(std::string key) {
 	// Return garbage values
 	return bad_Projectile_Data;
 }
+//Storage<Unit>							player_Units; // = { .st = ST_Player_Unit };
+//Storage<Projectile>						player_Projectiles;
+//Storage<Unit>							enemy_Units;
+//Storage<Projectile>						enemy_Projectiles;
+//Storage<Particle_System>				particle_Systems;
 
-void* get_Ptr_From_Handle(Game_Data& game_Data, Handle handle) {
-	switch(handle.storage_Type) {
-		// We are returning so breaks are pointless
-		case ST_Player_Unit:
-			return get_Ptr_From_Handle_In_Storage(game_Data.player_Units, handle);
-		case ST_Player_Projectile:
-			return get_Ptr_From_Handle_In_Storage(game_Data.player_Projectiles, handle);
-		case ST_Enemy_Unit:
-			return get_Ptr_From_Handle_In_Storage(game_Data.enemy_Units, handle);
-		case ST_Enemy_Projectile:
-			return get_Ptr_From_Handle_In_Storage(game_Data.enemy_Projectiles, handle);
-		default:
-			return nullptr;
+Unit* get_Ptr_From_Unit_Storage(Storage<Unit>& storage, Handle handle) {
+	if (handle.index < ARRAY_SIZE(storage.generations) &&
+		handle.generation == storage.generations[handle.index].generation &&
+		handle.generation != 0) {
+		return &storage.arr[handle.index];
 	}
+	return nullptr;
 }
 
-void delete_Entity_From_Handle(Game_Data& game_Data, Handle handle) {
+Projectile* get_Ptr_From_Projectile_Storage(Storage<Projectile>& storage, Handle handle) {
+	if (handle.index < ARRAY_SIZE(storage.generations) &&
+		handle.generation == storage.generations[handle.index].generation &&
+		handle.generation != 0) {
+		return &storage.arr[handle.index];
+	}
+	return nullptr;
+}
+
+Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& storage, Handle handle) {
+	if (handle.index < ARRAY_SIZE(storage.generations) &&
+		handle.generation == storage.generations[handle.index].generation &&
+		handle.generation != 0) {
+		return &storage.arr[handle.index];
+	}
+	return nullptr;
+}
+
+void maybe_Delete_Entity_From_Handle(Game_Data& game_Data, Handle handle) {
 	switch (handle.storage_Type) {
 	case ST_Player_Unit: {
 		Unit* unit = (Unit*)get_Ptr_From_Handle(game_Data, handle);
@@ -393,16 +409,12 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 
 void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
-	REF(level);
 
 	Unit_Data unit_Data = get_Unit_Data(unit_Type);
 	unit.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(unit_Data.sprite_Sheet_Name);
 	unit.rigid_Body = create_Rigid_Body(spawn_Position, false);
-	float new_Max_HP = unit_Data.max_HP;
-	for (int i = 1; i < level; i++) {
-		new_Max_HP *= unit_Data.hp_Multiplier;
-	}
-	unit.health_Bar = create_Health_Bar(50, 13, 60, 2, unit_Data.max_HP);
+	float new_Max_HP = unit_Data.max_HP * powf(unit_Data.hp_Multiplier, ((float)level - 1.0f));
+	unit.health_Bar = create_Health_Bar(50, 13, 60, 2, new_Max_HP);
 	unit.speed = unit_Data.speed;
 	unit.damage = unit_Data.damage;
 	unit.attack_Cooldown = unit_Data.attack_Cooldown;
@@ -478,73 +490,6 @@ void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Color_Index color) {
 		V2 world_Position = get_Collider_WS_Position(rigid_Body, collider);
 		draw_Circle(world_Position.x, world_Position.y, collider->radius, color);
 	}
-}
-
-void outline_Rect(SDL_Rect* rect, int outline_Thickness) {
-	SDL_Rect top_Rect = {};
-	top_Rect.x = rect->x;
-	top_Rect.y = rect->y;
-	top_Rect.w = rect->w;
-	top_Rect.h = outline_Thickness;
-	SDL_RenderFillRect(Globals::renderer, &top_Rect);
-
-	SDL_Rect bottom_Rect = {};
-	bottom_Rect.x = rect->x;
-	bottom_Rect.y = ((rect->y + rect->h) - outline_Thickness);
-	bottom_Rect.w = rect->w;
-	bottom_Rect.h = outline_Thickness;
-	SDL_RenderFillRect(Globals::renderer, &bottom_Rect);
-
-	SDL_Rect left_Rect = {};
-	left_Rect.x = rect->x;
-	left_Rect.y = rect->y;
-	left_Rect.w = outline_Thickness;
-	left_Rect.h = rect->h;
-	SDL_RenderFillRect(Globals::renderer, &left_Rect);
-
-	SDL_Rect right_Rect = {};
-	right_Rect.x = ((rect->x + rect->w) - outline_Thickness);
-	right_Rect.y = rect->y;
-	right_Rect.w = outline_Thickness;
-	right_Rect.h = rect->h;
-	SDL_RenderFillRect(Globals::renderer, &right_Rect);
-
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderDrawRect(Globals::renderer, rect);
-}
-
-void draw_HP_Bar(V2* position, Health_Bar* health_Bar) {
-	float remaining_HP_Percent = (health_Bar->current_HP / health_Bar->max_HP);
-	if (remaining_HP_Percent < 0) {
-		remaining_HP_Percent = 0;
-	}
-
-	// Lerp of T = A * (1 - T) + B * T
-	// A is the left side, B is the right side, T is the health %
-	float lerp = linear_Interpolation(0, (float)health_Bar->width, remaining_HP_Percent);
-
-	SDL_Rect rect_Green = {};
-	rect_Green.w = (int)lerp;
-	rect_Green.h = (int)health_Bar->height;
-	rect_Green.x = (int)((position->x) - health_Bar->width / 2);
-	rect_Green.y = (int)((position->y) - health_Bar->y_Offset);
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &rect_Green);
-
-	SDL_Rect rect_Red = rect_Green;
-	rect_Red.w = health_Bar->width - rect_Green.w;
-	rect_Red.x = (int)(rect_Green.x + rect_Green.w);
-	SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &rect_Red);
-
-	// Outline HP bars
-	SDL_Rect outline = {};
-	outline.w = (int)health_Bar->width;
-	outline.h = (int)health_Bar->height;
-	outline.x = (int)((position->x) - health_Bar->width / 2);
-	outline.y = (int)((position->y) - health_Bar->y_Offset);
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	outline_Rect(&outline, health_Bar->thickness);
 }
 
 std::vector<int> create_Height_Map(const char* filename) {

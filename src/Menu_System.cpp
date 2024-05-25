@@ -476,6 +476,112 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, 
 }
 
 
+void outline_Rect(SDL_Rect* rect, int outline_Thickness) {
+	SDL_Rect top_Rect = {};
+	top_Rect.x = rect->x;
+	top_Rect.y = rect->y;
+	top_Rect.w = rect->w;
+	top_Rect.h = outline_Thickness;
+	SDL_RenderFillRect(Globals::renderer, &top_Rect);
+
+	SDL_Rect bottom_Rect = {};
+	bottom_Rect.x = rect->x;
+	bottom_Rect.y = ((rect->y + rect->h) - outline_Thickness);
+	bottom_Rect.w = rect->w;
+	bottom_Rect.h = outline_Thickness;
+	SDL_RenderFillRect(Globals::renderer, &bottom_Rect);
+
+	SDL_Rect left_Rect = {};
+	left_Rect.x = rect->x;
+	left_Rect.y = rect->y;
+	left_Rect.w = outline_Thickness;
+	left_Rect.h = rect->h;
+	SDL_RenderFillRect(Globals::renderer, &left_Rect);
+
+	SDL_Rect right_Rect = {};
+	right_Rect.x = ((rect->x + rect->w) - outline_Thickness);
+	right_Rect.y = rect->y;
+	right_Rect.w = outline_Thickness;
+	right_Rect.h = rect->h;
+	SDL_RenderFillRect(Globals::renderer, &right_Rect);
+
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderDrawRect(Globals::renderer, rect);
+}
+
+void draw_HP_Bar(V2* position, Health_Bar* health_Bar) {
+	float remaining_HP_Percent = (health_Bar->current_HP / health_Bar->max_HP);
+	if (remaining_HP_Percent < 0) {
+		remaining_HP_Percent = 0;
+	}
+
+	// Lerp of T = A * (1 - T) + B * T
+	// A is the left side, B is the right side, T is the health %
+	float lerp = linear_Interpolation(0, (float)health_Bar->width, remaining_HP_Percent);
+
+	SDL_Rect rect_Green = {};
+	rect_Green.w = (int)lerp;
+	rect_Green.h = (int)health_Bar->height;
+	rect_Green.x = (int)((position->x) - health_Bar->width / 2);
+	rect_Green.y = (int)((position->y) - health_Bar->y_Offset);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &rect_Green);
+
+	SDL_Rect rect_Red = rect_Green;
+	rect_Red.w = health_Bar->width - rect_Green.w;
+	rect_Red.x = (int)(rect_Green.x + rect_Green.w);
+	SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &rect_Red);
+
+	// Outline HP bars
+	SDL_Rect outline = {};
+	outline.w = (int)health_Bar->width;
+	outline.h = (int)health_Bar->height;
+	outline.x = (int)((position->x) - health_Bar->width / 2);
+	outline.y = (int)((position->y) - health_Bar->y_Offset);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	outline_Rect(&outline, health_Bar->thickness);
+}
+
+void draw_HP_Bar_With_String(Font* font, V2* position, Health_Bar* health_Bar) {
+	float remaining_HP_Percent = (health_Bar->current_HP / health_Bar->max_HP);
+	if (remaining_HP_Percent < 0) {
+		remaining_HP_Percent = 0;
+	}
+
+	// Lerp of T = A * (1 - T) + B * T
+	// A is the left side, B is the right side, T is the health %
+	float lerp = linear_Interpolation(0, (float)health_Bar->width, remaining_HP_Percent);
+
+	SDL_Rect rect_Green = {};
+	rect_Green.w = (int)lerp;
+	rect_Green.h = (int)health_Bar->height;
+	rect_Green.x = (int)((position->x) - health_Bar->width / 2);
+	rect_Green.y = (int)((position->y) - health_Bar->y_Offset);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &rect_Green);
+
+	SDL_Rect rect_Red = rect_Green;
+	rect_Red.w = health_Bar->width - rect_Green.w;
+	rect_Red.x = (int)(rect_Green.x + rect_Green.w);
+	SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &rect_Red);
+
+	// Outline HP bars
+	SDL_Rect outline = {};
+	outline.w = (int)health_Bar->width;
+	outline.h = (int)health_Bar->height;
+	outline.x = (int)((position->x) - health_Bar->width / 2);
+	outline.y = (int)((position->y) - health_Bar->y_Offset);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	outline_Rect(&outline, health_Bar->thickness);
+
+	SDL_SetTextureColorMod(font->texture, 0, 0, 0);
+	std::string hp_String = std::to_string((int)health_Bar->current_HP);
+	draw_String(font, hp_String.c_str(), (int)position->x, ((int)position->y - health_Bar->y_Offset) + (health_Bar->height / 2), 1, true);
+	SDL_SetTextureColorMod(font->texture, 255, 255, 255);
+}
+
 void draw_Game_Loop_UI() {
 	// Draw game loop UI here
 	// Check the current units the player has selected and/or equipped

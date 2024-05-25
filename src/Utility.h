@@ -30,7 +30,6 @@ struct Generation {
 	uint64_t generation = 1;
 };
 int count_Active_Handles(Generation generations[], int size);
-bool compare_Handles(Handle handle_1, Handle handle_2);
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 // Suppress compiler warnings

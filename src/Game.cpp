@@ -247,9 +247,12 @@ void process(Archive* ar, Storage<Unit>& storage) {
 	process(ar, storage.arr, storage.index_One_Past_Last);
 }
 
+// Could do template here.  Storage type is the template parameter
 void process(Archive* ar, Storage<Projectile>& storage) {
-	process(ar, storage.generations, storage.index_One_Past_Last);
 	process(ar, storage.index_One_Past_Last);
+	for (uint64_t i = 0; i < storage.index_One_Past_Last; i++) {
+		process(ar, storage.generations[i]);
+	}
 	process(ar, storage.arr, storage.index_One_Past_Last);
 }
 
@@ -323,8 +326,6 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 				// Casting to the enum seems to work like a charm
 				load_Game(game_Data, (Saved_Games)(i));
 				cache_Data.cache[current_Save_Game] = game_Data;
-				int j = 0;
-				j++;
 			}
 		}
 		cache_Data.loaded = true;
