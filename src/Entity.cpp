@@ -38,11 +38,6 @@ const Projectile_Data& get_Projectile_Data(std::string key) {
 	// Return garbage values
 	return bad_Projectile_Data;
 }
-//Storage<Unit>							player_Units; // = { .st = ST_Player_Unit };
-//Storage<Projectile>						player_Projectiles;
-//Storage<Unit>							enemy_Units;
-//Storage<Projectile>						enemy_Projectiles;
-//Storage<Particle_System>				particle_Systems;
 
 Unit* get_Ptr_From_Unit_Storage(Storage<Unit>& storage, Handle handle) {
 	if (handle.index < ARRAY_SIZE(storage.generations) &&
@@ -393,14 +388,12 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	// add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
 	if (unit_Side == N_PLAYER) {
 		projectile.handle = create_Handle(game_Data.player_Projectiles);
-		projectile.handle.storage_Type = ST_Player_Projectile;
 		game_Data.player_Projectiles.arr[projectile.handle.index] = projectile;
 
 		game_Data.active_Entities.push_back(projectile.handle);
 	}
 	else if (unit_Side == N_ENEMY) {
 		projectile.handle = create_Handle(game_Data.enemy_Projectiles);
-		projectile.handle.storage_Type = ST_Player_Projectile;
 		game_Data.enemy_Projectiles.arr[projectile.handle.index] = projectile;
 
 		game_Data.active_Entities.push_back(projectile.handle);
@@ -588,7 +581,7 @@ bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_
 
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 	for (int i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
-		Unit* player_Unit = get_Ptr_From_Handle_In_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
+		Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
 		Castle* castle = &game_Data.enemy_Castle;
 		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
 			player_Unit->stop = true;

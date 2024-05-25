@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
         attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
 
         if (current_Game_State == GS_GAMELOOP) {
-            for (int i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
+            for (uint32_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
                 Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
                 if (particle_System != nullptr) {
 					Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, particle_System->target_Handle);
@@ -416,7 +416,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Update player projectile positions
-                for (int i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
+                for (uint32_t i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
                     Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.player_Projectiles, game_Data.player_Projectiles.arr[i].handle);
                     if (projectile != nullptr) {
                         if (!projectile->destroyed) {
@@ -425,7 +425,7 @@ int main(int argc, char** argv) {
                     }
                 }
 				// Update enemy projectile positions
-				for (int i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
 					Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
                     if (projectile != nullptr) {
                         if (!projectile->destroyed) {
@@ -453,7 +453,7 @@ int main(int argc, char** argv) {
 #endif
 
                 // Update player units
-                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
                     Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         if (player_Unit->destroyed == false) {
@@ -467,7 +467,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Update enemy units
-				for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 					Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
                     if (enemy_Unit != nullptr) {
                         if (enemy_Unit->destroyed == false) {
@@ -481,7 +481,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Player Projectile Collision
-				for (int i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
 					Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.player_Projectiles, game_Data.player_Projectiles.arr[i].handle);
                     if (projectile != nullptr) {
                         Castle* enemy_Castle = &game_Data.enemy_Castle;
@@ -498,7 +498,7 @@ int main(int argc, char** argv) {
                             }
                         }
                         // Collision with Warriors and projectiles
-                        for (int j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
+                        for (uint32_t j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
                             Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[j].handle);
                             if (enemy_Unit != nullptr) {
                                 if (check_RB_Collision(&projectile->rigid_Body, &enemy_Unit->rigid_Body)) {
@@ -553,7 +553,7 @@ int main(int argc, char** argv) {
                 }
 
 				// Collision player units with map
-				for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
 					Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data.terrain_Height_Map)) {
@@ -565,7 +565,7 @@ int main(int argc, char** argv) {
                     }
 				}
                 // Collision enemy units with map
-				for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 					Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
                     if (enemy_Unit != nullptr) {
                         if (check_Height_Map_Collision(&enemy_Unit->rigid_Body, game_Data.terrain_Height_Map)) {
@@ -578,14 +578,14 @@ int main(int argc, char** argv) {
                 }
 
                 // Initialize default values before collision check
-                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
                     Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         player_Unit->stop = false;
                         player_Unit->current_Attack_Cooldown -= delta_Time;
                     }
                 }
-				for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 					Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
                     if (enemy_Unit != nullptr) {
                         enemy_Unit->stop = false;
@@ -594,7 +594,7 @@ int main(int argc, char** argv) {
                 }
 
                 // Rigid Body Collision: Player units with enemy castle
-                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
                     Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         Castle* castle = &game_Data.enemy_Castle;
@@ -608,7 +608,7 @@ int main(int argc, char** argv) {
                     }
                 }
                 // Rigid Body Collision: Enemy units with player castle
-				for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 					Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
                     if (enemy_Unit != nullptr) {
                         Castle* castle = &game_Data.player_Castle;
@@ -622,10 +622,10 @@ int main(int argc, char** argv) {
                     }
                 }
                 // Rigid Body Collision: Player units with enemy units
-                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
                     Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
-						for (int j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
+						for (uint32_t j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
 							Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[j].handle);
                             if (enemy_Unit != nullptr) {
                                 if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
@@ -646,10 +646,10 @@ int main(int argc, char** argv) {
                 }
 
                 // Units that fire projectiles
-                for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+                for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
                     Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
-						for (int j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
+						for (uint32_t j = 0; j < game_Data.enemy_Units.index_One_Past_Last; j++) {
 							Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[j].handle);
                             if (enemy_Unit != nullptr) {
                                 if (player_Unit->projectile_Type != "") {
@@ -683,7 +683,7 @@ int main(int argc, char** argv) {
 
                 // TODO: Need to do a attack range collision check for the enemy as well
 
-				for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
 					Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                     if (player_Unit != nullptr) {
                         float speed = player_Unit->speed;
@@ -692,7 +692,7 @@ int main(int argc, char** argv) {
                         }
                     }
 				}
-				for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+				for (uint32_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 					Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
                     if (enemy_Unit != nullptr) {
                         float speed = enemy_Unit->speed;
@@ -732,7 +732,7 @@ int main(int argc, char** argv) {
             );
 
             // Draw player projectiles
-			for (int i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
+			for (uint32_t i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
 				Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.player_Projectiles, game_Data.player_Projectiles.arr[i].handle);
                 if (projectile != nullptr) {
                     draw_RigidBody_Colliders(&projectile->rigid_Body, CI_GREEN);
@@ -744,7 +744,7 @@ int main(int argc, char** argv) {
                 }
             }
 			// Draw enemy projectiles
-			for (int i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
+			for (uint32_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
 				Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
                 if (projectile != nullptr) {
                     // draw_RigidBody_Colliders(&arrow->rigid_Body, CI_GREEN);
@@ -757,7 +757,7 @@ int main(int argc, char** argv) {
 			}
 
             // Draw player units
-            for (int i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+            for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
                 Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
                 if (player_Unit != nullptr) {
                     /*
@@ -784,7 +784,7 @@ int main(int argc, char** argv) {
             }
 
             // Draw enemy Units
-			for (int i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+			for (uint32_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 				Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
 				//Unit* enemy_Unit = get_Ptr_From_Handle_In_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
                 if (enemy_Unit != nullptr) {
@@ -934,7 +934,7 @@ int main(int argc, char** argv) {
             }
             // Could move to a function
             // Only loop through the total allocations to save cpu more operations
-            //for (uint64_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
+            //for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {
             //    Unit* unit = get_Ptr_From_Handle_In_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
             //    if (unit != nullptr) {
             //        if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
@@ -943,7 +943,7 @@ int main(int argc, char** argv) {
             //        }
             //    }
             //}
-			//for (uint64_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
+			//for (uint32_t i = 0; i < game_Data.enemy_Units.index_One_Past_Last; i++) {
 			//	Unit* unit = get_Ptr_From_Handle_In_Storage(game_Data.enemy_Units, game_Data.enemy_Units.arr[i].handle);
 			//	if (unit != nullptr) {
 			//		if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
@@ -952,7 +952,7 @@ int main(int argc, char** argv) {
 			//		}
 			//	}
 			//}
-			//for (uint64_t i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
+			//for (uint32_t i = 0; i < game_Data.player_Projectiles.index_One_Past_Last; i++) {
 			//	Projectile* projectile = get_Ptr_From_Handle_In_Storage(game_Data.player_Projectiles, game_Data.player_Projectiles.arr[i].handle);
 			//	if (projectile != nullptr) {
 			//		if (projectile->destroyed || projectile->life_Time <= 0) {
@@ -961,7 +961,7 @@ int main(int argc, char** argv) {
 			//		}
 			//	}
 			//}
-			//for (uint64_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
+			//for (uint32_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
 			//	Projectile* projectile = get_Ptr_From_Handle_In_Storage(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
 			//	if (projectile != nullptr) {
 			//		if (projectile->destroyed || projectile->life_Time <= 0) {
@@ -970,7 +970,7 @@ int main(int argc, char** argv) {
 			//		}
 			//	}
 			//}
-			for (uint64_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
+			for (uint32_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
 				Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
 				if (particle_System != nullptr) {
 					if (particle_System->destroyed && particle_System->particles.size() == 0) {

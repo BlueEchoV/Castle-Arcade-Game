@@ -20,14 +20,14 @@ enum Storage_Type {
 struct Handle {
 	// Bit fields (unsigned int index : 10;)
 	// uint16_t is just way better
-	uint64_t index;
-	uint64_t generation;
+	uint32_t index;
+	uint32_t generation;
 	Storage_Type storage_Type;
 };
 struct Generation {
 	bool slot_Taken = false;
 	// Default generation 1
-	uint64_t generation = 1;
+	uint32_t generation = 1;
 };
 int count_Active_Handles(Generation generations[], int size);
 

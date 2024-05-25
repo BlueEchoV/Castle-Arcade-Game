@@ -91,8 +91,8 @@ void process(Archive* ar, T (&my_Array)[size]) {
 
 // Only loop through the active indices
 template <typename T, int size>
-void process(Archive* ar, T (&my_Array)[size], uint64_t active_Indicies) {
-	for (uint64_t i = 0; i < active_Indicies; i++) {
+void process(Archive* ar, T (&my_Array)[size], uint32_t active_Indicies) {
+	for (uint32_t i = 0; i < active_Indicies; i++) {
 		process(ar, my_Array[i]);
 	}
 }

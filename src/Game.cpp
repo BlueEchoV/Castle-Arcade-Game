@@ -62,7 +62,7 @@ void process(Archive* ar, int& my_Int) {
 	}
 }
 
-void process(Archive* ar, uint64_t& my_Int) {
+void process(Archive* ar, uint32_t& my_Int) {
 	if (ar->operation == GDO_SAVE) {
 		fwrite(&my_Int, sizeof(my_Int), 1, ar->file);
 	}
@@ -250,7 +250,7 @@ void process(Archive* ar, Storage<Unit>& storage) {
 // Could do template here.  Storage type is the template parameter
 void process(Archive* ar, Storage<Projectile>& storage) {
 	process(ar, storage.index_One_Past_Last);
-	for (uint64_t i = 0; i < storage.index_One_Past_Last; i++) {
+	for (uint32_t i = 0; i < storage.index_One_Past_Last; i++) {
 		process(ar, storage.generations[i]);
 	}
 	process(ar, storage.arr, storage.index_One_Past_Last);

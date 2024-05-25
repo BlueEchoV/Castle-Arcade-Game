@@ -183,7 +183,7 @@ struct Unit {
 
 //struct Unit_Storage {
 //	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
-//	uint64_t index_One_Past_Last = 0;
+//	uint32_t index_One_Past_Last = 0;
 //	// Array of units
 //	Unit arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
 //};
@@ -191,17 +191,17 @@ struct Unit {
 template <typename T>
 struct Storage {
 	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
-	uint64_t index_One_Past_Last = 0;
+	uint32_t index_One_Past_Last = 0;
 	T arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
-	// Storage_Type st;
+	Storage_Type st;
 };
 
 template <typename T>
 Handle create_Handle(Storage<T>& storage) {
 	Handle result = {};
-	uint64_t length = ARRAY_SIZE(storage.generations);
+	uint32_t length = ARRAY_SIZE(storage.generations);
 	// For wrapping. We start at the last known open handle position.
-	for (uint64_t i = 0; i < length; i++) {
+	for (uint32_t i = 0; i < length; i++) {
 		if (!storage.generations[i].slot_Taken) {
 			storage.generations[i].slot_Taken = true;
 			if (storage.index_One_Past_Last < (i + 1)) {
@@ -212,13 +212,14 @@ Handle create_Handle(Storage<T>& storage) {
 			break;
 		}
 	}
+	result.storage_Type = storage.st;
 	assert(result.index < length);
 	return result;
 }
 
 template <typename T>
 void delete_Handle(Storage<T>& storage, const Handle handle) {
-	uint64_t index = handle.index;
+	uint32_t index = handle.index;
 	if (index < ARRAY_SIZE(storage.generations) && handle.generation == storage.generations[index].generation) {
 		// This wraps
 		storage.generations[index].generation++;
@@ -231,13 +232,13 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 // If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
 	Castle									player_Castle;
-	Storage<Unit>							player_Units; // = { .st = ST_Player_Unit };
-	Storage<Projectile>						player_Projectiles;
+	Storage<Unit>							player_Units = { .st = ST_Player_Unit };
+	Storage<Projectile>						player_Projectiles = { .st = ST_Player_Projectile };;
 	// Storage<Spell>						player_Spells;
 
 	Castle									enemy_Castle;
-	Storage<Unit>							enemy_Units;
-	Storage<Projectile>						enemy_Projectiles;
+	Storage<Unit>							enemy_Units = { .st = ST_Enemy_Unit };
+	Storage<Projectile>						enemy_Projectiles = { .st = ST_Enemy_Projectile };
 	// Storage<Spell>						enemy_Spells;
 
 	std::vector<Handle>						active_Entities;

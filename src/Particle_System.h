@@ -57,7 +57,7 @@ struct Particle_System {
 	Handle handle;
 };
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle target_Handle = { (uint64_t)-1, (uint64_t)0 }, bool flip_Horizontally = false);
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle target_Handle = { (uint32_t)-1, (uint32_t)0 }, bool flip_Horizontally = false);
 
 void update_Particle_System(Particle_System& particle_System, float delta_Time);
 
