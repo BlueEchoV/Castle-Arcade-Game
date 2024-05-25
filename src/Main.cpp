@@ -929,9 +929,8 @@ int main(int argc, char** argv) {
 			}
 #endif
 
-            for (Handle handle : game_Data.active_Entities) {
-                maybe_Delete_Entity_From_Handle(game_Data, handle);
-            }
+			delete_Expired_Entity_Handles(game_Data);
+
             // Could move to a function
             // Only loop through the total allocations to save cpu more operations
             //for (uint32_t i = 0; i < game_Data.player_Units.index_One_Past_Last; i++) {

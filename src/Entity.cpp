@@ -66,53 +66,55 @@ Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& 
 	return nullptr;
 }
 
-void maybe_Delete_Entity_From_Handle(Game_Data& game_Data, Handle handle) {
-	switch (handle.storage_Type) {
-	case ST_Player_Unit: {
-		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, handle);
-		if (unit != nullptr) {
-			if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-				delete_Handle(game_Data.player_Units, unit->handle);
-				unit = {};
+void delete_Expired_Entity_Handles(Game_Data& game_Data) {
+	for (Handle handle : game_Data.active_Entities) {
+		switch (handle.storage_Type) {
+		case ST_Player_Unit: {
+			Unit* unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, handle);
+			if (unit != nullptr) {
+				if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
+					delete_Handle(game_Data.player_Units, unit->handle);
+					unit = {};
+				}
 			}
+			break;
 		}
-		break;
-	}
-	case ST_Player_Projectile: {
-		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.player_Projectiles, handle);
-		if (projectile != nullptr) {
-			if (projectile->destroyed || projectile->life_Time <= 0) {
-				delete_Handle(game_Data.player_Projectiles, projectile->handle);
-				projectile = {};
+		case ST_Player_Projectile: {
+			Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.player_Projectiles, handle);
+			if (projectile != nullptr) {
+				if (projectile->destroyed || projectile->life_Time <= 0) {
+					delete_Handle(game_Data.player_Projectiles, projectile->handle);
+					projectile = {};
+				}
 			}
+			break;
 		}
-		break;
-	}
-	case ST_Enemy_Unit: {
-		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, handle);
-		if (unit != nullptr) {
-			if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-				delete_Handle(game_Data.enemy_Units, unit->handle);
-				unit = {};
+		case ST_Enemy_Unit: {
+			Unit* unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, handle);
+			if (unit != nullptr) {
+				if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
+					delete_Handle(game_Data.enemy_Units, unit->handle);
+					unit = {};
+				}
 			}
+			break;
 		}
-		break;
-	}
-	case ST_Enemy_Projectile: {
-		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.enemy_Projectiles, handle);
-		if (projectile != nullptr) {
-			if (projectile->destroyed || projectile->life_Time <= 0) {
-				delete_Handle(game_Data.enemy_Projectiles, projectile->handle);
-				projectile = {};
+		case ST_Enemy_Projectile: {
+			Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.enemy_Projectiles, handle);
+			if (projectile != nullptr) {
+				if (projectile->destroyed || projectile->life_Time <= 0) {
+					delete_Handle(game_Data.enemy_Projectiles, projectile->handle);
+					projectile = {};
+				}
 			}
+			break;
 		}
-		break;
-	}
-	default: {
-		// Handle doesn't exists or isn't specified above (invalid deletion)
-		assert(false);
-		break;
-	}
+		default: {
+			// Handle doesn't exists or isn't specified above (invalid deletion)
+			assert(false);
+			break;
+		}
+		}
 	}
 }
 

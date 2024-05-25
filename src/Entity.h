@@ -256,7 +256,7 @@ void clear_Game_Data(Game_Data* game_Data);
 Unit* get_Ptr_From_Unit_Storage(Storage<Unit>& storage, Handle handle);
 Projectile* get_Ptr_From_Projectile_Storage(Storage<Projectile>& storage, Handle handle);
 Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& storage, Handle handle);
-void maybe_Delete_Entity_From_Handle(Game_Data& game_Data, Handle handle);
+void delete_Expired_Entity_Handles(Game_Data& game_Data);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
