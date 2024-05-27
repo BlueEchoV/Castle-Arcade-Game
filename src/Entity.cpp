@@ -71,6 +71,7 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.units, player_Unit_ID);
 		if (unit != nullptr && (unit->destroyed || unit->health_Bar.current_HP <= 0)) {
 			delete_Handle(game_Data.units, unit->handle);
+			*unit = {};
 			// Remove the handle from player_Unit_IDS
 			return true;
 		}
@@ -81,6 +82,7 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, player_Proj_ID);
 		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
 			delete_Handle(game_Data.projectiles, projectile->handle);
+			*projectile = {};
 			return true;
 		}
 		return false;
@@ -89,14 +91,25 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.units, enemy_Unit_ID);
 		if (unit != nullptr && (unit->destroyed || unit->health_Bar.current_HP <= 0)) {
 			delete_Handle(game_Data.units, unit->handle);
+			*unit = {};
 			return true;
 		}
 		return false;
 		});
-	std::erase_if(game_Data.enemy_Proj_IDS, [&game_Data](const Handle& enemy_Proj_IDS) {
-		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, enemy_Proj_IDS);
+	std::erase_if(game_Data.enemy_Proj_IDS, [&game_Data](const Handle& enemy_Proj_ID) {
+		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, enemy_Proj_ID);
 		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
 			delete_Handle(game_Data.projectiles, projectile->handle);
+			*projectile = {};
+			return true;
+		}
+		return false;
+		});
+	std::erase_if(game_Data.particle_System_IDS, [&game_Data](const Handle& particle_System_ID) {
+		Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, particle_System_ID);
+		if (particle_System->destroyed && particle_System->particles.size() == 0) {
+			delete_Handle(game_Data.particle_Systems, particle_System->handle);
+			*particle_System = {};
 			return true;
 		}
 		return false;

@@ -156,15 +156,17 @@ int main(int argc, char** argv) {
         attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
 
         if (current_Game_State == GS_GAMELOOP) {
-            for (uint32_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
-                Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
+            for (uint32_t i = 0; i < game_Data.particle_System_IDS.size(); i++) {
+                Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_System_IDS[i]);
                 if (particle_System != nullptr) {
-					Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.units, particle_System->parent);
-					if (enemy_Unit != nullptr) {
-						particle_System->rect.x = (int)enemy_Unit->rigid_Body.position_WS.x;
-						particle_System->rect.y = (int)enemy_Unit->rigid_Body.position_WS.y;
-						break;
-					}
+                    // Check if the handle is valid
+                    if (particle_System->parent.generation != 0) {
+                        Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.units, particle_System->parent);
+                        if (enemy_Unit != nullptr) {
+                            particle_System->rect.x = (int)enemy_Unit->rigid_Body.position_WS.x;
+                            particle_System->rect.y = (int)enemy_Unit->rigid_Body.position_WS.y;
+                        }
+                    }
                     update_Particle_System(*particle_System, delta_Time);
                 }
 			}
@@ -517,7 +519,7 @@ int main(int argc, char** argv) {
                                             enemy_Unit->health_Bar.current_HP -= projectile->damage;
                                             projectile->parent = enemy_Unit->handle;
                                         }
-                                        if (projectile->can_Attach) {
+                                        if (projectile->can_Attach && projectile->parent.generation != 0) {
                                             bool targeted_Unit_Still_Alive = false;
 											Unit* enemy_Unit_Second_Check = get_Ptr_From_Unit_Storage(game_Data.units, projectile->parent);
 											if (enemy_Unit_Second_Check != nullptr) {
@@ -928,16 +930,6 @@ int main(int argc, char** argv) {
 #endif
 
 			delete_Expired_Entity_Handles(game_Data);
-
-			for (uint32_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
-				Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
-				if (particle_System != nullptr) {
-					if (particle_System->destroyed && particle_System->particles.size() == 0) {
-						delete_Handle(game_Data.particle_Systems, particle_System->handle);
-                        particle_System = {};
-					}
-				}
-			}
         }
         SDL_RenderPresent(Globals::renderer);
     }

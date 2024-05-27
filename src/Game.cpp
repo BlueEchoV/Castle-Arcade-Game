@@ -281,20 +281,22 @@ void process(Archive* ar, Storage<Particle_System>& storage) {
 }
 
 void process(Archive* ar, Game_Data* game_Data) {
-	REF(ar);
-	REF(game_Data);
-	//process(ar, game_Data->player_Castle);
-	//process(ar, game_Data->player_Units);
-	//process(ar, game_Data->player_Projectiles);
-	//
-	//process(ar, game_Data->enemy_Castle);
-	//process(ar, game_Data->units);
-	//process(ar, game_Data->enemy_Projectiles);
-	//
-	//process(ar, game_Data->particle_Systems);
-	//
-	//process(ar, game_Data->terrain_Height_Map);
-	//process(ar, game_Data->timer);
+	process(ar, game_Data->units);
+	process(ar, game_Data->projectiles);
+	process(ar, game_Data->active_Entity_IDS);
+
+	process(ar, game_Data->player_Castle);
+	process(ar, game_Data->player_Unit_IDS);
+	process(ar, game_Data->player_Proj_IDS);
+
+	process(ar, game_Data->enemy_Castle);
+	process(ar, game_Data->enemy_Unit_IDS);
+	process(ar, game_Data->enemy_Proj_IDS);
+
+	process(ar, game_Data->particle_Systems);
+
+	process(ar, game_Data->terrain_Height_Map);
+	process(ar, game_Data->timer);
 }
 
 // Call load game function and save game function that calls process game data

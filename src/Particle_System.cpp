@@ -40,6 +40,8 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 
 	particle_System.handle = create_Handle(game_Data.particle_Systems);
 	game_Data.particle_Systems.arr[particle_System.handle.index] = particle_System;
+
+	game_Data.particle_System_IDS.push_back(particle_System.handle);
 }
 
 // Update 
@@ -178,8 +180,8 @@ F_Color HSV_To_RGB(float h,		float s,		float v) {
 
 // Render
 void draw_Particle_Systems(Game_Data& game_Data) {
-	for (uint32_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
-		Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
+	for (uint32_t i = 0; i < game_Data.particle_System_IDS.size(); i++) {
+		Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_System_IDS[i]);
 		if (particle_System != nullptr) {
 			const Particle_Data* particle_Data = &get_Particle_Data(particle_System->particle_Type);
 			const Sprite_Sheet* sprite_Sheet_Data = &get_Sprite_Sheet(particle_Data->sprite_Sheet_Name);

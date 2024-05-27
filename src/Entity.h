@@ -65,15 +65,9 @@ struct Castle_Stats {
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
 	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
-	{  100.0f,    {0.01f, 0.0f},     {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
-	{  100.0f,    {1.0f, 0.0f},      {100.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
+	{  100.0f,    {0.01f, 0.0f},     {0.1f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
+	{  100.0f,    {1.0f, 0.0f},      {0.1f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
-
-//enum Unit_Type {
-//	UT_Warrior,
-//	UT_Archer,
-//	UT_Necromancer
-//};
 
 struct Unit_Level_Tracker {
 	int warrior = 1;
@@ -230,26 +224,22 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 // I could use a C array (Chris would use this) or a C++ array
 // If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
-	Castle									player_Castle;
-	//Storage<Unit>							player_Units = { .st = ST_Player_Unit };
-	//Storage<Projectile>						player_Projectiles = { .st = ST_Player_Projectile };;
-	//Storage<Spell>						player_Spells;
-
-	Castle									enemy_Castle;
-	//Storage<Unit>							enemy_Units = { .st = ST_Enemy_Unit };
-	//Storage<Projectile>						projectiles = { .st = ST_Enemy_Projectile };
-	//Storage<Spell>						enemy_Spells;
-
 	Storage<Unit>							units = { .st = ST_Player };
 	Storage<Projectile>						projectiles = { .st = ST_Enemy };
-
 	std::vector<Handle>						active_Entity_IDS;
+	
+	Castle									player_Castle;
 	std::vector<Handle>						player_Unit_IDS;
 	std::vector<Handle>						player_Proj_IDS;
+	// Spells?
+	
+	Castle									enemy_Castle;
 	std::vector<Handle>						enemy_Unit_IDS;
 	std::vector<Handle>						enemy_Proj_IDS;
+	// Spells?
 
 	Storage<Particle_System>				particle_Systems;
+	std::vector<Handle>						particle_System_IDS;
 
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
