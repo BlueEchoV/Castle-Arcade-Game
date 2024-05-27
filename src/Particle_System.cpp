@@ -123,6 +123,26 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 	}
 }
 
+void check_Particle_System_Collision_With_Terrain(Game_Data& game_Data, Particle_System& particle_System) {
+	for (int i = 0; i < particle_System.particles.size(); i++) {
+		Particle* particle = &particle_System.particles[i];
+		V2 world_Position = particle->position;
+
+		int collider_X = (int)world_Position.x;
+		int collider_Y = (int)world_Position.y;
+
+		if (collider_X < 0 || collider_X >= game_Data.terrain_Height_Map.size()) {
+			continue;
+		}
+
+		int terrain_Position = RESOLUTION_HEIGHT - game_Data.terrain_Height_Map[collider_X];
+
+		if (collider_Y >= terrain_Position) {
+			particle->lifetime = 0.0f;
+		}
+	}
+}
+
 float clamp(float& a) {
 	if (a > 1.0) {
 		return a = 1.0;

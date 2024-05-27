@@ -1,3 +1,3 @@
 type,sprite_Sheet_Name,size,particles_Per_Second,max_Fade,lifetime_Min,lifetime_Max,velocity_Min.x,velocity_Min.y,velocity_Max.x,velocity_Max.y
-PT_RAINBOW,basic_Particle_1,10,100,0.5,5,5,-100,-100,100,100
+PT_RAINBOW,basic_Particle_1,10,100,0.5,9,9,0,0,0,0
 PT_BLOOD,basic_Particle_1,6,100,0.5,3,3,-50,0,0,0

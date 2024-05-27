@@ -57,13 +57,10 @@ struct Particle_System {
 };
 
 void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle parent = { (uint8_t)-1, (uint8_t)0 }, bool flip_Horizontally = false);
-
 void update_Particle_System(Particle_System& particle_System, float delta_Time);
-
+void draw_Particle_Systems(Game_Data& game_Data);
+void check_Particle_System_Collision_With_Terrain(Game_Data& game_Data, Particle_System& particle_System);
 F_Color HSV_To_RGB(float h, float s, float v);
 
-void draw_Particle_Systems(Game_Data& game_Data);
-
 void load_Particle_Data_CSV(CSV_Data* csv_Data);
-
 void attempt_Reload_Particle_CSV_File(CSV_Data* csv_Data);

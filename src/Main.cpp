@@ -96,10 +96,10 @@ int main(int argc, char** argv) {
 	spawn_Particle_System(
         game_Data,
 		"PT_RAINBOW",
-        { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 4 },
-		1000,
-		500,
-		100,
+        { RESOLUTION_WIDTH / 2, -50 },
+        1000,
+        RESOLUTION_WIDTH,
+		50,
         test_Handle,
         false
 	);
@@ -154,6 +154,8 @@ int main(int argc, char** argv) {
 
         // Hot loadinggame_Data.
         attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
+
+        check_Particle_System_Collision_With_Terrain(game_Data, game_Data.particle_Systems.arr[0]);
 
         if (current_Game_State == GS_GAMELOOP) {
             for (uint32_t i = 0; i < game_Data.particle_System_IDS.size(); i++) {
@@ -538,14 +540,23 @@ int main(int argc, char** argv) {
                                             // This way, if the projectile is fast and goes through the target (which is fine),
                                             // then the projectile is bound to the unit but will also die with the unit.
                                             if (targeted_Unit_Still_Alive) {
-												V2 offset = projectile->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
-												Attached_Entity attached_Entity = return_Attached_Entity(
-													projectile->type,
-													projectile->rigid_Body.angle,
-													offset
-												);
-												enemy_Unit->attached_Entities[enemy_Unit->attached_Entities_Size++] = attached_Entity;
-												projectile->destroyed = true;
+                                                //float radius = get_Sprite_Radius(&projectile->sprite_Sheet_Tracker);
+                                                // I need to store this value so it doesn't change every frame
+                                                //float rand_Num = ((float)(rand() % 100) - 50.0f);
+                                                //float rand_Enemy_X = enemy_Unit_Second_Check->rigid_Body.position_WS.x + rand_Num;
+                                                if ((projectile->rigid_Body.position_WS.x) > enemy_Unit_Second_Check->rigid_Body.position_WS.x) {
+                                                    projectile->rigid_Body.position_WS.x = enemy_Unit_Second_Check->rigid_Body.position_WS.x;
+                                                    V2 offset = projectile->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
+                                                    Attached_Entity attached_Entity = return_Attached_Entity(
+                                                        projectile->type,
+                                                        projectile->rigid_Body.angle,
+                                                        offset
+                                                    );
+                                                    enemy_Unit->attached_Entities[enemy_Unit->attached_Entities_Size++] = attached_Entity;
+                                                    projectile->destroyed = true;
+                                                }
+                                            } else {
+                                                projectile->destroyed = true;
                                             }
                                         }
                                     }
