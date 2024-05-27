@@ -89,7 +89,7 @@ struct Castle {
 	//int unit_Level_Tracker[Globals::TOTAL_AVAILABLE_UNITS];
 	Unit_Level_Tracker unit_Level_Tracker;
 
-	Stored_Units stored_Units;
+	// Stored_Units stored_Units;
 };
 
 struct Projectile_Data {
@@ -184,8 +184,8 @@ struct Unit {
 
 template <typename T>
 struct Storage {
-	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
 	uint32_t index_One_Past_Last = 0;
+	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
 	T arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
 	Storage_Type st;
 };

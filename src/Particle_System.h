@@ -50,11 +50,10 @@ struct Particle_System {
 	float time_Between_Spawns;
 	float lifetime;
 	bool destroyed;
-	// Default initialization
+	Handle handle;
 	Handle parent;
 	bool flip_Horizontally = false;
 	std::vector<Particle> particles;
-	Handle handle;
 };
 
 void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle parent = { (uint8_t)-1, (uint8_t)0 }, bool flip_Horizontally = false);

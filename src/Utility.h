@@ -8,7 +8,7 @@
 #include <span>
 #include <stdint.h>
 
-enum Storage_Type {
+enum Storage_Type : uint8_t {
 	ST_Not_Specified,
 	ST_Player,
 	ST_Enemy,

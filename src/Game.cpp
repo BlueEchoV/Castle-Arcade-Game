@@ -148,7 +148,11 @@ void process(Archive* ar, Particle_System& particle_System) {
 	process(ar, particle_System.time_Between_Spawns);
 	process(ar, particle_System.lifetime);
 	process(ar, particle_System.destroyed);
+	process(ar, particle_System.handle);
+	process(ar, particle_System.parent);
+	process(ar, particle_System.flip_Horizontally);
 	process(ar, particle_System.particles);
+
 }
 
 void process(Archive* ar, std::vector<Particle_System>& particle_Systems) {
@@ -202,14 +206,24 @@ void process(Archive* ar, Cooldown& cooldown) {
 	process(ar, cooldown.remaining);
 }
 
+void process(Archive* ar, Unit_Level_Tracker& storage_Type) {
+	process(ar, storage_Type.warrior);
+	process(ar, storage_Type.archer);
+	process(ar, storage_Type.necromancer);
+}
+
 void process(Archive* ar, Castle& castle) {
 	process(ar, castle.sprite_Sheet_Tracker);
 	process(ar, castle.rigid_Body);
 	process(ar, castle.health_Bar);
+
 	process(ar, castle.fire_Cooldown);
 	process(ar, castle.spawn_Cooldown);
+
 	process(ar, castle.arrow_Ammo);
 	process(ar, castle.arrow_Ammo_Cooldown);
+
+	process(ar, castle.unit_Level_Tracker);
 }
 
 void process(Archive* ar, Attached_Entity& attached_Entity) {
@@ -228,6 +242,8 @@ void process(Archive* ar, Unit& unit) {
 	process(ar, unit.attack_Cooldown);
 	process(ar, unit.current_Attack_Cooldown);
 	process(ar, unit.attack_Range);
+	process(ar, unit.projectile_Type);
+	process(ar, unit.fire_Projectiles);
 
 	process(ar, unit.attached_Entities);
 	process(ar, unit.attached_Entities_Size);
@@ -241,13 +257,17 @@ void process(Archive* ar, Unit& unit) {
 void process(Archive* ar, Projectile& projectile) {
 	process(ar, projectile.type);
 	process(ar, projectile.sprite_Sheet_Tracker);
+
 	process(ar, projectile.rigid_Body);
+
 	process(ar, projectile.damage);
 	process(ar, projectile.speed);
 	process(ar, projectile.life_Time);
 	process(ar, projectile.collision_Delay);
+
 	process(ar, projectile.handle);
 	process(ar, projectile.parent);
+
 	process(ar, projectile.can_Attach);
 	process(ar, projectile.gravity);
 	process(ar, projectile.stop);
@@ -255,29 +275,20 @@ void process(Archive* ar, Projectile& projectile) {
 }
 
 void process(Archive* ar, Generation& gen) {
-	process(ar, gen.generation);
 	process(ar, gen.slot_Taken);
+	process(ar, gen.generation);
 }
 
-void process(Archive* ar, Storage<Unit>& storage) {
-	process(ar, storage.generations, storage.index_One_Past_Last);
-	process(ar, storage.index_One_Past_Last);
-	process(ar, storage.arr, storage.index_One_Past_Last);
-}
-
-// Could do template here.  Storage type is the template parameter
-void process(Archive* ar, Storage<Projectile>& storage) {
-	process(ar, storage.index_One_Past_Last);
-	for (uint32_t i = 0; i < storage.index_One_Past_Last; i++) {
-		process(ar, storage.generations[i]);
+void process(Archive* ar, Storage_Type& storage_Type) {
+	int temp;
+	if (ar->operation == GDO_SAVE) {
+		temp = (int)storage_Type;
+		fwrite(&temp, sizeof(temp), 1, ar->file);
 	}
-	process(ar, storage.arr, storage.index_One_Past_Last);
-}
-
-void process(Archive* ar, Storage<Particle_System>& storage) {
-	process(ar, storage.generations, storage.index_One_Past_Last);
-	process(ar, storage.index_One_Past_Last);
-	process(ar, storage.arr, storage.index_One_Past_Last);
+	else if (ar->operation == GDO_LOAD) {
+		fread(&temp, sizeof(temp), 1, ar->file);
+		storage_Type = (Storage_Type)temp;
+	}
 }
 
 void process(Archive* ar, Game_Data* game_Data) {
@@ -294,6 +305,7 @@ void process(Archive* ar, Game_Data* game_Data) {
 	process(ar, game_Data->enemy_Proj_IDS);
 
 	process(ar, game_Data->particle_Systems);
+	process(ar, game_Data->particle_System_IDS);
 
 	process(ar, game_Data->terrain_Height_Map);
 	process(ar, game_Data->timer);

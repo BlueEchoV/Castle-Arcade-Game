@@ -97,6 +97,18 @@ void process(Archive* ar, T (&my_Array)[size], uint32_t active_Indicies) {
 	}
 }
 
+template <typename T>
+void process(Archive* ar, Storage<T>& storage) {
+	process(ar, storage.index_One_Past_Last);
+	for (uint32_t i = 0; i < storage.index_One_Past_Last; i++) {
+		process(ar, storage.generations[i]);
+	}
+	for (uint32_t i = 0; i < storage.index_One_Past_Last; i++) {
+		process(ar, storage.arr[i]);
+	}
+	process(ar, storage.st);
+}
+
 void process(Archive* ar, bool& my_Bool);
 void process(Archive* ar, int& my_Int);
 void process(Archive* ar, float& my_Float);
@@ -104,7 +116,10 @@ void process(Archive* ar, uint8_t& my_Int);
 void process(Archive* ar, uint16_t& my_Int);
 void process(Archive* ar, uint32_t& my_Int);
 void process(Archive* ar, SDL_Rect& rect);
+void process(Archive* ar, Storage_Type& storage_Type);
+void process(Archive* ar, Generation& gen);
 void process(Archive* ar, Handle& handle);
+void process(Archive* ar, Unit_Level_Tracker& storage_Type);
 void process(Archive* ar, std::string& string);
 void process(Archive* ar, Sprite_Sheet_Tracker& sprite_Sheet_Tracker);
 void process(Archive* ar, Particle& particle);
@@ -116,9 +131,6 @@ void process(Archive* ar, Health_Bar& health_Bar);
 void process(Archive* ar, Cooldown& cooldown);
 void process(Archive* ar, Castle& castle);
 void process(Archive* ar, Projectile& projectile);
-void process(Archive* ar, Storage<Unit>& storage);
-void process(Archive* ar, Storage<Projectile>& storage);
-void process(Archive* ar, Storage<Particle_System>& storage);
 void process(Archive* ar, Game_Data* game_Data);
 
 void load_Game(Game_Data& game_Data, Saved_Games save_Game);
