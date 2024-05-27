@@ -431,7 +431,7 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 		unit.handle = create_Handle(game_Data.units);
 		game_Data.units.arr[unit.handle.index] = unit;
 
-		game_Data.player_Unit_IDS.push_back(unit.handle);
+		game_Data.enemy_Unit_IDS.push_back(unit.handle);
 		game_Data.active_Entity_IDS.push_back(unit.handle);
 	}
 	// Could push onto the active_Entites vector here as well
