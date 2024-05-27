@@ -66,6 +66,16 @@ Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& 
 	return nullptr;
 }
 
+bool compare_Valid_Handles(Handle handle_1, Handle handle_2) {
+	if (handle_1.index == handle_2.index &&
+		handle_1.generation == handle_2.generation &&
+		handle_1.storage_Type == handle_2.storage_Type &&
+		handle_1.generation != 0) {
+		return true;
+	}
+	return false;
+}
+
 void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 	std::erase_if(game_Data.player_Unit_IDS, [&game_Data](const Handle& player_Unit_ID) {
 		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.units, player_Unit_ID);
@@ -371,8 +381,9 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	projectile.speed = projectile_Data.speed;
 	projectile.life_Time = projectile_Data.life_Time;
 	// 90000 is a pretty garbage number. I may want to come up with a better means of measuring speed
-	projectile.collision_Delay.duration = 0.02f;
-	projectile.collision_Delay.remaining = projectile.collision_Delay.duration;
+	//projectile.collision_Delay.duration = 0.02f;
+	//projectile.collision_Delay.remaining = projectile.collision_Delay.duration;
+	projectile.current_Penetrations = projectile_Data.max_Penetrations;
 
 	projectile.stop = false;
 	projectile.destroyed = false;
@@ -652,6 +663,7 @@ Type_Descriptor projectile_Type_Descriptors[] = {
 	FIELD(Projectile_Data, DT_STRING, sprite_Sheet_Name),
 	FIELD(Projectile_Data, DT_STRING, collider),
 	// Treat a bool like an int. 0 is false. 1 is true.
+	FIELD(Projectile_Data, DT_INT, max_Penetrations),
 	FIELD(Projectile_Data, DT_INT, can_Attach),
 	FIELD(Projectile_Data, DT_FLOAT, gravity_Multiplier),
 	FIELD(Projectile_Data, DT_FLOAT, speed),

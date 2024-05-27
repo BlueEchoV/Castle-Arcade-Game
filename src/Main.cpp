@@ -504,22 +504,31 @@ int main(int argc, char** argv) {
                             if (enemy_Unit != nullptr) {
                                 if (check_RB_Collision(&projectile->rigid_Body, &enemy_Unit->rigid_Body)) {
                                     if (!projectile->stop) {
-                                        // On first hit, proc the damage
-                                        if (projectile->collision_Delay.remaining == projectile->collision_Delay.duration) {
-                                            spawn_Particle_System(
-                                                game_Data,
-                                                "PT_BLOOD",
-                                                enemy_Unit->rigid_Body.position_WS,
-                                                0.5,
-                                                15,
-                                                15,
-                                                enemy_Unit->handle,
-                                                false
-                                            );
-                                            enemy_Unit->health_Bar.current_HP -= projectile->damage;
-                                            projectile->parent = enemy_Unit->handle;
+                                        bool enemy_Already_Hit = false;
+                                        for (int e = 0; e < projectile->penetrated_Enemy_IDS_Size; e++) {
+                                            if (compare_Valid_Handles(projectile->penetrated_Enemy_IDS[e], enemy_Unit->handle)) {
+                                                enemy_Already_Hit = true;
+                                            } 
                                         }
-                                        if (projectile->can_Attach && projectile->parent.generation != 0) {
+                                        if (!enemy_Already_Hit && projectile->current_Penetrations >= 0) {
+                                            projectile->current_Penetrations--;
+                                            // Store the hit enemy handle
+                                            projectile->penetrated_Enemy_IDS[projectile->penetrated_Enemy_IDS_Size++] = enemy_Unit->handle;
+											spawn_Particle_System(
+												game_Data,
+												"PT_BLOOD",
+												enemy_Unit->rigid_Body.position_WS,
+												0.5,
+												15,
+												15,
+												enemy_Unit->handle,
+												false
+											);
+											enemy_Unit->health_Bar.current_HP -= projectile->damage;
+											projectile->parent = enemy_Unit->handle;
+                                        }
+                                        // Attaching logic
+                                        if (projectile->can_Attach && projectile->parent.generation != 0 && projectile->current_Penetrations < 0) {
                                             bool targeted_Unit_Still_Alive = false;
 											Unit* enemy_Unit_Second_Check = get_Ptr_From_Unit_Storage(game_Data.units, projectile->parent);
 											if (enemy_Unit_Second_Check != nullptr) {
@@ -529,22 +538,15 @@ int main(int argc, char** argv) {
                                             // This way, if the projectile is fast and goes through the target (which is fine),
                                             // then the projectile is bound to the unit but will also die with the unit.
                                             if (targeted_Unit_Still_Alive) {
-                                                if (projectile->collision_Delay.remaining > 0) {
-                                                    projectile->collision_Delay.remaining -= delta_Time;
-                                                }
-                                                else {
-                                                    V2 offset = projectile->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
-                                                    Attached_Entity attached_Entity = return_Attached_Entity(
-                                                        projectile->type,
-                                                        projectile->rigid_Body.angle,
-                                                        offset
-                                                    );
-                                                    enemy_Unit->attached_Entities[enemy_Unit->attached_Entities_Size++] = attached_Entity;
-                                                    projectile->destroyed = true;
-                                                }
+												V2 offset = projectile->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
+												Attached_Entity attached_Entity = return_Attached_Entity(
+													projectile->type,
+													projectile->rigid_Body.angle,
+													offset
+												);
+												enemy_Unit->attached_Entities[enemy_Unit->attached_Entities_Size++] = attached_Entity;
+												projectile->destroyed = true;
                                             }
-                                        } else {
-                                            projectile->destroyed = true;
                                         }
                                     }
                                 }

@@ -263,7 +263,9 @@ void process(Archive* ar, Projectile& projectile) {
 	process(ar, projectile.damage);
 	process(ar, projectile.speed);
 	process(ar, projectile.life_Time);
-	process(ar, projectile.collision_Delay);
+	process(ar, projectile.current_Penetrations);
+	process(ar, projectile.penetrated_Enemy_IDS_Size);
+	process(ar, projectile.penetrated_Enemy_IDS);
 
 	process(ar, projectile.handle);
 	process(ar, projectile.parent);

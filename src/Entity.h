@@ -65,8 +65,8 @@ struct Castle_Stats {
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
 	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
-	{  100.0f,    {0.01f, 0.0f},     {0.1f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
-	{  100.0f,    {1.0f, 0.0f},      {0.1f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
+	{  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
+	{  100.0f,    {1.0f, 0.0f},      {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
 
 struct Unit_Level_Tracker {
@@ -97,6 +97,7 @@ struct Projectile_Data {
 	std::string sprite_Sheet_Name;
 	std::string collider;
 
+	int max_Penetrations;
 	bool can_Attach;
 
 	float gravity_Multiplier;
@@ -117,7 +118,9 @@ struct Projectile {
 	float damage;
 	float speed;
 	float life_Time;
-	Cooldown collision_Delay;
+	int current_Penetrations;
+	int penetrated_Enemy_IDS_Size;
+	Handle penetrated_Enemy_IDS[100] = {};
 
 	Handle handle;
 	Handle parent;
@@ -250,6 +253,7 @@ void clear_Game_Data(Game_Data* game_Data);
 Unit* get_Ptr_From_Unit_Storage(Storage<Unit>& storage, Handle handle);
 Projectile* get_Ptr_From_Projectile_Storage(Storage<Projectile>& storage, Handle handle);
 Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& storage, Handle handle);
+bool compare_Valid_Handles(Handle handle_1, Handle handle_2);
 void delete_Expired_Entity_Handles(Game_Data& game_Data);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
