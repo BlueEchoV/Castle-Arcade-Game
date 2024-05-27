@@ -498,7 +498,7 @@ int main(int argc, char** argv) {
                         }
                         // Collision with Warriors and projectiles
                         for (uint32_t j = 0; j < game_Data.enemy_Unit_IDS.size(); j++) {
-                            Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.units, game_Data.enemy_Unit_IDS[i]);
+                            Unit* enemy_Unit = get_Ptr_From_Unit_Storage(game_Data.units, game_Data.enemy_Unit_IDS[j]);
                             if (enemy_Unit != nullptr) {
                                 if (check_RB_Collision(&projectile->rigid_Body, &enemy_Unit->rigid_Body)) {
                                     if (!projectile->stop) {
@@ -929,44 +929,6 @@ int main(int argc, char** argv) {
 
 			delete_Expired_Entity_Handles(game_Data);
 
-            // Could move to a function
-            // Only loop through the total allocations to save cpu more operations
-            //for (uint32_t i = 0; i < game_Data.units.index_One_Past_Last; i++) {
-            //    Unit* unit = get_Ptr_From_Handle_In_Storage(game_Data.units, game_Data.units.arr[i].handle);
-            //    if (unit != nullptr) {
-            //        if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-            //            delete_Handle(game_Dataunits., unit->handle);
-            //            unit = {};
-            //        }
-            //    }
-            //}
-			//for (uint32_t i = 0; i < game_Data.units.index_One_Past_Last; i++) {
-			//	Unit* unit = get_Ptr_From_Handle_In_Storage(game_Data.units, game_Data.units.arr[i].handle);
-			//	if (unit != nullptr) {
-			//		if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-			//			delete_Handle(game_Data.units, unit->handle);
-			//			unit = {};
-			//		}
-			//	}
-			//}
-			//for (uint32_t i = 0; i < game_Data.projectiles.index_One_Past_Last; i++) {
-			//	Projectile* projectile = get_Ptr_From_Handle_In_Storage(game_Data.projectiles, game_Data.projectiles.arr[i].handle);
-			//	if (projectile != nullptr) {
-			//		if (projectile->destroyed || projectile->life_Time <= 0) {
-			//			delete_Handle(game_Data.projectiles, projectile->handle);
-            //            projectile = {};
-			//		}
-			//	}
-			//}
-			//for (uint32_t i = 0; i < game_Data.enemy_Projectiles.index_One_Past_Last; i++) {
-			//	Projectile* projectile = get_Ptr_From_Handle_In_Storage(game_Data.enemy_Projectiles, game_Data.enemy_Projectiles.arr[i].handle);
-			//	if (projectile != nullptr) {
-			//		if (projectile->destroyed || projectile->life_Time <= 0) {
-			//			delete_Handle(game_Data.enemy_Projectiles, projectile->handle);
-			//			projectile = {};
-			//		}
-			//	}
-			//}
 			for (uint32_t i = 0; i < game_Data.particle_Systems.index_One_Past_Last; i++) {
 				Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, game_Data.particle_Systems.arr[i].handle);
 				if (particle_System != nullptr) {
@@ -976,11 +938,6 @@ int main(int argc, char** argv) {
 					}
 				}
 			}
-		    //std::erase_if(game_Data.active_Entities, [](const Handle& handle) {
-		    //	return handle.slot_Taken == false;
-		    //	}
-		    //);
-
         }
         SDL_RenderPresent(Globals::renderer);
     }

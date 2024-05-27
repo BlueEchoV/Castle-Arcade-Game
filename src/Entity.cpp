@@ -80,7 +80,7 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 	std::erase_if(game_Data.player_Proj_IDS, [&game_Data](const Handle& player_Proj_ID) {
 		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, player_Proj_ID);
 		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
-			delete_Handle(game_Data.units, projectile->handle);
+			delete_Handle(game_Data.projectiles, projectile->handle);
 			return true;
 		}
 		return false;
@@ -93,10 +93,10 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		}
 		return false;
 		});
-	std::erase_if(game_Data.enemy_Unit_IDS, [&game_Data](const Handle& enemy_Unit_ID) {
-		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, enemy_Unit_ID);
+	std::erase_if(game_Data.enemy_Proj_IDS, [&game_Data](const Handle& enemy_Proj_IDS) {
+		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, enemy_Proj_IDS);
 		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
-			delete_Handle(game_Data.units, projectile->handle);
+			delete_Handle(game_Data.projectiles, projectile->handle);
 			return true;
 		}
 		return false;
