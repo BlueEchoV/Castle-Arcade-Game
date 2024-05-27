@@ -62,6 +62,24 @@ void process(Archive* ar, int& my_Int) {
 	}
 }
 
+void process(Archive* ar, uint8_t& my_Int) {
+	if (ar->operation == GDO_SAVE) {
+		fwrite(&my_Int, sizeof(my_Int), 1, ar->file);
+	}
+	else if (ar->operation == GDO_LOAD) {
+		fread(&my_Int, sizeof(my_Int), 1, ar->file);
+	}
+}
+
+void process(Archive* ar, uint16_t& my_Int) {
+	if (ar->operation == GDO_SAVE) {
+		fwrite(&my_Int, sizeof(my_Int), 1, ar->file);
+	}
+	else if (ar->operation == GDO_LOAD) {
+		fread(&my_Int, sizeof(my_Int), 1, ar->file);
+	}
+}
+
 void process(Archive* ar, uint32_t& my_Int) {
 	if (ar->operation == GDO_SAVE) {
 		fwrite(&my_Int, sizeof(my_Int), 1, ar->file);
@@ -229,7 +247,7 @@ void process(Archive* ar, Projectile& projectile) {
 	process(ar, projectile.life_Time);
 	process(ar, projectile.collision_Delay);
 	process(ar, projectile.handle);
-	process(ar, projectile.target_Handle);
+	process(ar, projectile.parent);
 	process(ar, projectile.can_Attach);
 	process(ar, projectile.gravity);
 	process(ar, projectile.stop);
@@ -263,18 +281,20 @@ void process(Archive* ar, Storage<Particle_System>& storage) {
 }
 
 void process(Archive* ar, Game_Data* game_Data) {
-	process(ar, game_Data->player_Castle);
-	process(ar, game_Data->player_Units);
-	process(ar, game_Data->player_Projectiles);
-
-	process(ar, game_Data->enemy_Castle);
-	process(ar, game_Data->enemy_Units);
-	process(ar, game_Data->enemy_Projectiles);
-
-	process(ar, game_Data->particle_Systems);
-
-	process(ar, game_Data->terrain_Height_Map);
-	process(ar, game_Data->timer);
+	REF(ar);
+	REF(game_Data);
+	//process(ar, game_Data->player_Castle);
+	//process(ar, game_Data->player_Units);
+	//process(ar, game_Data->player_Projectiles);
+	//
+	//process(ar, game_Data->enemy_Castle);
+	//process(ar, game_Data->units);
+	//process(ar, game_Data->enemy_Projectiles);
+	//
+	//process(ar, game_Data->particle_Systems);
+	//
+	//process(ar, game_Data->terrain_Height_Map);
+	//process(ar, game_Data->timer);
 }
 
 // Call load game function and save game function that calls process game data

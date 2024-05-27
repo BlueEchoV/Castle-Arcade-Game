@@ -10,10 +10,8 @@
 
 enum Storage_Type {
 	ST_Not_Specified,
-	ST_Player_Unit,
-	ST_Player_Projectile,
-	ST_Enemy_Unit,
-	ST_Enemy_Projectile
+	ST_Player,
+	ST_Enemy,
 };
 
 // I need stable indices for this to work
@@ -21,13 +19,14 @@ struct Handle {
 	// Bit fields (unsigned int index : 10;)
 	// uint16_t is just way better
 	uint32_t index;
-	uint32_t generation;
+	// 0 - 255
+	uint8_t generation;
 	Storage_Type storage_Type;
 };
 struct Generation {
 	bool slot_Taken = false;
 	// Default generation 1
-	uint32_t generation = 1;
+	uint8_t generation = 1;
 };
 int count_Active_Handles(Generation generations[], int size);
 

@@ -100,6 +100,9 @@ void process(Archive* ar, T (&my_Array)[size], uint32_t active_Indicies) {
 void process(Archive* ar, bool& my_Bool);
 void process(Archive* ar, int& my_Int);
 void process(Archive* ar, float& my_Float);
+void process(Archive* ar, uint8_t& my_Int);
+void process(Archive* ar, uint16_t& my_Int);
+void process(Archive* ar, uint32_t& my_Int);
 void process(Archive* ar, SDL_Rect& rect);
 void process(Archive* ar, Handle& handle);
 void process(Archive* ar, std::string& string);

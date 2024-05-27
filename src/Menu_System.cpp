@@ -246,7 +246,7 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font*
 	y_Offset += font->char_Height * string_Size;
 	draw_String(font, total_Arrows_Ptr, x_Offset, y_Offset, string_Size, false);
 	y_Offset += font->char_Height * string_Size;
-	//draw_String(font, total_Player_Units_Ptr, x_Offset, y_Offset, string_Size, false);
+	//draw_String(font, total_units_Ptr, x_Offset, y_Offset, string_Size, false);
 	//y_Offset += font->char_Height * string_Size;
 	//draw_String(font, total_Enemies_Ptr, x_Offset, y_Offset, string_Size, false);
 	//y_Offset += font->char_Height * string_Size;

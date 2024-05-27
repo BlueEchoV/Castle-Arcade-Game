@@ -67,55 +67,40 @@ Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& 
 }
 
 void delete_Expired_Entity_Handles(Game_Data& game_Data) {
-	for (Handle handle : game_Data.active_Entities) {
-		switch (handle.storage_Type) {
-		case ST_Player_Unit: {
-			Unit* unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, handle);
-			if (unit != nullptr) {
-				if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-					delete_Handle(game_Data.player_Units, unit->handle);
-					unit = {};
-				}
-			}
-			break;
+	std::erase_if(game_Data.player_Unit_IDS, [&game_Data](const Handle& player_Unit_ID) {
+		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.units, player_Unit_ID);
+		if (unit != nullptr && (unit->destroyed || unit->health_Bar.current_HP <= 0)) {
+			delete_Handle(game_Data.units, unit->handle);
+			// Remove the handle from player_Unit_IDS
+			return true;
 		}
-		case ST_Player_Projectile: {
-			Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.player_Projectiles, handle);
-			if (projectile != nullptr) {
-				if (projectile->destroyed || projectile->life_Time <= 0) {
-					delete_Handle(game_Data.player_Projectiles, projectile->handle);
-					projectile = {};
-				}
-			}
-			break;
+		// Keep the handle in player_Unit_IDS
+		return false;
+		});
+	std::erase_if(game_Data.player_Proj_IDS, [&game_Data](const Handle& player_Proj_ID) {
+		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, player_Proj_ID);
+		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
+			delete_Handle(game_Data.units, projectile->handle);
+			return true;
 		}
-		case ST_Enemy_Unit: {
-			Unit* unit = get_Ptr_From_Unit_Storage(game_Data.enemy_Units, handle);
-			if (unit != nullptr) {
-				if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
-					delete_Handle(game_Data.enemy_Units, unit->handle);
-					unit = {};
-				}
-			}
-			break;
+		return false;
+		});
+	std::erase_if(game_Data.enemy_Unit_IDS, [&game_Data](const Handle& enemy_Unit_ID) {
+		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.units, enemy_Unit_ID);
+		if (unit != nullptr && (unit->destroyed || unit->health_Bar.current_HP <= 0)) {
+			delete_Handle(game_Data.units, unit->handle);
+			return true;
 		}
-		case ST_Enemy_Projectile: {
-			Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.enemy_Projectiles, handle);
-			if (projectile != nullptr) {
-				if (projectile->destroyed || projectile->life_Time <= 0) {
-					delete_Handle(game_Data.enemy_Projectiles, projectile->handle);
-					projectile = {};
-				}
-			}
-			break;
+		return false;
+		});
+	std::erase_if(game_Data.enemy_Unit_IDS, [&game_Data](const Handle& enemy_Unit_ID) {
+		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, enemy_Unit_ID);
+		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
+			delete_Handle(game_Data.units, projectile->handle);
+			return true;
 		}
-		default: {
-			// Handle doesn't exists or isn't specified above (invalid deletion)
-			assert(false);
-			break;
-		}
-		}
-	}
+		return false;
+		});
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
@@ -389,16 +374,18 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	add_Collider(&projectile.rigid_Body, { projectile_Data.collider_Pos_LS_X, projectile_Data.collider_Pos_LS_Y }, projectile_Data.collider_Radius);
 	// add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
 	if (unit_Side == N_PLAYER) {
-		projectile.handle = create_Handle(game_Data.player_Projectiles);
-		game_Data.player_Projectiles.arr[projectile.handle.index] = projectile;
+		projectile.handle = create_Handle(game_Data.projectiles);
+		game_Data.projectiles.arr[projectile.handle.index] = projectile;
 
-		game_Data.active_Entities.push_back(projectile.handle);
+		game_Data.player_Proj_IDS.push_back(projectile.handle);
+		game_Data.active_Entity_IDS.push_back(projectile.handle);
 	}
 	else if (unit_Side == N_ENEMY) {
-		projectile.handle = create_Handle(game_Data.enemy_Projectiles);
-		game_Data.enemy_Projectiles.arr[projectile.handle.index] = projectile;
+		projectile.handle = create_Handle(game_Data.projectiles);
+		game_Data.projectiles.arr[projectile.handle.index] = projectile;
 
-		game_Data.active_Entities.push_back(projectile.handle);
+		game_Data.enemy_Proj_IDS.push_back(projectile.handle);
+		game_Data.active_Entity_IDS.push_back(projectile.handle);
 	}
 }
 
@@ -435,17 +422,17 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 
 	// unit.ID = allocate_Entity_ID(*game_Data);
 	if (unit_Side == N_PLAYER) {
-		unit.handle = create_Handle(game_Data.player_Units);
-		unit.handle.storage_Type = ST_Player_Unit;
-		game_Data.player_Units.arr[unit.handle.index] = unit;
+		unit.handle = create_Handle(game_Data.units);
+		game_Data.units.arr[unit.handle.index] = unit;
 
-		game_Data.active_Entities.push_back(unit.handle);
+		game_Data.player_Unit_IDS.push_back(unit.handle);
+		game_Data.active_Entity_IDS.push_back(unit.handle);
 	} else if (unit_Side == N_ENEMY) {
-		unit.handle = create_Handle(game_Data.enemy_Units);
-		unit.handle.storage_Type = ST_Enemy_Unit;
-		game_Data.enemy_Units.arr[unit.handle.index] = unit;
+		unit.handle = create_Handle(game_Data.units);
+		game_Data.units.arr[unit.handle.index] = unit;
 
-		game_Data.active_Entities.push_back(unit.handle);
+		game_Data.player_Unit_IDS.push_back(unit.handle);
+		game_Data.active_Entity_IDS.push_back(unit.handle);
 	}
 	// Could push onto the active_Entites vector here as well
 }
@@ -583,7 +570,7 @@ bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_
 
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 	for (int i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
-		Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.player_Units, game_Data.player_Units.arr[i].handle);
+		Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.units, game_Data.units.arr[i].handle);
 		Castle* castle = &game_Data.enemy_Castle;
 		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
 			player_Unit->stop = true;

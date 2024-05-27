@@ -126,7 +126,7 @@ struct Projectile {
 	Cooldown collision_Delay;
 
 	Handle handle;
-	Handle target_Handle;
+	Handle parent;
 
 	bool can_Attach;
 	float gravity;
@@ -200,7 +200,6 @@ template <typename T>
 Handle create_Handle(Storage<T>& storage) {
 	Handle result = {};
 	uint32_t length = ARRAY_SIZE(storage.generations);
-	// For wrapping. We start at the last known open handle position.
 	for (uint32_t i = 0; i < length; i++) {
 		if (!storage.generations[i].slot_Taken) {
 			storage.generations[i].slot_Taken = true;
@@ -232,18 +231,23 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 // If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
 	Castle									player_Castle;
-	Storage<Unit>							player_Units = { .st = ST_Player_Unit };
-	Storage<Projectile>						player_Projectiles = { .st = ST_Player_Projectile };;
-	// Storage<Spell>						player_Spells;
+	//Storage<Unit>							player_Units = { .st = ST_Player_Unit };
+	//Storage<Projectile>						player_Projectiles = { .st = ST_Player_Projectile };;
+	//Storage<Spell>						player_Spells;
 
 	Castle									enemy_Castle;
-	Storage<Unit>							enemy_Units = { .st = ST_Enemy_Unit };
-	Storage<Projectile>						enemy_Projectiles = { .st = ST_Enemy_Projectile };
-	// Storage<Spell>						enemy_Spells;
+	//Storage<Unit>							enemy_Units = { .st = ST_Enemy_Unit };
+	//Storage<Projectile>						projectiles = { .st = ST_Enemy_Projectile };
+	//Storage<Spell>						enemy_Spells;
 
-	std::vector<Handle>						active_Entities;
-	// std::vector<Handle>						player_Entities;
-	// std::vector<Handle>						enemy_Entities;
+	Storage<Unit>							units = { .st = ST_Player };
+	Storage<Projectile>						projectiles = { .st = ST_Enemy };
+
+	std::vector<Handle>						active_Entity_IDS;
+	std::vector<Handle>						player_Unit_IDS;
+	std::vector<Handle>						player_Proj_IDS;
+	std::vector<Handle>						enemy_Unit_IDS;
+	std::vector<Handle>						enemy_Proj_IDS;
 
 	Storage<Particle_System>				particle_Systems;
 

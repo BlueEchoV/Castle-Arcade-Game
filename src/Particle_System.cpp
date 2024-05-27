@@ -23,7 +23,7 @@ const Particle_Data& get_Particle_Data(std::string key) {
 	return bad_Particle_Data;
 }
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle target_Handle, bool flip_Horizontally) {
+void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle parent, bool flip_Horizontally) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
@@ -35,7 +35,7 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 	particle_System.time_Between_Spawns = 0.0f;
 	particle_System.destroyed = false;
 	particle_System.lifetime = lifetime;
-	particle_System.target_Handle = target_Handle;
+	particle_System.parent = parent;
 	particle_System.flip_Horizontally = flip_Horizontally;
 
 	particle_System.handle = create_Handle(game_Data.particle_Systems);
