@@ -521,15 +521,15 @@ int main(int argc, char** argv) {
 											);
 											enemy_Unit->health_Bar.current_HP -= projectile->damage;
 											projectile->parent = enemy_Unit->handle;
-                                        }
+										}
 										Unit* enemy_Unit_Second_Check = get_Unit(game_Data.units, projectile->parent);
-                                        if (projectile->can_Attach && enemy_Unit_Second_Check != nullptr && projectile->current_Penetrations < 0) 
+                                        if (enemy_Unit_Second_Check != nullptr && projectile->current_Penetrations < 0) 
                                         {
                                             //float radius = get_Sprite_Radius(&projectile->sprite_Sheet_Tracker);
                                             // I need to store this value so it doesn't change every frame
                                             //float rand_Num = ((float)(rand() % 100) - 50.0f);
                                             //float rand_Enemy_X = enemy_Unit_Second_Check->rigid_Body.position_WS.x + rand_Num;
-                                            if (enemy_Unit_Second_Check->attached_Entities_Size < ARRAY_SIZE(enemy_Unit_Second_Check->attached_Entities)) {
+                                            if (projectile->can_Attach && enemy_Unit_Second_Check->attached_Entities_Size < ARRAY_SIZE(enemy_Unit_Second_Check->attached_Entities)) {
                                                 if ((projectile->rigid_Body.position_WS.x) > enemy_Unit_Second_Check->rigid_Body.position_WS.x) {
                                                     projectile->rigid_Body.position_WS.x = enemy_Unit_Second_Check->rigid_Body.position_WS.x;
                                                     V2 offset = projectile->rigid_Body.position_WS - enemy_Unit->rigid_Body.position_WS;
