@@ -143,9 +143,11 @@ struct Unit_Data {
 	std::string projectile_Type;
 	float base_HP;
 	float hp_Multiplier;
-	float damage;
+	float base_Damage;
+	float damage_Multiplier;
 	float speed;
-	float attack_Cooldown;
+	float base_Attack_Cooldown;
+	float attack_Cooldown_Multiplier;
 	float attack_Range;
 	// std::string spell_Type;
 };

@@ -417,11 +417,20 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	Unit_Data unit_Data = get_Unit_Data(unit_Type);
 	unit.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(unit_Data.sprite_Sheet_Name);
 	unit.rigid_Body = create_Rigid_Body(spawn_Position, false);
+	
+	unit.speed = unit_Data.speed;
+
+	// ***Level based ***
 	float updated_HP = unit_Data.base_HP + ((level - 1.0f) * ((unit_Data.hp_Multiplier * unit_Data.base_HP) - unit_Data.base_HP));
 	unit.health_Bar = create_Health_Bar(50, 13, 60, 2, updated_HP);
-	unit.speed = unit_Data.speed;
-	unit.damage = unit_Data.damage;
-	unit.attack_Cooldown = unit_Data.attack_Cooldown;
+	
+	float updated_Damage = unit_Data.base_Damage + ((level - 1.0f) * ((unit_Data.damage_Multiplier * unit_Data.base_Damage) - unit_Data.base_Damage));
+	unit.damage = updated_Damage;
+	//NOTE: 														  subtract this value because it's a cooldown
+	float updated_Attack_Cooldown = unit_Data.base_Attack_Cooldown - ((level - 1.0f) * ((unit_Data.attack_Cooldown_Multiplier * unit_Data.base_Attack_Cooldown) - unit_Data.base_Attack_Cooldown));
+	unit.attack_Cooldown = updated_Attack_Cooldown;
+	// *****************
+
 	unit.current_Attack_Cooldown = 0.0f;
 	unit.attack_Range = unit_Data.attack_Range;
 	unit.destroyed = false;
@@ -628,9 +637,11 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_STRING, projectile_Type),
 	FIELD(Unit_Data, DT_FLOAT, base_HP),
 	FIELD(Unit_Data, DT_FLOAT, hp_Multiplier),
-	FIELD(Unit_Data, DT_FLOAT, damage),
+	FIELD(Unit_Data, DT_FLOAT, base_Damage),
+	FIELD(Unit_Data, DT_FLOAT, damage_Multiplier),
 	FIELD(Unit_Data, DT_FLOAT, speed),
-	FIELD(Unit_Data, DT_FLOAT, attack_Cooldown),
+	FIELD(Unit_Data, DT_FLOAT, base_Attack_Cooldown),
+	FIELD(Unit_Data, DT_FLOAT, attack_Cooldown_Multiplier),
 	FIELD(Unit_Data, DT_FLOAT, attack_Range),
 	// FIELD(Unit_Data, MT_STRING, spell_Type),
 };
