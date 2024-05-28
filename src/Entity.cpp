@@ -417,8 +417,8 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	Unit_Data unit_Data = get_Unit_Data(unit_Type);
 	unit.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(unit_Data.sprite_Sheet_Name);
 	unit.rigid_Body = create_Rigid_Body(spawn_Position, false);
-	float new_Max_HP = unit_Data.max_HP * powf(unit_Data.hp_Multiplier, ((float)level - 1.0f));
-	unit.health_Bar = create_Health_Bar(50, 13, 60, 2, new_Max_HP);
+	float updated_HP = unit_Data.base_HP + ((level - 1.0f) * ((unit_Data.hp_Multiplier * unit_Data.base_HP) - unit_Data.base_HP));
+	unit.health_Bar = create_Health_Bar(50, 13, 60, 2, updated_HP);
 	unit.speed = unit_Data.speed;
 	unit.damage = unit_Data.damage;
 	unit.attack_Cooldown = unit_Data.attack_Cooldown;
@@ -626,7 +626,7 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_STRING, type),
 	FIELD(Unit_Data, DT_STRING, sprite_Sheet_Name),
 	FIELD(Unit_Data, DT_STRING, projectile_Type),
-	FIELD(Unit_Data, DT_FLOAT, max_HP),
+	FIELD(Unit_Data, DT_FLOAT, base_HP),
 	FIELD(Unit_Data, DT_FLOAT, hp_Multiplier),
 	FIELD(Unit_Data, DT_FLOAT, damage),
 	FIELD(Unit_Data, DT_FLOAT, speed),

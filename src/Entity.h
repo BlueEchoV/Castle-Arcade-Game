@@ -141,7 +141,7 @@ struct Unit_Data {
 	std::string type;
 	std::string sprite_Sheet_Name;
 	std::string projectile_Type;
-	float max_HP;
+	float base_HP;
 	float hp_Multiplier;
 	float damage;
 	float speed;
