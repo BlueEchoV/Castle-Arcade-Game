@@ -39,34 +39,19 @@ const Projectile_Data& get_Projectile_Data(std::string key) {
 	return bad_Projectile_Data;
 }
 
-Unit* get_Ptr_From_Unit_Storage(Storage<Unit>& storage, Handle handle) {
-	if (handle.index < ARRAY_SIZE(storage.generations) &&
-		handle.generation == storage.generations[handle.index].generation &&
-		handle.generation != 0) {
-		return &storage.arr[handle.index];
-	}
-	return nullptr;
+Unit* get_Unit(Storage<Unit>& storage, Handle handle) {
+	return get_Entity(storage, handle);
 }
 
-Projectile* get_Ptr_From_Projectile_Storage(Storage<Projectile>& storage, Handle handle) {
-	if (handle.index < ARRAY_SIZE(storage.generations) &&
-		handle.generation == storage.generations[handle.index].generation &&
-		handle.generation != 0) {
-		return &storage.arr[handle.index];
-	}
-	return nullptr;
+Projectile* get_Projectile(Storage<Projectile>& storage, Handle handle) {
+	return get_Entity(storage, handle);
 }
 
-Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& storage, Handle handle) {
-	if (handle.index < ARRAY_SIZE(storage.generations) &&
-		handle.generation == storage.generations[handle.index].generation &&
-		handle.generation != 0) {
-		return &storage.arr[handle.index];
-	}
-	return nullptr;
+Particle_System* get_Particle_System(Storage<Particle_System>& storage, Handle handle) {
+	return get_Entity(storage, handle);
 }
 
-bool compare_Valid_Handles(Handle handle_1, Handle handle_2) {
+bool compare_Handles(Handle handle_1, Handle handle_2) {
 	if (handle_1.index == handle_2.index &&
 		handle_1.generation == handle_2.generation &&
 		handle_1.storage_Type == handle_2.storage_Type &&
@@ -78,8 +63,11 @@ bool compare_Valid_Handles(Handle handle_1, Handle handle_2) {
 
 void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 	std::erase_if(game_Data.player_Unit_IDS, [&game_Data](const Handle& player_Unit_ID) {
-		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.units, player_Unit_ID);
-		if (unit != nullptr && (unit->destroyed || unit->health_Bar.current_HP <= 0)) {
+		Unit* unit = get_Unit(game_Data.units, player_Unit_ID);
+		if (unit == nullptr) {
+			return true;
+		}
+		if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
 			delete_Handle(game_Data.units, unit->handle);
 			*unit = {};
 			// Remove the handle from player_Unit_IDS
@@ -89,8 +77,11 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		return false;
 		});
 	std::erase_if(game_Data.player_Proj_IDS, [&game_Data](const Handle& player_Proj_ID) {
-		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, player_Proj_ID);
-		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
+		Projectile* projectile = get_Projectile(game_Data.projectiles, player_Proj_ID);
+		if (projectile == nullptr) {
+			return true;
+		}
+		if (projectile->destroyed || projectile->life_Time <= 0) {
 			delete_Handle(game_Data.projectiles, projectile->handle);
 			*projectile = {};
 			return true;
@@ -98,8 +89,11 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		return false;
 		});
 	std::erase_if(game_Data.enemy_Unit_IDS, [&game_Data](const Handle& enemy_Unit_ID) {
-		Unit* unit = get_Ptr_From_Unit_Storage(game_Data.units, enemy_Unit_ID);
-		if (unit != nullptr && (unit->destroyed || unit->health_Bar.current_HP <= 0)) {
+		Unit* unit = get_Unit(game_Data.units, enemy_Unit_ID);
+		if (unit == nullptr) {
+			return true;
+		}
+		if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
 			delete_Handle(game_Data.units, unit->handle);
 			*unit = {};
 			return true;
@@ -107,8 +101,11 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		return false;
 		});
 	std::erase_if(game_Data.enemy_Proj_IDS, [&game_Data](const Handle& enemy_Proj_ID) {
-		Projectile* projectile = get_Ptr_From_Projectile_Storage(game_Data.projectiles, enemy_Proj_ID);
-		if (projectile != nullptr && (projectile->destroyed || projectile->life_Time <= 0)) {
+		Projectile* projectile = get_Projectile(game_Data.projectiles, enemy_Proj_ID);
+		if (projectile == nullptr) {
+			return true;
+		}
+		if (projectile->destroyed || projectile->life_Time <= 0) {
 			delete_Handle(game_Data.projectiles, projectile->handle);
 			*projectile = {};
 			return true;
@@ -116,7 +113,10 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		return false;
 		});
 	std::erase_if(game_Data.particle_System_IDS, [&game_Data](const Handle& particle_System_ID) {
-		Particle_System* particle_System = get_Ptr_From_Particle_System_Storage(game_Data.particle_Systems, particle_System_ID);
+		Particle_System* particle_System = get_Particle_System(game_Data.particle_Systems, particle_System_ID);
+		if (particle_System == nullptr) {
+			return true;
+		}
 		if (particle_System->destroyed && particle_System->particles.size() == 0) {
 			delete_Handle(game_Data.particle_Systems, particle_System->handle);
 			*particle_System = {};
@@ -594,7 +594,7 @@ bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_
 
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 	for (int i = 0; i < Globals::MAX_ENTITY_ARRAY_LENGTH; i++) {
-		Unit* player_Unit = get_Ptr_From_Unit_Storage(game_Data.units, game_Data.units.arr[i].handle);
+		Unit* player_Unit = get_Unit(game_Data.units, game_Data.units.arr[i].handle);
 		Castle* castle = &game_Data.enemy_Castle;
 		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
 			player_Unit->stop = true;

@@ -344,6 +344,17 @@ void start_Game(Game_Data& game_Data) {
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
 		LEVEL_1
 	);
+	Handle test_Handle = {};
+	spawn_Particle_System(
+		game_Data,
+		"PT_RAINBOW",
+		{ RESOLUTION_WIDTH / 2, -50 },
+		1000,
+		RESOLUTION_WIDTH,
+		50,
+		test_Handle,
+		false
+	);
 }
 
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache) {

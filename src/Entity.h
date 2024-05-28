@@ -65,7 +65,7 @@ struct Castle_Stats {
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
 	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
-	{  100.0f,    {0.01f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
+	{  100.0f,    {0.1f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
 	{  100.0f,    {1.0f, 0.0f},      {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
 };
 
@@ -120,7 +120,7 @@ struct Projectile {
 	float life_Time;
 	int current_Penetrations;
 	int penetrated_Enemy_IDS_Size;
-	Handle penetrated_Enemy_IDS[100] = {};
+	Handle penetrated_Enemy_IDS[25] = {};
 
 	Handle handle;
 	Handle parent;
@@ -227,10 +227,10 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 // I could use a C array (Chris would use this) or a C++ array
 // If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
-	Storage<Unit>							units = { .st = ST_Player };
-	Storage<Projectile>						projectiles = { .st = ST_Enemy };
+	Storage<Unit>							units = { .st = ST_Units };
+	Storage<Projectile>						projectiles = { .st = ST_Projectile };
 	std::vector<Handle>						active_Entity_IDS;
-	
+
 	Castle									player_Castle;
 	std::vector<Handle>						player_Unit_IDS;
 	std::vector<Handle>						player_Proj_IDS;
@@ -241,20 +241,31 @@ struct Game_Data {
 	std::vector<Handle>						enemy_Proj_IDS;
 	// Spells?
 
-	Storage<Particle_System>				particle_Systems;
+	Storage<Particle_System>				particle_Systems = { .st = ST_Particle_System };
 	std::vector<Handle>						particle_System_IDS;
 
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
 };
 
-void clear_Game_Data(Game_Data* game_Data);
+template <typename T>
+T* get_Entity(Storage<T>& storage, Handle handle) {
+	if (handle.index < ARRAY_SIZE(storage.generations) &&
+		handle.generation == storage.generations[handle.index].generation &&
+		handle.storage_Type == storage.st &&
+		handle.generation != 0) {
+		return &storage.arr[handle.index];
+	}
+	return nullptr;
+}
 
-Unit* get_Ptr_From_Unit_Storage(Storage<Unit>& storage, Handle handle);
-Projectile* get_Ptr_From_Projectile_Storage(Storage<Projectile>& storage, Handle handle);
-Particle_System* get_Ptr_From_Particle_System_Storage(Storage<Particle_System>& storage, Handle handle);
-bool compare_Valid_Handles(Handle handle_1, Handle handle_2);
+Unit* get_Unit(Storage<Unit>& storage, Handle handle);
+Projectile* get_Projectile(Storage<Projectile>& storage, Handle handle);
+Particle_System* get_Particle_System(Storage<Particle_System>& storage, Handle handle);
+bool compare_Handles(Handle handle_1, Handle handle_2);
 void delete_Expired_Entity_Handles(Game_Data& game_Data);
+
+void clear_Game_Data(Game_Data* game_Data);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 

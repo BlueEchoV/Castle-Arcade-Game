@@ -9,9 +9,9 @@
 #include <stdint.h>
 
 enum Storage_Type : uint8_t {
-	ST_Not_Specified,
-	ST_Player,
-	ST_Enemy,
+	ST_Units = 1,
+	ST_Projectile,
+	ST_Particle_System,
 };
 
 // I need stable indices for this to work
@@ -19,14 +19,14 @@ struct Handle {
 	// Bit fields (unsigned int index : 10;)
 	// uint16_t is just way better
 	uint32_t index;
-	// 0 - 255
-	uint8_t generation;
+	// 65k
+	uint16_t generation;
 	Storage_Type storage_Type;
 };
 struct Generation {
 	bool slot_Taken = false;
 	// Default generation 1
-	uint8_t generation = 1;
+	uint16_t generation = 1;
 };
 int count_Active_Handles(Generation generations[], int size);
 
