@@ -13,10 +13,10 @@ struct F_Color {
 	float a;
 };
 
-
 enum Particle_Type {
 	PT_BLOOD,
 	PT_WATER,
+	PT_RAIN,
 	PT_RAINBOW,
 
 	PT_TOTAL
@@ -30,6 +30,7 @@ struct Particle_Data {
 	float max_Fade;
 	float lifetime_Min;
 	float lifetime_Max;
+	float gravity_Multi;
 	V2 velocity_Min;
 	V2 velocity_Max;
 };

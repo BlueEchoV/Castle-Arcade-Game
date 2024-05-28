@@ -229,7 +229,6 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 struct Game_Data {
 	Storage<Unit>							units = { .st = ST_Units };
 	Storage<Projectile>						projectiles = { .st = ST_Projectile };
-	std::vector<Handle>						active_Entity_IDS;
 
 	Castle									player_Castle;
 	std::vector<Handle>						player_Unit_IDS;

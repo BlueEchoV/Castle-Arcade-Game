@@ -296,7 +296,6 @@ void process(Archive* ar, Storage_Type& storage_Type) {
 void process(Archive* ar, Game_Data* game_Data) {
 	process(ar, game_Data->units);
 	process(ar, game_Data->projectiles);
-	process(ar, game_Data->active_Entity_IDS);
 
 	process(ar, game_Data->player_Castle);
 	process(ar, game_Data->player_Unit_IDS);
@@ -347,7 +346,7 @@ void start_Game(Game_Data& game_Data) {
 	Handle test_Handle = {};
 	spawn_Particle_System(
 		game_Data,
-		"PT_RAINBOW",
+		"PT_RAIN",
 		{ RESOLUTION_WIDTH / 2, -50 },
 		1000,
 		RESOLUTION_WIDTH,

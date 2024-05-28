@@ -7,8 +7,8 @@
 std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 
 const Particle_Data bad_Particle_Data = {
-	// type,		sprite_Sheet,		size	  particles_Per_Second max_Fade_In  lifetime_Min	lifetime_Max  velocity_Min		velocity_Max
-	  "PT_RAINBOW", "basic_Particle_1", 20,		  1.0f,					0.5f,		3.0f,			3.0f,			{0.0f, 0.0f},	{0.0f, 0.0f}
+	// type,		sprite_Sheet,		size	  particles_Per_Second max_Fade_In  lifetime_Min	lifetime_Max  gravity_Multi velocity_Min		velocity_Max
+	  "PT_RAINBOW", "basic_Particle_1", 20,		  1.0f,					0.5f,		3.0f,			3.0f,			1.0f,		{0.0f, 0.0f},	{0.0f, 0.0f}
 };
 
 const Particle_Data& get_Particle_Data(std::string key) {
@@ -46,11 +46,12 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 
 // Update 
 void update_Particle_System(Particle_System& particle_System, float delta_Time) {
+	const Particle_Data* data = &get_Particle_Data(particle_System.particle_Type);
 	// Store the current position
 	{
 		// Update current particles
 		for (int i = 0; i < particle_System.particles.size(); i++) {
-			particle_System.particles[i].velocity.y += (100 * delta_Time);
+			particle_System.particles[i].velocity.y += ((Globals::GRAVITY * data->gravity_Multi) * delta_Time);
 
 			particle_System.particles[i].position.x += (particle_System.particles[i].velocity.x * delta_Time);
 			particle_System.particles[i].position.y += (particle_System.particles[i].velocity.y * delta_Time);
@@ -64,8 +65,6 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 		int max_Spawn = 1000;
 		int current_Spawn = 0;
 		
-		const Particle_Data* data = &get_Particle_Data(particle_System.particle_Type);
-
 		while (particle_System.time_Between_Spawns <= 0 
 			&& current_Spawn <= max_Spawn
 			&& particle_System.destroyed == false) {
@@ -245,6 +244,9 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 				}
 				else if (particle_System->particle_Type == "PT_BLOOD") {
 					color.r = 1.0f;
+				} else if (particle_System->particle_Type == "PT_RAIN") {
+					color.b = 1.0f;
+					color.g = 0.5f;
 				}
 				SDL_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
 
@@ -265,6 +267,7 @@ Type_Descriptor particle_Data_Type_Descriptors[] = {
 	FIELD(Particle_Data, DT_FLOAT, max_Fade),
 	FIELD(Particle_Data, DT_FLOAT, lifetime_Min),
 	FIELD(Particle_Data, DT_FLOAT, lifetime_Max),
+	FIELD(Particle_Data, DT_FLOAT, gravity_Multi),
 	FIELD(Particle_Data, DT_FLOAT, velocity_Min.x),
 	FIELD(Particle_Data, DT_FLOAT, velocity_Min.y),
 	FIELD(Particle_Data, DT_FLOAT, velocity_Max.x),

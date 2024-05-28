@@ -402,14 +402,12 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 		game_Data.projectiles.arr[projectile.handle.index] = projectile;
 
 		game_Data.player_Proj_IDS.push_back(projectile.handle);
-		game_Data.active_Entity_IDS.push_back(projectile.handle);
 	}
 	else if (unit_Side == N_ENEMY) {
 		projectile.handle = create_Handle(game_Data.projectiles);
 		game_Data.projectiles.arr[projectile.handle.index] = projectile;
 
 		game_Data.enemy_Proj_IDS.push_back(projectile.handle);
-		game_Data.active_Entity_IDS.push_back(projectile.handle);
 	}
 }
 
@@ -450,13 +448,11 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 		game_Data.units.arr[unit.handle.index] = unit;
 
 		game_Data.player_Unit_IDS.push_back(unit.handle);
-		game_Data.active_Entity_IDS.push_back(unit.handle);
 	} else if (unit_Side == N_ENEMY) {
 		unit.handle = create_Handle(game_Data.units);
 		game_Data.units.arr[unit.handle.index] = unit;
 
 		game_Data.enemy_Unit_IDS.push_back(unit.handle);
-		game_Data.active_Entity_IDS.push_back(unit.handle);
 	}
 	// Could push onto the active_Entites vector here as well
 }
