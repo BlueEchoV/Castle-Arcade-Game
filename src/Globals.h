@@ -12,7 +12,6 @@ namespace Globals {
 	extern SDL_Renderer* renderer;
 
 	const float GRAVITY = 100;
-	const float ARCHER_ARROW_GRAVITY = 50;
 
 	const int MAX_ATTACHED_ENTITIES = 100;
 	const int MAX_COLLIDERS = 100;

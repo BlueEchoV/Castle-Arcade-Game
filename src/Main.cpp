@@ -14,9 +14,6 @@
 // Engine core
 SoLoud::Soloud soloud;
 
-Game_Data game_Data_New_Game = {};
-// Allocates on the heap
-Game_Data game_Data = {};
 // This could just be an array
 std::unordered_map<std::string, Game_Data> saved_Games_Cache = {};
 Cache_Data save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
@@ -47,7 +44,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    Font font_1 = load_Font_Bitmap("images/font_1.png");
+    font_1 = load_Font_Bitmap("images/font_1.png");
     init_Sprites();
 
     CSV_Data sprite_Sheet_CSV_Data = {};
@@ -74,8 +71,6 @@ int main(int argc, char** argv) {
     // 0 - 1
     float time_Scalar = 1.0f;
 
-    bool running = true;
-
     CSV_Data particle_CSV_Data = create_Open_CSV_File("data/Particle_Data.csv");
     load_Particle_Data_CSV(&particle_CSV_Data);
     close_CSV_File(&particle_CSV_Data);
@@ -88,7 +83,6 @@ int main(int argc, char** argv) {
     load_Projectile_Data_CSV(&projectile_CSV_Data);
     close_CSV_File(&projectile_CSV_Data);
 
-    Game_State current_Game_State = GS_GAMELOOP;
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -194,43 +188,7 @@ int main(int argc, char** argv) {
         }
 
         if (current_Game_State == GS_MENU) {
-			// No game logic
-			SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
-        
-            draw_String_With_Background(
-                &font_1, 
-                "Castle Defense", 
-                RESOLUTION_WIDTH / 2, 
-                RESOLUTION_HEIGHT / 4, 
-                8, 
-                true, 
-                CI_BLACK,
-                20
-            );
-            
-            V2 button_Pos = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 };
-            int button_Width = 300;
-            int button_Height = 100;
-            int string_Size = 4;
 
-			if (button_Text(&font_1, "Play", button_Pos, button_Width, button_Height, string_Size)) {
-                current_Game_State = GS_GAMELOOP;
-                game_Data = game_Data_New_Game;
-                start_Game(game_Data);
-			}
-			button_Pos.y += 100;
-			if (button_Text(&font_1, "Load Game", button_Pos, button_Width, button_Height, string_Size)) {
-                current_Game_State = GS_LOADGAME;
-			}
-            button_Pos.y += 100;
-			if (button_Text(&font_1, "Options", button_Pos, button_Width, button_Height, string_Size)) {
-
-			}
-            button_Pos.y += 100;
-			if (button_Text(&font_1, "Quit", button_Pos, button_Width, button_Height, string_Size)) {
-				running = false;
-			}
-            button_Pos.y += 100;
         }
         else if (current_Game_State == GS_LOADGAME) {
             SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
@@ -241,20 +199,20 @@ int main(int argc, char** argv) {
 			V2 button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
             int size = 3;
 
-            draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
+            draw_String_With_Background("Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
             button_Pos.y += offset;
 
-            if (load_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
+            if (load_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
                 load_Game(game_Data, SG_SAVE_GAME_1);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
-			if (load_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
+			if (load_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
                 load_Game(game_Data, SG_SAVE_GAME_2);
 				current_Game_State = GS_GAMELOOP;
 			}
 			button_Pos.y += offset;
-			if (load_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, &font_1, button_Pos, button_Width, button_Height, size)) {
+			if (load_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
                 load_Game(game_Data, SG_SAVE_GAME_3);
 				current_Game_State = GS_GAMELOOP;
 			}
@@ -267,7 +225,6 @@ int main(int argc, char** argv) {
 			SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Gameloop"), NULL, NULL);
 			if (current_Game_State == GS_VICTORY) {
 				draw_String_With_Background(
-					&font_1,
 					"Victory!!!",
 					RESOLUTION_WIDTH / 2,
 					RESOLUTION_HEIGHT / 2,
@@ -279,7 +236,6 @@ int main(int argc, char** argv) {
 			}
 			if (current_Game_State == GS_GAMEOVER) {
 				draw_String_With_Background(
-					&font_1,
 					"Game Over",
 					RESOLUTION_WIDTH / 2,
 					RESOLUTION_HEIGHT / 2,
@@ -289,7 +245,7 @@ int main(int argc, char** argv) {
 					3
 				);
 			}
-			if (button_Text(&font_1, "Return to Menu", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 90 }, 325, 90, 3)) {
+			if (button_Text("Return to Menu", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 90 }, 325, 90, 3)) {
 				current_Game_State = GS_MENU;
 			}
 		}
@@ -744,7 +700,7 @@ int main(int argc, char** argv) {
                         false
                     );
                     // draw_HP_Bar(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
-                    draw_HP_Bar_With_String(&font_1, &player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
+                    draw_HP_Bar_With_String(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
                 }
             }
 
@@ -775,7 +731,6 @@ int main(int argc, char** argv) {
             // UI
             draw_Timer(
                 game_Data,
-                &font_1, 
                 { RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 }, 
                 6, 
                 CI_BLACK, 
@@ -783,7 +738,6 @@ int main(int argc, char** argv) {
             );
 
             draw_Time_Scalar(
-                &font_1, 
                 time_Scalar, 
                 (int)((RESOLUTION_WIDTH / 16) * 14),
                 (int)(RESOLUTION_HEIGHT / 9 * 0.5),
@@ -791,15 +745,12 @@ int main(int argc, char** argv) {
             );
 
 			draw_Arrow_Ammo_Tracker(
-				&font_1,
 				game_Data.player_Castle.arrow_Ammo,
 				{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
 				3
 			);
 
-            // draw the summon buttons here based off the summonable units vector
-
-            draw_Summonable_Units_Buttons(game_Data, font_1);
+            draw_Summonable_Player_Units_Buttons(game_Data);
 
             if (current_Game_State == GS_PAUSED) {
                 int button_Width_Paused = 325;
@@ -807,7 +758,6 @@ int main(int argc, char** argv) {
                 int string_Size_Paused = 3;
                 V2 button_Pos_Paused = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 2 };
                 draw_String_With_Background(
-                    &font_1,
                     "Game Paused",
                     RESOLUTION_WIDTH / 2,
                     RESOLUTION_HEIGHT / 2,
@@ -817,11 +767,11 @@ int main(int argc, char** argv) {
                     5
                 );
                 button_Pos_Paused.y += button_Height_Paused;
-				if (button_Text(&font_1, "Return to Menu", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
+				if (button_Text("Return to Menu", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
                     current_Game_State = GS_MENU;
 				}
                 button_Pos_Paused.y += button_Height_Paused;
-				if (button_Text(&font_1, "Save Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
+				if (button_Text("Save Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
                     current_Game_State = GS_SAVEGAME;
 				}
                 button_Pos_Paused.y += button_Height_Paused;
@@ -836,19 +786,19 @@ int main(int argc, char** argv) {
 				V2 button_Pos_Saved = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
 				int size = 3;
 
-				draw_String_With_Background(&font_1, "Saved Games", (int)button_Pos_Saved.x, (int)button_Pos_Saved.y, size, true, CI_BLACK, 3);
+				draw_String_With_Background("Saved Games", (int)button_Pos_Saved.x, (int)button_Pos_Saved.y, size, true, CI_BLACK, 3);
                 
                 // This is a loop
-                if (save_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+                if (save_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
                     // Put this in the save_Game_Button
                     save_Game_To_Cache(SG_SAVE_GAME_1, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
-				if (save_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+				if (save_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
                     save_Game_To_Cache(SG_SAVE_GAME_2, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;
-				if (save_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, &font_1, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+				if (save_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
                     save_Game_To_Cache(SG_SAVE_GAME_3, game_Data, save_Game_Cache_Data);
 				}
                 button_Pos_Saved.y += offset;

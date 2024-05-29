@@ -1,4 +1,11 @@
 #include "Menu_System.h"
+#include "stack"
+
+
+Font font_1 = {};
+Game_State current_Game_State = GS_GAMELOOP;
+Game_Data game_Data_New_Game = {};
+Game_Data game_Data = {};
 
 std::unordered_map<SDL_Keycode, Key_State> key_States;
 
@@ -70,41 +77,40 @@ Font load_Font_Bitmap(const char* font_File_Path) {
 	return result;
 }
 
-
-void draw_Character(Font* font, char character, int position_X, int position_Y, int size) {
+void draw_Character(char character, int position_X, int position_Y, int size) {
     int ascii_Dec = (int)character - (int)' ';
-    int chars_Per_Row = (font->width / font->char_Width);
+    int chars_Per_Row = (font_1.width / font_1.char_Width);
 
     SDL_Rect src_Rect = {};
     // Position in the row
-    src_Rect.x = (ascii_Dec % chars_Per_Row) * font->char_Width;
+    src_Rect.x = (ascii_Dec % chars_Per_Row) * font_1.char_Width;
     // Which row the char is in
-    src_Rect.y = (ascii_Dec / chars_Per_Row) * font->char_Height;
-    src_Rect.w = font->char_Width;
-    src_Rect.h = font->char_Height;
+    src_Rect.y = (ascii_Dec / chars_Per_Row) * font_1.char_Height;
+    src_Rect.w = font_1.char_Width;
+    src_Rect.h = font_1.char_Height;
 
     SDL_Rect dest_Rect = {};
     // Position of the character on the screen
     dest_Rect.x = position_X;
     dest_Rect.y = position_Y;
-    dest_Rect.w = (int)(font->char_Width * size);
-    dest_Rect.h = (int)(font->char_Height * size);
+    dest_Rect.w = (int)(font_1.char_Width * size);
+    dest_Rect.h = (int)(font_1.char_Height * size);
 
-    SDL_RenderCopyEx(Globals::renderer, font->texture, &src_Rect, &dest_Rect, 0, NULL, SDL_FLIP_NONE);
+    SDL_RenderCopyEx(Globals::renderer, font_1.texture, &src_Rect, &dest_Rect, 0, NULL, SDL_FLIP_NONE);
 }
 
-void draw_String(Font* font, const char* string, int position_X, int position_Y, int size, bool center) {
+void draw_String(const char* string, int position_X, int position_Y, int size, bool center) {
     int offset_X = 0;
     int index = 0;
     char iterator = string[index];
     size_t length_Pixels = strlen(string);
-    length_Pixels *= font->char_Width * size;
+    length_Pixels *= font_1.char_Width * size;
 
     int char_Position_X = 0;
     int char_Position_Y = 0;
     if (center) {
         char_Position_X = (position_X - (int)(length_Pixels / 2));
-        char_Position_Y = (position_Y - ((font->char_Height * size) / 2));
+        char_Position_Y = (position_Y - ((font_1.char_Height * size) / 2));
     }
     else {
         char_Position_X = position_X;
@@ -113,18 +119,18 @@ void draw_String(Font* font, const char* string, int position_X, int position_Y,
 
     while (iterator != '\0') {
         char_Position_X += offset_X;
-        draw_Character(font, iterator, char_Position_X, char_Position_Y, size);
-        offset_X = font->char_Width * size;
+        draw_Character(iterator, char_Position_X, char_Position_Y, size);
+        offset_X = font_1.char_Width * size;
         index++;
         iterator = string[index];
     }
 }
 
-void draw_String_With_Background(Font* font, const char* string, int position_X, int position_Y, int size, bool center, Color_Index color, int outline_Padding) {
+void draw_String_With_Background(const char* string, int position_X, int position_Y, int size, bool center, Color_Index color, int outline_Padding) {
     size_t length_Pixels = strlen(string);
-    length_Pixels *= font->char_Width;
+    length_Pixels *= font_1.char_Width;
     length_Pixels *= size;
-    size_t height_Pixels = font->char_Height;
+    size_t height_Pixels = font_1.char_Height;
     height_Pixels *= size;
 
     SDL_Rect canvas_Area = {};
@@ -152,10 +158,10 @@ void draw_String_With_Background(Font* font, const char* string, int position_X,
     }
     SDL_RenderFillRect(Globals::renderer, &canvas_Area);
 
-    draw_String(font, string, position_X, position_Y, size, center);
+    draw_String(string, position_X, position_Y, size, center);
 }
 
-bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int string_Size) {
+bool button_Text(const char* string, V2 pos, int w, int h, int string_Size) {
 	SDL_Rect button_Area = {};
 	int outline_Thickness = 5;
 
@@ -169,7 +175,7 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(Globals::renderer, &button_Area);
 
-	draw_String(font, string, (int)pos.x, (int)pos.y, string_Size, true);
+	draw_String(string, (int)pos.x, (int)pos.y, string_Size, true);
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
@@ -210,7 +216,7 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 Game_Data selected_Game_Data;
 
 // Have this display an image?
-void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, V2 pos, int w, int h) {
+void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, V2 pos, int w, int h) {
 	std::string save_Game_String = create_Save_Game_File_Name(save_Game);
 	selected_Game_Data = cache_Data.cache[save_Game_String];
 
@@ -246,26 +252,26 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font*
 	int y_Offset = button_Area.y + 5;
 	int string_Size = 2;
 
-	draw_String(font, title_ptr, x_Offset, y_Offset, string_Size, false);
-	y_Offset += font->char_Height * string_Size;
-	draw_String(font, total_Arrows_Ptr, x_Offset, y_Offset, string_Size, false);
-	y_Offset += font->char_Height * string_Size;
+	draw_String(title_ptr, x_Offset, y_Offset, string_Size, false);
+	y_Offset += font_1.char_Height * string_Size;
+	draw_String(total_Arrows_Ptr, x_Offset, y_Offset, string_Size, false);
+	y_Offset += font_1.char_Height * string_Size;
 	//draw_String(font, total_units_Ptr, x_Offset, y_Offset, string_Size, false);
-	//y_Offset += font->char_Height * string_Size;
+	//y_Offset += font_1.char_Height * string_Size;
 	//draw_String(font, total_Enemies_Ptr, x_Offset, y_Offset, string_Size, false);
-	//y_Offset += font->char_Height * string_Size;
+	//y_Offset += font_1.char_Height * string_Size;
 
 }
 
-void draw_Timer(Game_Data& game_Data, Font* font, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
+void draw_Timer(Game_Data& game_Data_1, V2 position, int timer_Size, Color_Index color, int outline_Padding) {
 	SDL_Rect temp = {};
 
-	std::string str = std::to_string((int)game_Data.timer);
+	std::string str = std::to_string((int)game_Data_1.timer);
 	const char* ptr = str.c_str();
-	draw_String_With_Background(font, ptr, (int)(position.x - (font->char_Width / 2)), (int)(position.y - (font->char_Height / 2)), timer_Size, true, color, outline_Padding);
+	draw_String_With_Background(ptr, (int)(position.x - (font_1.char_Width / 2)), (int)(position.y - (font_1.char_Height / 2)), timer_Size, true, color, outline_Padding);
 }
 
-bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, const char* string, V2 pos, int w, int h, int string_Size) {
+bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, const char* string, V2 pos, int w, int h, int string_Size) {
 	SDL_Rect button_Area = {};
 	int outline_Thickness = 5;
 
@@ -279,7 +285,7 @@ bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, F
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(Globals::renderer, &button_Area);
 
-	draw_String(font, string, (int)pos.x, (int)pos.y, string_Size, true);
+	draw_String(string, (int)pos.x, (int)pos.y, string_Size, true);
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
@@ -292,7 +298,7 @@ bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, F
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
 		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		// Call the window that displays the info
-		display_Save_Game_Info(save_Game, cache_Data, font, pos, w, h);
+		display_Save_Game_Info(save_Game, cache_Data, pos, w, h);
 		if (mouse_Down_This_Frame) {
 			next_Frame_Hot_Name = string;
 		}
@@ -368,14 +374,14 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 	return button_Pressed;
 }
 
-void draw_Arrow_Ammo_Tracker(Font* font, int ammo, V2 pos, int size) {
+void draw_Arrow_Ammo_Tracker(int ammo, V2 pos, int size) {
 	std::string str_1 = std::to_string(ammo);
 	std::string str_2 = "Arrow ammo:" + str_1;
 	const char* ptr = str_2.c_str();
-	draw_String_With_Background(font, ptr, (int)pos.x, (int)pos.y, size, true, CI_BLACK, 5);
+	draw_String_With_Background(ptr, (int)pos.x, (int)pos.y, size, true, CI_BLACK, 5);
 }
 
-void draw_Time_Scalar(Font* font, float time_Scalar, int pos_X, int pos_Y, int size) {
+void draw_Time_Scalar(float time_Scalar, int pos_X, int pos_Y, int size) {
 	float converted_Time_Scalar;
 	if (time_Scalar > 0) {
 		converted_Time_Scalar = time_Scalar * 100;
@@ -387,14 +393,14 @@ void draw_Time_Scalar(Font* font, float time_Scalar, int pos_X, int pos_Y, int s
 	std::string str_2 = std::to_string((int)converted_Time_Scalar);
 	std::string str_3 = str_1 + str_2;
 	const char* ptr = str_3.c_str();
-	draw_String_With_Background(font, ptr, pos_X, pos_Y, size, true, CI_BLACK, 5);
+	draw_String_With_Background(ptr, pos_X, pos_Y, size, true, CI_BLACK, 5);
 }
 
 void display_Load_Game_Info() {
 
 }
 
-bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, Font* font, V2 pos, int w, int h, int size) {
+bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, V2 pos, int w, int h, int size) {
 	bool result = false;
 	std::string file_Name_String = create_Save_Game_File_Name(save_Game);
 	const char* file_Name = file_Name_String.c_str();
@@ -411,7 +417,7 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, Font* font,
 		}
 		const char* file_Name_Trimmed = file_String_Trimmed.c_str();
 
-		if (button_Text_Load_Game_Info(save_Game, cache_Data, font, file_Name_Trimmed, pos, w, h, size)) {
+		if (button_Text_Load_Game_Info(save_Game, cache_Data, file_Name_Trimmed, pos, w, h, size)) {
 			result = true;
 		}
 
@@ -425,11 +431,11 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, Font* font,
 		std::string game_Time = std::to_string((int)timer);
 		std::string final_Str = "Game time: " + game_Time;
 		const char* str = final_Str.c_str();
-		draw_String(font, str, (int)pos.x, (int)pos.y + 27, 2, true);
+		draw_String(str, (int)pos.x, (int)pos.y + 27, 2, true);
 
 		V2 delete_Button_Pos = pos;
 		delete_Button_Pos.x += (w / 2) + (h / 2);
-		if (button_Text(font, "X", delete_Button_Pos, h, h, size + 2)) {
+		if (button_Text("X", delete_Button_Pos, h, h, size + 2)) {
 			cache_Data.loaded = false;
 			cache_Data.cache.erase(file_Name);
 			remove(file_Name);
@@ -440,7 +446,7 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, Font* font,
 	return result;
 }
 
-bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, V2 pos, int w, int h, int size) {
+bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, V2 pos, int w, int h, int size) {
 	bool result = false;
 	std::string file_String = create_Save_Game_File_Name(save_Game);
 	std::string file_String_Trimmed;
@@ -454,7 +460,7 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, 
 	}
 	const char* file_Name_Trimmed = file_String_Trimmed.c_str();
 
-	if (button_Text(font, file_Name_Trimmed, pos, w, h, size)) {
+	if (button_Text(file_Name_Trimmed, pos, w, h, size)) {
 		result = true;
 	}
 
@@ -467,13 +473,13 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, 
 	if (timer < 0) {
 		std::string final_Str = "Empty";
 		const char* str = final_Str.c_str();
-		draw_String(font, str, (int)pos.x, (int)pos.y + 27, 2, true);
+		draw_String(str, (int)pos.x, (int)pos.y + 27, 2, true);
 	}
 	else {
 		std::string game_Time = std::to_string((int)timer);
 		std::string final_Str = "Game time: " + game_Time;
 		const char* str = final_Str.c_str();
-		draw_String(font, str, (int)pos.x, (int)pos.y + 27, 2, true);
+		draw_String(str, (int)pos.x, (int)pos.y + 27, 2, true);
 	}
 
 	return result;
@@ -547,7 +553,7 @@ void draw_HP_Bar(V2* position, Health_Bar* health_Bar) {
 	outline_Rect(&outline, health_Bar->thickness);
 }
 
-void draw_HP_Bar_With_String(Font* font, V2* position, Health_Bar* health_Bar) {
+void draw_HP_Bar_With_String(V2* position, Health_Bar* health_Bar) {
 	float remaining_HP_Percent = (health_Bar->current_HP / health_Bar->max_HP);
 	if (remaining_HP_Percent < 0) {
 		remaining_HP_Percent = 0;
@@ -580,14 +586,14 @@ void draw_HP_Bar_With_String(Font* font, V2* position, Health_Bar* health_Bar) {
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	outline_Rect(&outline, health_Bar->thickness);
 
-	SDL_SetTextureColorMod(font->texture, 0, 0, 0);
+	SDL_SetTextureColorMod(font_1.texture, 0, 0, 0);
 	std::string hp_String = std::to_string((int)health_Bar->current_HP);
-	draw_String(font, hp_String.c_str(), (int)position->x, ((int)position->y - health_Bar->y_Offset) + (health_Bar->height / 2), 1, true);
-	SDL_SetTextureColorMod(font->texture, 255, 255, 255);
+	draw_String(hp_String.c_str(), (int)position->x, ((int)position->y - health_Bar->y_Offset) + (health_Bar->height / 2), 1, true);
+	SDL_SetTextureColorMod(font_1.texture, 255, 255, 255);
 }
 
-void draw_Summonable_Units_Buttons(Game_Data& game_Data, Font& font_1) {
-	Castle* player_Castle = &game_Data.player_Castle;
+void draw_Summonable_Player_Units_Buttons(Game_Data& game_Data_1) {
+	Castle* player_Castle = &game_Data_1.player_Castle;
 
 	V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
 	int spawn_Unit_Button_W = 150;
@@ -609,17 +615,19 @@ void draw_Summonable_Units_Buttons(Game_Data& game_Data, Font& font_1) {
 		// *** Debugging purposes ***
 		std::string level_Up_String = std::to_string(unit_Counter) + ": Level Up+";
 		unit_Counter++;
-		if (button_Text(&font_1, level_Up_String.c_str(), level_Up_Button_Pos, spawn_Unit_Button_W, level_Up_Button_H, 1)) {
+		if (button_Text(level_Up_String.c_str(), level_Up_Button_Pos, spawn_Unit_Button_W, level_Up_Button_H, 1)) {
 			summonable_Unit.level++;
 		}
 		level_Up_Button_Pos.x += spawn_Unit_Button_W;
 
 		std::string debug_String = std::to_string(summonable_Unit.level);
-		draw_String(&font_1, debug_String.c_str(), (int)level_Text_Pos.x, (int)level_Text_Pos.y, 2, true);
+		draw_String(debug_String.c_str(), (int)level_Text_Pos.x, (int)level_Text_Pos.y, 2, true);
 		level_Text_Pos.x += spawn_Unit_Button_W;
 		// *************************
 	}
 }
+
+static std::stack<Menu_Mode> menu_Stack;
 
 void draw_Game_Loop_UI() {
 	// Draw game loop UI here
@@ -627,8 +635,48 @@ void draw_Game_Loop_UI() {
 	// and draw the associated buttons
 }
 
+Game_Data empty_Game_Data = {};
+
+bool running = true;
+
+//Game_Data& game_Data, Font& font_1, Game_State current_Game_State
 void draw_Main_Menu() {
-	// Play, Load, Quit buttons
+	// No game logic
+	SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
+
+	draw_String_With_Background(
+		"Castle Defense",
+		RESOLUTION_WIDTH / 2,
+		RESOLUTION_HEIGHT / 4,
+		8,
+		true,
+		CI_BLACK,
+		20
+	);
+
+	V2 button_Pos = { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 };
+	int button_Width = 300;
+	int button_Height = 100;
+	int string_Size = 4;
+
+	if (button_Text("Play", button_Pos, button_Width, button_Height, string_Size)) {
+		current_Game_State = GS_GAMELOOP;
+		game_Data = empty_Game_Data;
+		start_Game(game_Data);
+	}
+	button_Pos.y += 100;
+	if (button_Text("Load Game", button_Pos, button_Width, button_Height, string_Size)) {
+		current_Game_State = GS_LOADGAME;
+	}
+	button_Pos.y += 100;
+	if (button_Text("Options", button_Pos, button_Width, button_Height, string_Size)) {
+
+	}
+	button_Pos.y += 100;
+	if (button_Text("Quit", button_Pos, button_Width, button_Height, string_Size)) {
+		running = false;
+	}
+	button_Pos.y += 100;
 }
 
 void draw_Sub_Menu_Paused() {
@@ -640,18 +688,26 @@ void draw_Sub_Menu_Paused() {
 // I could have a stack of menus and then I have a hierarchy of menus
 // When I press escape, I pop the top of the stack
 void draw_Menu(/*Menu mode enum*/) {
-	// ****************************
-	/*
-	if (mm == Menu) {
+	if (menu_Stack.empty())
+	{
+		return;
+	};
+
+	switch (menu_Stack.top()) 
+	{
+	case MM_Main_Menu:
+	{
 		draw_Main_Menu();
-	} else if (mm == Gameloop) {
-		if (gs == paused) {
-			draw_Sub_Menu_Paused();
-		} else if (gs == Victory) {
-			draw_Victory_Screen();
-		} else if (gs == Game Over) {
-			draw_Game_Over_Screen();
-		}
+		break;
 	}
-	*/
+	case MM_Game_Loop_UI:
+	{
+
+		break;
+	}
+	case MM_Sub_Menu_Paused:
+	{
+		break;
+	}
+	}
 }
