@@ -592,8 +592,8 @@ void draw_HP_Bar_With_String(V2* position, Health_Bar* health_Bar) {
 	SDL_SetTextureColorMod(font_1.texture, 255, 255, 255);
 }
 
-void draw_Summonable_Player_Units_Buttons(Game_Data& game_Data_1) {
-	Castle* player_Castle = &game_Data_1.player_Castle;
+void draw_Summonable_Player_Units_Buttons() {
+	Castle* player_Castle = &game_Data.player_Castle;
 
 	V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
 	int spawn_Unit_Button_W = 150;
@@ -627,9 +627,31 @@ void draw_Summonable_Player_Units_Buttons(Game_Data& game_Data_1) {
 	}
 }
 
+void draw_Player_Hud() {
+	draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
+	draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
+	draw_Timer(
+		game_Data,
+		{ RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 },
+		6,
+		CI_BLACK,
+		3
+	);
+	draw_Arrow_Ammo_Tracker(
+		game_Data.player_Castle.arrow_Ammo,
+		{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
+		3
+	);
+	draw_Summonable_Player_Units_Buttons();
+}
+
 static std::stack<Menu_Mode> menu_Stack;
 
-void empty_Stack() {
+size_t get_Menu_Stack_Size() {
+	return menu_Stack.size();
+}
+
+void empty_Menu_Stack() {
 	while (menu_Stack.size() > 0) {
 		menu_Stack.pop();
 	}
@@ -646,12 +668,6 @@ void pop_Menu_From_Stack() {
 			menu_Stack.pop();
 		}
 	}
-}
-
-void draw_Game_Loop_UI() {
-	// Draw game loop UI here
-	// Check the current units the player has selected and/or equipped
-	// and draw the associated buttons
 }
 
 bool running = true;
@@ -678,7 +694,7 @@ void draw_Main_Menu() {
 	if (button_Text("Play", button_Pos, button_Width, button_Height, string_Size)) {
 		current_Game_State = GS_GAMELOOP;
 		game_Data = game_Data_New_Game;
-		empty_Stack();
+		empty_Menu_Stack();
 		start_Game(game_Data);
 	}
 	button_Pos.y += 100;
@@ -717,7 +733,7 @@ void draw_Sub_Menu_Paused() {
 	}
 	button_Pos_Paused.y += button_Height_Paused;
 	if (button_Text("Save Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
-		current_Game_State = GS_SAVEGAME;
+		push_To_Menu_Stack(MM_Sub_Menu_Save_Game);
 	}
 	button_Pos_Paused.y += button_Height_Paused;
 }
@@ -756,10 +772,9 @@ void draw_Sub_Menu_Save_Game() {
 }
 
 // Drawing the hud should be separate from drawing the menu
-
 // I could have a stack of menus and then I have a hierarchy of menus
 // When I press escape, I pop the top of the stack
-void draw_Menu(/*Menu mode enum*/) {
+void draw_Menu() {
 	if (menu_Stack.empty())
 	{
 		return;
@@ -772,13 +787,14 @@ void draw_Menu(/*Menu mode enum*/) {
 		draw_Main_Menu();
 		break;
 	}
-	case MM_Game_Loop_UI:
-	{
-
-		break;
-	}
 	case MM_Sub_Menu_Paused:
 	{
+		draw_Sub_Menu_Paused();
+		break;
+	}
+	case MM_Sub_Menu_Save_Game:
+	{
+		draw_Sub_Menu_Save_Game();
 		break;
 	}
 	}

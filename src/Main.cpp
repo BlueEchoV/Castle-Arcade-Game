@@ -111,9 +111,20 @@ int main(int argc, char** argv) {
             }
         }
 
-        if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
+		if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
             pop_Menu_From_Stack();
-        }
+            if (current_Game_State == GS_GAMELOOP) {
+				push_To_Menu_Stack(MM_Sub_Menu_Paused);
+				current_Game_State = GS_PAUSED;
+			}
+			else if (current_Game_State == GS_PAUSED) {
+				// Only change the game_State with the menu stack is at 1
+                size_t stack_Size = get_Menu_Stack_Size();
+                if (stack_Size <= 0) {
+					current_Game_State = GS_GAMELOOP;
+				}
+			}
+		}
 
         current_frame_Hot_Name = next_Frame_Hot_Name;
         next_Frame_Hot_Name = "";
@@ -177,15 +188,6 @@ int main(int argc, char** argv) {
                 game_Data = save_Game_Cache_Data.cache[save_Game_1_String];
             }
 		}
-
-        if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
-            if (current_Game_State == GS_GAMELOOP) {
-                current_Game_State = GS_PAUSED;
-            }
-            else if (current_Game_State == GS_PAUSED) {
-                current_Game_State = GS_GAMELOOP;
-            }
-        }
 
         if (current_Game_State == GS_MENU) {
             
@@ -260,7 +262,9 @@ int main(int argc, char** argv) {
                 }
             }
            
-            if (current_Game_State == GS_GAMELOOP && time_Scalar > 0) {
+            // Updating the game logic
+            if (current_Game_State == GS_GAMELOOP && time_Scalar > 0) 
+            {
                 // Spawn Arrows and update lifetime
                 if (key_States[SDLK_SPACE].held_Down == true && game_Data.player_Castle.arrow_Ammo > 0) {
                     if (game_Data.player_Castle.fire_Cooldown.remaining < 0) {
@@ -726,41 +730,21 @@ int main(int argc, char** argv) {
                 }
 			}
 
-            draw_HP_Bar(&game_Data.player_Castle.rigid_Body.position_WS, &game_Data.player_Castle.health_Bar);
-            draw_HP_Bar(&game_Data.enemy_Castle.rigid_Body.position_WS, &game_Data.enemy_Castle.health_Bar);
-            
-            // UI
-            draw_Timer(
-                game_Data,
-                { RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 }, 
-                6, 
-                CI_BLACK, 
-                3
-            );
-
-            draw_Time_Scalar(
-                time_Scalar, 
-                (int)((RESOLUTION_WIDTH / 16) * 14),
-                (int)(RESOLUTION_HEIGHT / 9 * 0.5),
-                3
-            );
-
-			draw_Arrow_Ammo_Tracker(
-				game_Data.player_Castle.arrow_Ammo,
-				{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
+			draw_Time_Scalar(
+				time_Scalar,
+				(int)((RESOLUTION_WIDTH / 16) * 14),
+				(int)(RESOLUTION_HEIGHT / 9 * 0.5),
 				3
 			);
 
-            draw_Summonable_Player_Units_Buttons(game_Data);
-
+            draw_Player_Hud();
+            draw_Particle_Systems(game_Data);
             if (current_Game_State == GS_PAUSED) {
-                push_To_Menu_Stack(MM_Sub_Menu_Paused);
+
             }
             if (current_Game_State == GS_SAVEGAME) {
-                push_To_Menu_Stack(MM_Sub_Menu_Save_Game);
-            }
 
-            draw_Particle_Systems(game_Data);
+            }
            
 #if 0
 			if (button_Text(&font_1, "Play", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 150, 100, 3)) {

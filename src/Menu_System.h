@@ -74,9 +74,11 @@ void outline_Rect(SDL_Rect* rect, int outline_Thickness);
 void draw_HP_Bar(V2* position, Health_Bar* health_Bar);
 void draw_HP_Bar_With_String(V2* position, Health_Bar* health_Bar);
 
-void draw_Summonable_Player_Units_Buttons(Game_Data& game_Data);
+void draw_Summonable_Player_Units_Buttons();
+void draw_Player_Hud();
 
-void empty_Stack();
+size_t get_Menu_Stack_Size();
+void empty_Menu_Stack();
 void push_To_Menu_Stack(Menu_Mode menu_Mode);
 void pop_Menu_From_Stack();
 
