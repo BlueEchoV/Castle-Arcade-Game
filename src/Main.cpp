@@ -115,6 +115,17 @@ int main(int argc, char** argv) {
             }
         }
 
+        if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
+            if (current_Game_State == GS_MENU) {
+                // Don't pop the main menu!
+                if (get_Menu_Stack_Size() != 1) {
+                    pop_Menu_From_Stack();
+                }
+            } else {
+                pop_Menu_From_Stack();
+            }
+        }
+
         current_frame_Hot_Name = next_Frame_Hot_Name;
         next_Frame_Hot_Name = "";
         SDL_GetMouseState(&mouse_X, &mouse_Y);
@@ -188,7 +199,7 @@ int main(int argc, char** argv) {
         }
 
         if (current_Game_State == GS_MENU) {
-
+            
         }
         else if (current_Game_State == GS_LOADGAME) {
             SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
@@ -246,7 +257,8 @@ int main(int argc, char** argv) {
 				);
 			}
 			if (button_Text("Return to Menu", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 90 }, 325, 90, 3)) {
-				current_Game_State = GS_MENU;
+                push_To_Menu_Stack(MM_Main_Menu);
+                current_Game_State = GS_MENU;
 			}
 		}
         else if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED || current_Game_State == GS_SAVEGAME) {
@@ -768,6 +780,7 @@ int main(int argc, char** argv) {
                 );
                 button_Pos_Paused.y += button_Height_Paused;
 				if (button_Text("Return to Menu", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
+                    push_To_Menu_Stack(MM_Main_Menu);
                     current_Game_State = GS_MENU;
 				}
                 button_Pos_Paused.y += button_Height_Paused;
@@ -811,7 +824,7 @@ int main(int argc, char** argv) {
             }
 
             draw_Particle_Systems(game_Data);
-
+           
 #if 0
 			if (button_Text(&font_1, "Play", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 150, 100, 3)) {
 				soloud.play(wav_Electronic_Song);
@@ -823,6 +836,9 @@ int main(int argc, char** argv) {
 
 			delete_Expired_Entity_Handles(game_Data);
         }
+
+        draw_Menu();
+
         SDL_RenderPresent(Globals::renderer);
     }
 

@@ -629,13 +629,31 @@ void draw_Summonable_Player_Units_Buttons(Game_Data& game_Data_1) {
 
 static std::stack<Menu_Mode> menu_Stack;
 
+void empty_Stack() {
+	while (menu_Stack.size() > 0) {
+		menu_Stack.pop();
+	}
+}
+
+void push_To_Menu_Stack(Menu_Mode menu_Mode) {
+	menu_Stack.push(menu_Mode);
+}
+
+void pop_Menu_From_Stack() {
+	if (menu_Stack.size() > 0) {
+		menu_Stack.pop();
+	}
+}
+
+size_t get_Menu_Stack_Size() {
+	return menu_Stack.size();
+}
+
 void draw_Game_Loop_UI() {
 	// Draw game loop UI here
 	// Check the current units the player has selected and/or equipped
 	// and draw the associated buttons
 }
-
-Game_Data empty_Game_Data = {};
 
 bool running = true;
 
@@ -661,7 +679,8 @@ void draw_Main_Menu() {
 
 	if (button_Text("Play", button_Pos, button_Width, button_Height, string_Size)) {
 		current_Game_State = GS_GAMELOOP;
-		game_Data = empty_Game_Data;
+		game_Data = game_Data_New_Game;
+		empty_Stack();
 		start_Game(game_Data);
 	}
 	button_Pos.y += 100;
