@@ -582,6 +582,38 @@ void draw_HP_Bar_With_String(Font* font, V2* position, Health_Bar* health_Bar) {
 	SDL_SetTextureColorMod(font->texture, 255, 255, 255);
 }
 
+void draw_Summonable_Units_Buttons(Game_Data& game_Data, Font& font_1) {
+	Castle* player_Castle = &game_Data.player_Castle;
+
+	V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
+	int spawn_Unit_Button_W = 150;
+
+	int level_Up_Button_H = 30;
+	V2 level_Up_Button_Pos = { button_Pos.x, (button_Pos.y - (spawn_Unit_Button_W / 2)) - level_Up_Button_H / 2 };
+
+	V2 level_Text_Pos = { level_Up_Button_Pos.x , level_Up_Button_Pos.y - level_Up_Button_H };
+
+	for (Summonable_Unit& summonable_Unit : player_Castle->summonable_Units) {
+		std::string button_Name = "Spawn " + summonable_Unit.name;
+		std::string displayed_Image = summonable_Unit.name + "_Stop";
+		if (button_Image(get_Sprite_Sheet_Texture(displayed_Image), button_Name.c_str(), button_Pos, spawn_Unit_Button_W)) {
+			summonable_Unit.is_Pressed = true;
+		}
+		button_Pos.x += spawn_Unit_Button_W;
+		
+		// *** Debugging purposes ***
+		if (button_Text(&font_1, "Level Up+", level_Up_Button_Pos, spawn_Unit_Button_W, 30, 2)) {
+			summonable_Unit.level++;
+		}
+		level_Up_Button_Pos.x += spawn_Unit_Button_W;
+
+		std::string debug_String = std::to_string(summonable_Unit.level);
+		draw_String(&font_1, debug_String.c_str(), (int)level_Text_Pos.x, (int)level_Text_Pos.y, 2, true);
+		level_Text_Pos.x += spawn_Unit_Button_W;
+		// *************************
+	}
+}
+
 void draw_Game_Loop_UI() {
 	// Draw game loop UI here
 	// Check the current units the player has selected and/or equipped

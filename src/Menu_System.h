@@ -60,3 +60,5 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, Font* font, 
 void outline_Rect(SDL_Rect* rect, int outline_Thickness);
 void draw_HP_Bar(V2* position, Health_Bar* health_Bar);
 void draw_HP_Bar_With_String(Font* font, V2* position, Health_Bar* health_Bar);
+
+void draw_Summonable_Units_Buttons(Game_Data& game_Data, Font& font_1);

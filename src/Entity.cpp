@@ -175,6 +175,21 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 	return result;
 }
 
+void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name) {
+	Summonable_Unit summonable_Unit;
+
+	summonable_Unit.is_Pressed = false;
+	summonable_Unit.level = 1;
+	summonable_Unit.name = unit_Name;
+	summonable_Unit.nation = nation;
+
+	if (summonable_Unit.nation == N_PLAYER) {
+		game_Data.player_Castle.summonable_Units.push_back(summonable_Unit);
+	} else if (summonable_Unit.nation == N_ENEMY) {
+		game_Data.enemy_Castle.summonable_Units.push_back(summonable_Unit);
+	}
+}
+
 void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip) {
 	SDL_Rect temp = {};
 	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(attached_Entity->sprite_Sheet_Tracker.sprite_Sheet_Name);

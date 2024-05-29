@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include <assert.h>
 
+enum Nation {
+	N_PLAYER,
+	N_ENEMY
+};
+
 struct Health_Bar {
 	float max_HP;
 	float current_HP;
@@ -75,6 +80,13 @@ struct Unit_Level_Tracker {
 	int necromancer = 1;
 };
 
+struct Summonable_Unit {
+	std::string name;
+	int level = 1;
+	bool is_Pressed;
+	Nation nation;
+};
+
 struct Castle {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
@@ -86,8 +98,8 @@ struct Castle {
 	int arrow_Ammo;
 	Cooldown arrow_Ammo_Cooldown;
 
-	//int unit_Level_Tracker[Globals::TOTAL_AVAILABLE_UNITS];
 	Unit_Level_Tracker unit_Level_Tracker;
+	std::vector<Summonable_Unit> summonable_Units;
 
 	// Stored_Units stored_Units;
 };
@@ -129,11 +141,6 @@ struct Projectile {
 	float gravity;
 	bool stop;
 	bool destroyed;
-};
-
-enum Nation {
-	N_PLAYER,
-	N_ENEMY
 };
 
 // Applies to all units
@@ -282,6 +289,8 @@ const Unit_Data& get_Unit_Data(std::string key);
 const Projectile_Data& get_Projectile_Data(std::string key);
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
+
+void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
 
 void spawn_Player_Castle(Game_Data& game_Data, V2 position_WS, Level level);
 void spawn_Enemy_Castle(Game_Data& game_Data, V2 position_WS, Level level);

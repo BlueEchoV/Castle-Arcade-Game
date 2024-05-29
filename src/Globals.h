@@ -22,4 +22,6 @@ namespace Globals {
 	const int MAX_ENTITY_ARRAY_LENGTH = 100;
 
 	const int TOTAL_AVAILABLE_UNITS = 100;
+
+	const int MAX_SUMMONABLE_UNITS_PER_CASTLE = 10;
 }

@@ -74,10 +74,6 @@ int main(int argc, char** argv) {
     // 0 - 1
     float time_Scalar = 1.0f;
 
-    bool spawn_Warrior_Pressed = false;
-    bool spawn_Archer_Pressed = false;
-    bool spawn_Necromancer_Pressed = false;
-
     bool running = true;
 
     CSV_Data particle_CSV_Data = create_Open_CSV_File("data/Particle_Data.csv");
@@ -335,53 +331,23 @@ int main(int argc, char** argv) {
                 game_Data.player_Castle.arrow_Ammo_Cooldown.remaining -= delta_Time;
 
                 // Spawn Player Warriors
-                if (spawn_Warrior_Pressed) {
-                    Castle* player_Castle = &game_Data.player_Castle;
-                    Castle* enemy_Castle = &game_Data.enemy_Castle;
-                    spawn_Unit(
-                        game_Data,
-                        N_PLAYER,
-                        "warrior",
-                        player_Castle->unit_Level_Tracker.warrior,
-                        {
-                            (float)player_Castle->rigid_Body.position_WS.x,
-							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
-                        },
-                        enemy_Castle->rigid_Body.position_WS
-                    );
-                    spawn_Warrior_Pressed = false;
-                }
-                if (spawn_Archer_Pressed) {
+                for (Summonable_Unit& summonable_Unit : game_Data.player_Castle.summonable_Units) {
 					Castle* player_Castle = &game_Data.player_Castle;
 					Castle* enemy_Castle = &game_Data.enemy_Castle;
-					spawn_Unit(
-						game_Data,
-                        N_PLAYER,
-						"archer",
-                        1,
-						{
-							(float)player_Castle->rigid_Body.position_WS.x,
-							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
-						},
-                        enemy_Castle->rigid_Body.position_WS
-                    );
-                    spawn_Archer_Pressed = false;
-                }
-                if (spawn_Necromancer_Pressed) {
-					Castle* player_Castle = &game_Data.player_Castle;
-					Castle* enemy_Castle = &game_Data.enemy_Castle;
-					spawn_Unit(
-						game_Data,
-                        N_PLAYER,
-						"necromancer",
-						1,
-						{
-							(float)player_Castle->rigid_Body.position_WS.x,
-							((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
-						},
-						enemy_Castle->rigid_Body.position_WS
-					);
-					spawn_Necromancer_Pressed = false;
+                    if (summonable_Unit.is_Pressed) {
+						spawn_Unit(
+							game_Data,
+                            summonable_Unit.nation,
+                            summonable_Unit.name,
+                            summonable_Unit.level,
+							{
+								(float)player_Castle->rigid_Body.position_WS.x,
+								((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
+							},
+							enemy_Castle->rigid_Body.position_WS
+						);
+                        summonable_Unit.is_Pressed = false;
+                    }
                 }
 
                 // Spawn enemy Warriors
@@ -831,32 +797,9 @@ int main(int argc, char** argv) {
 				3
 			);
 
-            V2 button_Pos = { (RESOLUTION_WIDTH / 16), ((RESOLUTION_HEIGHT / 9) * 8) };
-			int button_Height_Unit_Spawn = 150;
-            // int x_Offset = button_Width;
-            if (button_Image(get_Sprite_Sheet_Texture("warrior_Stop"), "Spawn Warrior", button_Pos, button_Height_Unit_Spawn)) {
-                spawn_Warrior_Pressed = true;
-            } 
-            // Debugging button
-            int level_Up_Button_Height = 30;
-			V2 level_Up_Button_Pos = { button_Pos.x, (button_Pos.y - (button_Height_Unit_Spawn / 2)) - level_Up_Button_Height / 2 };
-			if (button_Text(&font_1, "Level Up+", level_Up_Button_Pos, button_Height_Unit_Spawn, 30, 2)) {
-                // Defined as global for now
-                game_Data.player_Castle.unit_Level_Tracker.warrior++;
-			}
-            V2 debug_Level_Up_Button_Pos = level_Up_Button_Pos;
-            debug_Level_Up_Button_Pos.y -= level_Up_Button_Height;
-            std::string debug_String = std::to_string(game_Data.player_Castle.unit_Level_Tracker.warrior);
-            draw_String(&font_1, debug_String.c_str(), (int)debug_Level_Up_Button_Pos.x, (int)debug_Level_Up_Button_Pos.y, 2, true);
-            button_Pos.x += button_Height_Unit_Spawn;
-            if (button_Image(get_Sprite_Sheet_Texture("archer_Stop"), "Spawn Archer", button_Pos, button_Height_Unit_Spawn)) {
-				spawn_Archer_Pressed = true;
-			}
-            button_Pos.x += button_Height_Unit_Spawn;
-			if (button_Image(get_Sprite_Sheet_Texture("necromancer_Stop"), "Spawn Necromancer", button_Pos, button_Height_Unit_Spawn)) {
-				spawn_Necromancer_Pressed = true;
-			}
-			button_Pos.x += button_Height_Unit_Spawn;
+            // draw the summon buttons here based off the summonable units vector
+
+            draw_Summonable_Units_Buttons(game_Data, font_1);
 
             if (current_Game_State == GS_PAUSED) {
                 int button_Width_Paused = 325;
