@@ -205,16 +205,7 @@ int main(int argc, char** argv) {
             }
 		}
 
-		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
-
-		}
-        else if (current_Game_State == GS_VICTORY) {
-
-        }
-        else if (current_Game_State == GS_GAMEOVER) {
-
-        }
-        else if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED) {
+        if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED) {
             if (key_States[SDLK_UP].held_Down == true) {
                 time_Scalar += 0.01f;
             }

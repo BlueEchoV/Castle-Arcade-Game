@@ -658,6 +658,9 @@ void empty_Menu_Stack() {
 }
 
 void push_To_Menu_Stack(Menu_Mode menu_Mode) {
+	if (menu_Mode == MM_Main_Menu) {
+		empty_Menu_Stack();
+	}
 	menu_Stack.push(menu_Mode);
 }
 
