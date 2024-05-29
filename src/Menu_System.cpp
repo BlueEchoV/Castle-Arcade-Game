@@ -178,6 +178,10 @@ bool button_Text(Font* font, const char* string, V2 pos, int w, int h, int strin
 
 	bool was_Hot = (current_frame_Hot_Name == string);
 
+	// Debugging information
+	//printf("Button '%s' position: (%d, %d) size: (%d, %d)\n", string, button_Area.x, button_Area.y, button_Area.w, button_Area.h);
+	//printf("Mouse position: (%d, %d) was_Hot: %d\n", x, y, was_Hot);
+
 	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
 		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
@@ -593,6 +597,7 @@ void draw_Summonable_Units_Buttons(Game_Data& game_Data, Font& font_1) {
 
 	V2 level_Text_Pos = { level_Up_Button_Pos.x , level_Up_Button_Pos.y - level_Up_Button_H };
 
+	int unit_Counter = 1;
 	for (Summonable_Unit& summonable_Unit : player_Castle->summonable_Units) {
 		std::string button_Name = "Spawn " + summonable_Unit.name;
 		std::string displayed_Image = summonable_Unit.name + "_Stop";
@@ -602,7 +607,9 @@ void draw_Summonable_Units_Buttons(Game_Data& game_Data, Font& font_1) {
 		button_Pos.x += spawn_Unit_Button_W;
 		
 		// *** Debugging purposes ***
-		if (button_Text(&font_1, "Level Up+", level_Up_Button_Pos, spawn_Unit_Button_W, 30, 2)) {
+		std::string level_Up_String = std::to_string(unit_Counter) + ": Level Up+";
+		unit_Counter++;
+		if (button_Text(&font_1, level_Up_String.c_str(), level_Up_Button_Pos, spawn_Unit_Button_W, level_Up_Button_H, 1)) {
 			summonable_Unit.level++;
 		}
 		level_Up_Button_Pos.x += spawn_Unit_Button_W;
