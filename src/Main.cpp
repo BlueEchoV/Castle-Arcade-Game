@@ -111,19 +111,35 @@ int main(int argc, char** argv) {
             }
         }
 
-		if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
-            pop_Menu_From_Stack();
-            if (current_Game_State == GS_GAMELOOP) {
+		if (key_States[SDLK_ESCAPE].pressed_This_Frame) 
+        {
+            if (current_Game_State == GS_GAMELOOP) 
+            {
 				push_To_Menu_Stack(MM_Sub_Menu_Paused);
 				current_Game_State = GS_PAUSED;
-			}
-			else if (current_Game_State == GS_PAUSED) {
+			} 
+            else if (current_Game_State == GS_PAUSED) 
+            {
 				// Only change the game_State with the menu stack is at 1
                 size_t stack_Size = get_Menu_Stack_Size();
-                if (stack_Size <= 0) {
+                if (stack_Size <= 1) 
+                {
 					current_Game_State = GS_GAMELOOP;
 				}
-			}
+                pop_Menu_From_Stack();
+			} 
+            else if (current_Game_State == GS_MAIN_MENU) 
+            {
+                pop_Menu_From_Stack_Keep_First();
+            }
+            else if (current_Game_State == GS_VICTORY)
+            {
+                pop_Menu_From_Stack_Keep_First();
+            } 
+            else if (current_Game_State == GS_GAMEOVER) 
+            {
+                pop_Menu_From_Stack_Keep_First();
+            }
 		}
 
         current_frame_Hot_Name = next_Frame_Hot_Name;
@@ -190,34 +206,14 @@ int main(int argc, char** argv) {
 		}
 
 		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
-			SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Gameloop"), NULL, NULL);
-			if (current_Game_State == GS_VICTORY) {
-				draw_String_With_Background(
-					"Victory!!!",
-					RESOLUTION_WIDTH / 2,
-					RESOLUTION_HEIGHT / 2,
-					4,
-					true,
-					CI_BLACK,
-					3
-				);
-			}
-			if (current_Game_State == GS_GAMEOVER) {
-				draw_String_With_Background(
-					"Game Over",
-					RESOLUTION_WIDTH / 2,
-					RESOLUTION_HEIGHT / 2,
-					4,
-					true,
-					CI_BLACK,
-					3
-				);
-			}
-			if (button_Text("Return to Menu", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 90 }, 325, 90, 3)) {
-                push_To_Menu_Stack(MM_Main_Menu);
-                current_Game_State = GS_MENU;
-			}
+
 		}
+        else if (current_Game_State == GS_VICTORY) {
+
+        }
+        else if (current_Game_State == GS_GAMEOVER) {
+
+        }
         else if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED) {
             if (key_States[SDLK_UP].held_Down == true) {
                 time_Scalar += 0.01f;

@@ -663,10 +663,14 @@ void push_To_Menu_Stack(Menu_Mode menu_Mode) {
 
 void pop_Menu_From_Stack() {
 	if (menu_Stack.size() > 0) {
-		// Make the main menu up poppable
-		if (menu_Stack.top() != MM_Main_Menu) {
-			menu_Stack.pop();
-		}
+		menu_Stack.pop();
+	}
+}
+
+// So we don't pop past the base menu state (If applicable)
+void pop_Menu_From_Stack_Keep_First() {
+	if (menu_Stack.size() > 1) {
+		menu_Stack.pop();
 	}
 }
 
@@ -729,7 +733,7 @@ void draw_Sub_Menu_Paused() {
 	button_Pos_Paused.y += button_Height_Paused;
 	if (button_Text("Return to Menu", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
 		push_To_Menu_Stack(MM_Main_Menu);
-		current_Game_State = GS_MENU;
+		current_Game_State = GS_MAIN_MENU;
 	}
 	button_Pos_Paused.y += button_Height_Paused;
 	if (button_Text("Save Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
@@ -766,7 +770,7 @@ void draw_Sub_Menu_Save_Game() {
 	button_Pos_Saved.y += offset;
 	/*
 	if (button_Text(&font_1, "Return to Menu", button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
-		current_Game_State = GS_MENU;
+		current_Game_State = GS_MAIN_MENU;
 	}
 	*/
 }
@@ -799,10 +803,46 @@ void draw_Sub_Menu_Load_Game() {
 	}
 	button_Pos.y += offset;
 	if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
-		current_Game_State = GS_MENU;
+		current_Game_State = GS_MAIN_MENU;
 	}
 }
 
+void draw_Menu_Victory_Screen() {
+	SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Gameloop"), NULL, NULL);
+	if (current_Game_State == GS_VICTORY) {
+		draw_String_With_Background(
+			"Victory!!!",
+			RESOLUTION_WIDTH / 2,
+			RESOLUTION_HEIGHT / 2,
+			4,
+			true,
+			CI_BLACK,
+			3
+		);
+	}
+	if (button_Text("Return to Menu", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 90 }, 325, 90, 3)) {
+		push_To_Menu_Stack(MM_Main_Menu);
+		current_Game_State = GS_MAIN_MENU;
+	}
+}
+void draw_Menu_Game_Over_Screen() {
+	SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Gameloop"), NULL, NULL);
+	if (current_Game_State == GS_GAMEOVER) {
+		draw_String_With_Background(
+			"Game Over",
+			RESOLUTION_WIDTH / 2,
+			RESOLUTION_HEIGHT / 2,
+			4,
+			true,
+			CI_BLACK,
+			3
+		);
+	}
+	if (button_Text("Return to Menu", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 + 90 }, 325, 90, 3)) {
+		push_To_Menu_Stack(MM_Main_Menu);
+		current_Game_State = GS_MAIN_MENU;
+	}
+}
 
 // Drawing the hud should be separate from drawing the menu
 // I could have a stack of menus and then I have a hierarchy of menus
@@ -833,6 +873,16 @@ void draw_Menu() {
 	case MM_Sub_Menu_Load_Game:
 	{
 		draw_Sub_Menu_Load_Game();
+		break;
+	}
+	case MM_Menu_Victory_Screen:
+	{
+		draw_Menu_Victory_Screen();
+		break;
+	}
+	case MM_Menu_Game_Over_Screen:
+	{
+		draw_Menu_Game_Over_Screen();
 		break;
 	}
 	}

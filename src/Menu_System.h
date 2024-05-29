@@ -33,7 +33,9 @@ enum Menu_Mode {
 	MM_Game_Loop_UI,
 	MM_Sub_Menu_Paused,
 	MM_Sub_Menu_Save_Game,
-	MM_Sub_Menu_Load_Game
+	MM_Sub_Menu_Load_Game,
+	MM_Menu_Victory_Screen,
+	MM_Menu_Game_Over_Screen
 };
 
 struct Key_State {
@@ -82,5 +84,6 @@ size_t get_Menu_Stack_Size();
 void empty_Menu_Stack();
 void push_To_Menu_Stack(Menu_Mode menu_Mode);
 void pop_Menu_From_Stack();
+void pop_Menu_From_Stack_Keep_First();
 
 void draw_Menu();

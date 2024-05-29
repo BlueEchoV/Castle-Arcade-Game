@@ -3,7 +3,7 @@
 #include "Entity.h"
 
 enum Game_State {
-	GS_MENU,
+	GS_MAIN_MENU,
 	GS_GAMELOOP,
 	GS_PAUSED,
 	GS_GAMEOVER,
