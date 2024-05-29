@@ -656,7 +656,6 @@ void draw_Game_Loop_UI() {
 
 bool running = true;
 
-//Game_Data& game_Data, Font& font_1, Game_State current_Game_State
 void draw_Main_Menu() {
 	// No game logic
 	SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
@@ -698,7 +697,62 @@ void draw_Main_Menu() {
 }
 
 void draw_Sub_Menu_Paused() {
-	// Save, quit, return to main menu buttons
+	int button_Width_Paused = 325;
+	int button_Height_Paused = 90;
+	int string_Size_Paused = 3;
+	V2 button_Pos_Paused = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 2 };
+	draw_String_With_Background(
+		"Game Paused",
+		RESOLUTION_WIDTH / 2,
+		RESOLUTION_HEIGHT / 2,
+		5,
+		true,
+		CI_BLACK,
+		5
+	);
+	button_Pos_Paused.y += button_Height_Paused;
+	if (button_Text("Return to Menu", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
+		push_To_Menu_Stack(MM_Main_Menu);
+		current_Game_State = GS_MENU;
+	}
+	button_Pos_Paused.y += button_Height_Paused;
+	if (button_Text("Save Game", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
+		current_Game_State = GS_SAVEGAME;
+	}
+	button_Pos_Paused.y += button_Height_Paused;
+}
+
+void draw_Sub_Menu_Save_Game() {
+	if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
+		current_Game_State = GS_GAMELOOP;
+	}
+	int button_Width_Saved = 325;
+	int button_Height_Saved = 90;
+	int offset = button_Height_Saved;
+	V2 button_Pos_Saved = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
+	int size = 3;
+
+	draw_String_With_Background("Saved Games", (int)button_Pos_Saved.x, (int)button_Pos_Saved.y, size, true, CI_BLACK, 3);
+
+	// This is a loop
+	if (save_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+		// Put this in the save_Game_Button
+		save_Game_To_Cache(SG_SAVE_GAME_1, game_Data, save_Game_Cache_Data);
+	}
+	button_Pos_Saved.y += offset;
+	if (save_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+		save_Game_To_Cache(SG_SAVE_GAME_2, game_Data, save_Game_Cache_Data);
+	}
+	button_Pos_Saved.y += offset;
+	if (save_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+		save_Game_To_Cache(SG_SAVE_GAME_3, game_Data, save_Game_Cache_Data);
+	}
+	button_Pos_Saved.y += offset;
+	/*
+	if (button_Text(&font_1, "Return to Menu", button_Pos_Saved, button_Width_Saved, button_Height_Saved, size)) {
+		current_Game_State = GS_MENU;
+	}
+	*/
 }
 
 // Drawing the hud should be separate from drawing the menu

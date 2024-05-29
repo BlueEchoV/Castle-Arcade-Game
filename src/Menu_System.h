@@ -31,7 +31,8 @@ enum Button_State {
 enum Menu_Mode {
 	MM_Main_Menu,
 	MM_Game_Loop_UI,
-	MM_Sub_Menu_Paused
+	MM_Sub_Menu_Paused,
+	MM_Sub_Menu_Save_Game
 };
 
 struct Key_State {
@@ -78,7 +79,5 @@ void draw_Summonable_Player_Units_Buttons(Game_Data& game_Data);
 void empty_Stack();
 void push_To_Menu_Stack(Menu_Mode menu_Mode);
 void pop_Menu_From_Stack();
-size_t get_Menu_Stack_Size();
 
-void draw_Main_Menu();
 void draw_Menu();

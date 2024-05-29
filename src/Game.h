@@ -133,6 +133,9 @@ void process(Archive* ar, Castle& castle);
 void process(Archive* ar, Projectile& projectile);
 void process(Archive* ar, Game_Data* game_Data);
 
+extern std::unordered_map<std::string, Game_Data> saved_Games_Cache;
+extern Cache_Data save_Game_Cache_Data;
+
 void load_Game(Game_Data& game_Data, Saved_Games save_Game);
 void save_Game(Game_Data& game_Data, Saved_Games save_Game);
 void start_Game(Game_Data& game_Data);

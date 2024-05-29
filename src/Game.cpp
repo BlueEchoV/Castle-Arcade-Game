@@ -331,7 +331,13 @@ void save_Game(Game_Data& game_Data, Saved_Games save_Game) {
 	}
 }
 
+// This could just be an array
+std::unordered_map<std::string, Game_Data> saved_Games_Cache = {};
+Cache_Data save_Game_Cache_Data;
+
 void start_Game(Game_Data& game_Data) {
+	// This could just be an array
+	save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
 	game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 	spawn_Player_Castle(
 		game_Data,
