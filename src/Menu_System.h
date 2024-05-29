@@ -32,7 +32,8 @@ enum Menu_Mode {
 	MM_Main_Menu,
 	MM_Game_Loop_UI,
 	MM_Sub_Menu_Paused,
-	MM_Sub_Menu_Save_Game
+	MM_Sub_Menu_Save_Game,
+	MM_Sub_Menu_Load_Game
 };
 
 struct Key_State {

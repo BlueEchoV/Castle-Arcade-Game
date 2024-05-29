@@ -699,7 +699,7 @@ void draw_Main_Menu() {
 	}
 	button_Pos.y += 100;
 	if (button_Text("Load Game", button_Pos, button_Width, button_Height, string_Size)) {
-		current_Game_State = GS_LOADGAME;
+		push_To_Menu_Stack(MM_Sub_Menu_Load_Game);
 	}
 	button_Pos.y += 100;
 	if (button_Text("Options", button_Pos, button_Width, button_Height, string_Size)) {
@@ -771,6 +771,39 @@ void draw_Sub_Menu_Save_Game() {
 	*/
 }
 
+void draw_Sub_Menu_Load_Game() {
+	SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
+
+	int button_Width = 325;
+	int button_Height = 90;
+	int offset = button_Height;
+	V2 button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
+	int size = 3;
+
+	draw_String_With_Background("Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
+	button_Pos.y += offset;
+
+	if (load_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
+		load_Game(game_Data, SG_SAVE_GAME_1);
+		current_Game_State = GS_GAMELOOP;
+	}
+	button_Pos.y += offset;
+	if (load_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
+		load_Game(game_Data, SG_SAVE_GAME_2);
+		current_Game_State = GS_GAMELOOP;
+	}
+	button_Pos.y += offset;
+	if (load_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
+		load_Game(game_Data, SG_SAVE_GAME_3);
+		current_Game_State = GS_GAMELOOP;
+	}
+	button_Pos.y += offset;
+	if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
+		current_Game_State = GS_MENU;
+	}
+}
+
+
 // Drawing the hud should be separate from drawing the menu
 // I could have a stack of menus and then I have a hierarchy of menus
 // When I press escape, I pop the top of the stack
@@ -795,6 +828,11 @@ void draw_Menu() {
 	case MM_Sub_Menu_Save_Game:
 	{
 		draw_Sub_Menu_Save_Game();
+		break;
+	}
+	case MM_Sub_Menu_Load_Game:
+	{
+		draw_Sub_Menu_Load_Game();
 		break;
 	}
 	}

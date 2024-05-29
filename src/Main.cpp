@@ -189,40 +189,6 @@ int main(int argc, char** argv) {
             }
 		}
 
-        if (current_Game_State == GS_MENU) {
-            
-        }
-        else if (current_Game_State == GS_LOADGAME) {
-            SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
-
-            int button_Width = 325;
-            int button_Height = 90;
-            int offset = button_Height;
-			V2 button_Pos = { RESOLUTION_WIDTH / 2 , RESOLUTION_HEIGHT / 10 * 3 };
-            int size = 3;
-
-            draw_String_With_Background("Saved Games", (int)button_Pos.x, (int)button_Pos.y, size, true, CI_BLACK, 3);
-            button_Pos.y += offset;
-
-            if (load_Game_Button(SG_SAVE_GAME_1, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
-                load_Game(game_Data, SG_SAVE_GAME_1);
-				current_Game_State = GS_GAMELOOP;
-			}
-			button_Pos.y += offset;
-			if (load_Game_Button(SG_SAVE_GAME_2, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
-                load_Game(game_Data, SG_SAVE_GAME_2);
-				current_Game_State = GS_GAMELOOP;
-			}
-			button_Pos.y += offset;
-			if (load_Game_Button(SG_SAVE_GAME_3, save_Game_Cache_Data, button_Pos, button_Width, button_Height, size)) {
-                load_Game(game_Data, SG_SAVE_GAME_3);
-				current_Game_State = GS_GAMELOOP;
-			}
-			button_Pos.y += offset;
-			if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
-				current_Game_State = GS_MENU;
-			}
-        }
 		else if (current_Game_State == GS_VICTORY || current_Game_State == GS_GAMEOVER) {
 			SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Gameloop"), NULL, NULL);
 			if (current_Game_State == GS_VICTORY) {
@@ -252,7 +218,7 @@ int main(int argc, char** argv) {
                 current_Game_State = GS_MENU;
 			}
 		}
-        else if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED || current_Game_State == GS_SAVEGAME) {
+        else if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED) {
             if (key_States[SDLK_UP].held_Down == true) {
                 time_Scalar += 0.01f;
             }
@@ -730,6 +696,7 @@ int main(int argc, char** argv) {
                 }
 			}
 
+            // DEBUGGING UI CODE
 			draw_Time_Scalar(
 				time_Scalar,
 				(int)((RESOLUTION_WIDTH / 16) * 14),
@@ -739,12 +706,6 @@ int main(int argc, char** argv) {
 
             draw_Player_Hud();
             draw_Particle_Systems(game_Data);
-            if (current_Game_State == GS_PAUSED) {
-
-            }
-            if (current_Game_State == GS_SAVEGAME) {
-
-            }
            
 #if 0
 			if (button_Text(&font_1, "Play", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 150, 100, 3)) {
