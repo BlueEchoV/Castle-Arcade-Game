@@ -641,12 +641,11 @@ void push_To_Menu_Stack(Menu_Mode menu_Mode) {
 
 void pop_Menu_From_Stack() {
 	if (menu_Stack.size() > 0) {
-		menu_Stack.pop();
+		// Make the main menu up poppable
+		if (menu_Stack.top() != MM_Main_Menu) {
+			menu_Stack.pop();
+		}
 	}
-}
-
-size_t get_Menu_Stack_Size() {
-	return menu_Stack.size();
 }
 
 void draw_Game_Loop_UI() {

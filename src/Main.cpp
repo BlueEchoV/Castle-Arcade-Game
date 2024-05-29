@@ -116,14 +116,7 @@ int main(int argc, char** argv) {
         }
 
         if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
-            if (current_Game_State == GS_MENU) {
-                // Don't pop the main menu!
-                if (get_Menu_Stack_Size() != 1) {
-                    pop_Menu_From_Stack();
-                }
-            } else {
-                pop_Menu_From_Stack();
-            }
+            pop_Menu_From_Stack();
         }
 
         current_frame_Hot_Name = next_Frame_Hot_Name;
