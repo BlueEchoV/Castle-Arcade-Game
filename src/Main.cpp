@@ -286,24 +286,6 @@ int main(int argc, char** argv) {
                     game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
                 }
 
-                // Update player projectile positions
-                for (uint32_t i = 0; i < game_Data.player_Proj_IDS.size(); i++) {
-                    Projectile* projectile = get_Projectile(game_Data.projectiles, game_Data.player_Proj_IDS[i]);
-                    if (projectile != nullptr) {
-                        if (!projectile->destroyed) {
-                            update_Projectile_Position(projectile, delta_Time);
-                        }
-                    }
-                }
-				// Update enemy projectile positions
-				for (uint32_t i = 0; i < game_Data.enemy_Proj_IDS.size(); i++) {
-					Projectile* projectile = get_Projectile(game_Data.projectiles, game_Data.enemy_Proj_IDS[i]);
-					if (projectile != nullptr) {
-						if (!projectile->destroyed) {
-							update_Projectile_Position(projectile, delta_Time);
-						}
-					}
-				}
 
 #if 0
 				if (arrow->stuck_To_Unit.is_Sticking) {
@@ -323,10 +305,14 @@ int main(int argc, char** argv) {
 				}
 #endif
 
-                // Update player units
+                // Update Units
                 update_Unit_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
-                // Update enemy units
                 update_Unit_Positions(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
+
+				// Update Projectiles
+                update_Projectile_Positions(game_Data, game_Data.player_Proj_IDS, delta_Time);
+                update_Projectile_Positions(game_Data, game_Data.enemy_Proj_IDS, delta_Time);
+
 
                 // Player Projectile Collision
 				for (uint32_t i = 0; i < game_Data.player_Proj_IDS.size(); i++) {

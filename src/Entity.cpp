@@ -300,14 +300,6 @@ V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider) {
 	return result;
 }
 
-void update_Projectile_Position(Projectile* projectile, float delta_Time) {
-	if (!projectile->stop) {
-		projectile->rigid_Body.velocity.y += projectile->gravity * delta_Time;
-		projectile->rigid_Body.position_WS.x += projectile->rigid_Body.velocity.x * delta_Time;
-		projectile->rigid_Body.position_WS.y += projectile->rigid_Body.velocity.y * delta_Time;
-	}
-}
-
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time) {
 	if (!stop_Unit) {
 		rigid_Body->position_WS.y += Globals::GRAVITY * delta_Time;
@@ -318,14 +310,39 @@ void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Ti
 
 void update_Unit_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time) {
 	for (uint32_t i = 0; i < units.size(); i++) {
-		Unit* player_Unit = get_Unit(game_Data.units, units[i]);
-		if (player_Unit != nullptr) {
-			if (player_Unit->destroyed == false) {
-				update_Unit_Position(
-					&player_Unit->rigid_Body,
-					player_Unit->stop,
-					delta_Time
-				);
+		// Only update if it's a unit storage 
+		if (units[i].storage_Type == ST_Units) {
+			Unit* player_Unit = get_Unit(game_Data.units, units[i]);
+			if (player_Unit != nullptr) {
+				if (!player_Unit->destroyed) {
+					update_Unit_Position(
+						&player_Unit->rigid_Body,
+						player_Unit->stop,
+						delta_Time
+					);
+				}
+			}
+		}
+	}
+}
+
+void update_Projectile_Position(Projectile* projectile, float delta_Time) {
+	if (!projectile->stop) {
+		projectile->rigid_Body.velocity.y += projectile->gravity * delta_Time;
+		projectile->rigid_Body.position_WS.x += projectile->rigid_Body.velocity.x * delta_Time;
+		projectile->rigid_Body.position_WS.y += projectile->rigid_Body.velocity.y * delta_Time;
+	}
+}
+
+void update_Projectile_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time) {
+	for (uint32_t i = 0; i < projectiles.size(); i++) {
+		// Only update if it's a projectiles storage 
+		if (projectiles[i].storage_Type == ST_Projectile) {
+			Projectile* projectile = get_Projectile(game_Data.projectiles, game_Data.player_Proj_IDS[i]);
+			if (projectile != nullptr) {
+				if (!projectile->destroyed) {
+					update_Projectile_Position(projectile, delta_Time);
+				}
 			}
 		}
 	}
