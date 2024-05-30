@@ -316,6 +316,21 @@ void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Ti
 	}
 }
 
+void update_Unit_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time) {
+	for (uint32_t i = 0; i < units.size(); i++) {
+		Unit* player_Unit = get_Unit(game_Data.units, units[i]);
+		if (player_Unit != nullptr) {
+			if (player_Unit->destroyed == false) {
+				update_Unit_Position(
+					&player_Unit->rigid_Body,
+					player_Unit->stop,
+					delta_Time
+				);
+			}
+		}
+	}
+}
+
 Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness, float hp) {
 	Health_Bar result;
 

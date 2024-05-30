@@ -324,31 +324,9 @@ int main(int argc, char** argv) {
 #endif
 
                 // Update player units
-                for (uint32_t i = 0; i < game_Data.player_Unit_IDS.size(); i++) {
-                    Unit* player_Unit = get_Unit(game_Data.units, game_Data.player_Unit_IDS[i]);
-                    if (player_Unit != nullptr) {
-                        if (player_Unit->destroyed == false) {
-                            update_Unit_Position(
-                                &player_Unit->rigid_Body,
-                                player_Unit->stop,
-                                delta_Time
-                            );
-                        }
-                    }
-                }
+                update_Unit_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
                 // Update enemy units
-				for (uint32_t i = 0; i < game_Data.enemy_Unit_IDS.size(); i++) {
-					Unit* enemy_Unit = get_Unit(game_Data.units, game_Data.enemy_Unit_IDS[i]);
-                    if (enemy_Unit != nullptr) {
-                        if (enemy_Unit->destroyed == false) {
-                            update_Unit_Position(
-                                &enemy_Unit->rigid_Body,
-                                enemy_Unit->stop,
-                                delta_Time
-                            );
-                        }
-                    }
-                }
+                update_Unit_Positions(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
 
                 // Player Projectile Collision
 				for (uint32_t i = 0; i < game_Data.player_Proj_IDS.size(); i++) {

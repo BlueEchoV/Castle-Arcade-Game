@@ -305,6 +305,7 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Projectile_Position(Projectile* projectile, float delta_Time);
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time);
+void update_Unit_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
 
 void draw_Castle(Castle* castle, bool flip);
 void draw_Projectile(Projectile* projectile, bool flip);
