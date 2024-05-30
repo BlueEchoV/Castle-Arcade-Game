@@ -129,6 +129,7 @@ struct Projectile {
 	float damage;
 	float speed;
 	float life_Time;
+	Cooldown attached_Entity_Delay;
 	int current_Penetrations;
 	int penetrated_Enemy_IDS_Size;
 	Handle penetrated_Enemy_IDS[25] = {};
@@ -307,6 +308,8 @@ void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Ti
 void update_Unit_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
 void update_Projectile_Position(Projectile* projectile, float delta_Time);
 void update_Projectile_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time);
+
+void check_Projectile_Collisions(Game_Data& game_Data, std::vector<Handle>& projectiles, Castle& target_Castle, std::vector<Handle>& target_Units, float delta_Time);
 
 void draw_Castle(Castle* castle, bool flip);
 void draw_Projectile(Projectile* projectile, bool flip);

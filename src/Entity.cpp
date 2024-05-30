@@ -348,6 +348,116 @@ void update_Projectile_Positions(Game_Data& game_Data, std::vector<Handle>& proj
 	}
 }
 
+void check_Projectile_Collisions(Game_Data& game_Data, std::vector<Handle>& projectiles, Castle& target_Castle, std::vector<Handle>& target_Units, float delta_Time) {
+	// Projectile Collision
+	for (uint32_t i = 0; i < projectiles.size(); i++) 
+	{
+		Projectile* projectile = get_Projectile(game_Data.projectiles, projectiles[i]);
+		if (projectile != nullptr) 
+		{
+			Castle* castle = &target_Castle;
+			if (check_RB_Collision(&projectile->rigid_Body, &castle->rigid_Body)) 
+			{
+				castle->health_Bar.current_HP -= projectile->damage;
+				projectile->destroyed = true;
+			}
+			// Collision with map
+			if (check_Height_Map_Collision(&projectile->rigid_Body, game_Data.terrain_Height_Map))
+			{
+				projectile->stop = true;
+				if (!projectile->can_Attach) 
+				{
+					projectile->destroyed = true;
+				}
+			}
+			// Collision with Units
+			for (uint32_t j = 0; j < target_Units.size(); j++)
+			{
+				Unit* target_Unit = get_Unit(game_Data.units, target_Units[j]);
+				if (target_Unit != nullptr) 
+				{
+					if (check_RB_Collision(&projectile->rigid_Body, &target_Unit->rigid_Body)) 
+					{
+						if (!projectile->stop) 
+						{
+							if (projectile->attached_Entity_Delay.remaining <= 0.0)
+							{
+								bool target_Already_Hit = false;
+								for (int e = 0; e < projectile->penetrated_Enemy_IDS_Size; e++)
+								{
+									if (compare_Handles(projectile->penetrated_Enemy_IDS[e], target_Unit->handle))
+									{
+										target_Already_Hit = true;
+									}
+								}
+								if (!target_Already_Hit && projectile->current_Penetrations >= 0)
+								{
+									projectile->current_Penetrations--;
+									// Guard against the array max size
+									if (projectile->penetrated_Enemy_IDS_Size >= ARRAY_SIZE(projectile->penetrated_Enemy_IDS))
+									{
+										projectile->destroyed = true;
+										continue;
+									}
+									// Store the hit enemy handle
+									projectile->penetrated_Enemy_IDS[projectile->penetrated_Enemy_IDS_Size++] = target_Unit->handle;
+									spawn_Particle_System(
+										game_Data,
+										"PT_BLOOD",
+										target_Unit->rigid_Body.position_WS,
+										0.5,
+										15,
+										15,
+										target_Unit->handle,
+										false
+									);
+									target_Unit->health_Bar.current_HP -= projectile->damage;
+									projectile->parent = target_Unit->handle;
+									// Reset it every time we hit an enemy
+									projectile->attached_Entity_Delay.remaining = projectile->attached_Entity_Delay.duration;
+								}
+								Unit* projectile_Parent_Unit = get_Unit(game_Data.units, projectile->parent);
+								if (projectile_Parent_Unit != nullptr && 
+									projectile->current_Penetrations < 0)
+								{
+									//float radius = get_Sprite_Radius(&projectile->sprite_Sheet_Tracker);
+									// I need to store this value so it doesn't change every frame
+									//float rand_Num = ((float)(rand() % 100) - 50.0f);
+									//float rand_Enemy_X = enemy_Unit_Second_Check->rigid_Body.position_WS.x + rand_Num;
+									if (projectile->can_Attach && projectile_Parent_Unit->attached_Entities_Size < ARRAY_SIZE(projectile_Parent_Unit->attached_Entities))
+									{
+										//if ((projectile->rigid_Body.position_WS.x) > projectile_Parent_Unit->rigid_Body.position_WS.x) {
+										projectile->rigid_Body.position_WS.x = projectile_Parent_Unit->rigid_Body.position_WS.x;
+										V2 offset = projectile->rigid_Body.position_WS - target_Unit->rigid_Body.position_WS;
+										Attached_Entity attached_Entity = return_Attached_Entity(
+											projectile->type,
+											projectile->rigid_Body.angle,
+											offset
+										);
+										target_Unit->attached_Entities[target_Unit->attached_Entities_Size++] = attached_Entity;
+										projectile->destroyed = true;
+										//}
+									}
+									else {
+										projectile->destroyed = true;
+									}
+								}
+								if (projectile->current_Penetrations < 0) {
+									projectile->destroyed = true;
+								}
+							} 
+							else 
+							{
+								projectile->attached_Entity_Delay.remaining -= delta_Time;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness, float hp) {
 	Health_Bar result;
 
@@ -418,6 +528,8 @@ void spawn_Enemy_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
 // The damage of the projectile is based off the unit's damage
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos) {
 	Projectile projectile = {};
+	projectile.attached_Entity_Delay.duration = 0.1f;
+	projectile.attached_Entity_Delay.remaining = 0.0f;
 
 	Projectile_Data projectile_Data = get_Projectile_Data(projectile_Type);
 	projectile.type = projectile_Data.type;
