@@ -662,7 +662,8 @@ int main(int argc, char** argv) {
                         false
                     );
                     // draw_HP_Bar(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
-                    draw_HP_Bar_With_String(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
+                    // draw_HP_Bar_With_Data(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
+                    draw_Unit_Data(*player_Unit, player_Unit->rigid_Body.position_WS);
                 }
             }
 
@@ -680,7 +681,7 @@ int main(int argc, char** argv) {
                         &enemy_Unit->sprite_Sheet_Tracker,
                         true
                     );
-                    draw_HP_Bar(&enemy_Unit->rigid_Body.position_WS, &enemy_Unit->health_Bar);
+                    draw_Unit_Data(*enemy_Unit, enemy_Unit->rigid_Body.position_WS);
                     for (int j = 0; j < enemy_Unit->attached_Entities_Size; j++) {
                         draw_Attached_Entity(&enemy_Unit->attached_Entities[j], enemy_Unit->rigid_Body.position_WS, false);
                     }

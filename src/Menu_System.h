@@ -74,8 +74,8 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, V2 pos, int
 bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, V2 pos, int w, int h, int size);
 
 void outline_Rect(SDL_Rect* rect, int outline_Thickness);
-void draw_HP_Bar(V2* position, Health_Bar* health_Bar);
-void draw_HP_Bar_With_String(V2* position, Health_Bar* health_Bar);
+void draw_HP_Bar(Health_Bar& health_Bar, V2 pos);
+void draw_Unit_Data(Unit& unit, V2 pos);
 
 void draw_Summonable_Player_Units_Buttons();
 void draw_Player_Hud();
