@@ -27,6 +27,7 @@ struct Particle_Data {
 	std::string sprite_Sheet_Name;
 	int size;
 	float particles_Per_Second;
+	int can_Collide_With_Terrain;
 	float max_Fade;
 	float lifetime_Min;
 	float lifetime_Max;
@@ -36,6 +37,7 @@ struct Particle_Data {
 };
 
 struct Particle {
+	bool can_Collide_With_Terrain;
 	int size;
 	float lifetime_Max;
 	float lifetime;
@@ -57,10 +59,11 @@ struct Particle_System {
 	std::vector<Particle> particles;
 };
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle parent = { (uint8_t)-1, (uint8_t)0 }, bool flip_Horizontally = false);
-void update_Particle_System(Particle_System& particle_System, float delta_Time);
+Handle spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle parent = { (uint8_t)-1, (uint8_t)0 }, bool flip_Horizontally = false);
+void update_Particle_System(Game_Data& game_Data, Particle_System& particle_System, float delta_Time);
 void draw_Particle_Systems(Game_Data& game_Data);
 void check_Particle_System_Collision_With_Terrain(Game_Data& game_Data, Particle_System& particle_System);
+void check_Particle_Collision_With_Terrain(Game_Data& game_Data, Particle& particle);
 F_Color HSV_To_RGB(float h, float s, float v);
 
 void load_Particle_Data_CSV(CSV_Data* csv_Data);

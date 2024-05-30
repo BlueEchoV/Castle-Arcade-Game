@@ -111,6 +111,7 @@ int main(int argc, char** argv) {
             }
         }
 
+        // Chose to handle every game state for now
 		if (key_States[SDLK_ESCAPE].pressed_This_Frame) 
         {
             if (current_Game_State == GS_GAMELOOP) 
@@ -160,8 +161,6 @@ int main(int argc, char** argv) {
         // Hot loadinggame_Data.
         attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
 
-        check_Particle_System_Collision_With_Terrain(game_Data, game_Data.particle_Systems.arr[0]);
-
         if (current_Game_State == GS_GAMELOOP) {
             for (uint32_t i = 0; i < game_Data.particle_System_IDS.size(); i++) {
                 Particle_System* particle_System = get_Particle_System(game_Data.particle_Systems, game_Data.particle_System_IDS[i]);
@@ -174,7 +173,7 @@ int main(int argc, char** argv) {
                             particle_System->rect.y = (int)enemy_Unit->rigid_Body.position_WS.y;
                         }
                     }
-                    update_Particle_System(*particle_System, delta_Time);
+                    update_Particle_System(game_Data, *particle_System, delta_Time);
                 }
 			}
         }

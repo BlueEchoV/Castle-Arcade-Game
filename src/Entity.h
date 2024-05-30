@@ -98,7 +98,6 @@ struct Castle {
 	int arrow_Ammo;
 	Cooldown arrow_Ammo_Cooldown;
 
-	Unit_Level_Tracker unit_Level_Tracker;
 	std::vector<Summonable_Unit> summonable_Units;
 
 	// Stored_Units stored_Units;
@@ -254,6 +253,8 @@ struct Game_Data {
 
 	std::vector<int>						terrain_Height_Map;
 	float									timer;
+
+	Handle									particle_System_Rain_ID;
 };
 
 template <typename T>

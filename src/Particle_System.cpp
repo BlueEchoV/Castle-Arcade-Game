@@ -7,8 +7,8 @@
 std::unordered_map<std::string, Particle_Data> particle_Data_Map = {};
 
 const Particle_Data bad_Particle_Data = {
-	// type,		sprite_Sheet,		size	  particles_Per_Second max_Fade_In  lifetime_Min	lifetime_Max  gravity_Multi velocity_Min		velocity_Max
-	  "PT_RAINBOW", "basic_Particle_1", 20,		  1.0f,					0.5f,		3.0f,			3.0f,			1.0f,		{0.0f, 0.0f},	{0.0f, 0.0f}
+	// type,		sprite_Sheet,		size	  particles_Per_Second	collides with terrain max_Fade_In  lifetime_Min	lifetime_Max  gravity_Multi velocity_Min		velocity_Max
+	  "PT_RAINBOW", "basic_Particle_1", 20,		  1.0f,					0,					  0.5f,			3.0f,			3.0f,			1.0f,		{0.0f, 0.0f},	{0.0f, 0.0f}
 };
 
 const Particle_Data& get_Particle_Data(std::string key) {
@@ -23,7 +23,7 @@ const Particle_Data& get_Particle_Data(std::string key) {
 	return bad_Particle_Data;
 }
 
-void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle parent, bool flip_Horizontally) {
+Handle spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 pos, float lifetime, int w, int h, Handle parent, bool flip_Horizontally) {
 	Particle_System particle_System = {};
 
 	particle_System.rect.x = (int)pos.x;
@@ -42,10 +42,12 @@ void spawn_Particle_System(Game_Data& game_Data, std::string particle_Type, V2 p
 	game_Data.particle_Systems.arr[particle_System.handle.index] = particle_System;
 
 	game_Data.particle_System_IDS.push_back(particle_System.handle);
+
+	return particle_System.handle;
 }
 
 // Update 
-void update_Particle_System(Particle_System& particle_System, float delta_Time) {
+void update_Particle_System(Game_Data& game_Data, Particle_System& particle_System, float delta_Time) {
 	const Particle_Data* data = &get_Particle_Data(particle_System.particle_Type);
 	// Store the current position
 	{
@@ -57,6 +59,9 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 			particle_System.particles[i].position.y += (particle_System.particles[i].velocity.y * delta_Time);
 
 			particle_System.particles[i].fade_In -= delta_Time;
+			if (particle_System.particles[i].can_Collide_With_Terrain) {
+				check_Particle_Collision_With_Terrain(game_Data, particle_System.particles[i]);
+			}
 		}
 	}
 	{
@@ -100,6 +105,7 @@ void update_Particle_System(Particle_System& particle_System, float delta_Time) 
 				);
 			particle.size = data->size;
 			particle.fade_In = data->max_Fade;
+			particle.can_Collide_With_Terrain = (bool)data->can_Collide_With_Terrain;
 			particle_System.particles.push_back(particle);
 
 			// Adding it binds it to the frames
@@ -139,6 +145,23 @@ void check_Particle_System_Collision_With_Terrain(Game_Data& game_Data, Particle
 		if (collider_Y >= terrain_Position) {
 			particle->lifetime = 0.0f;
 		}
+	}
+}
+
+void check_Particle_Collision_With_Terrain(Game_Data& game_Data, Particle& particle) {
+	V2 world_Position = particle.position;
+
+	int collider_X = (int)world_Position.x;
+	int collider_Y = (int)world_Position.y;
+
+	if (collider_X < 0 || collider_X >= game_Data.terrain_Height_Map.size()) {
+		return;
+	}
+
+	int terrain_Position = RESOLUTION_HEIGHT - game_Data.terrain_Height_Map[collider_X];
+
+	if (collider_Y >= terrain_Position) {
+		particle.lifetime = 0.0f;
 	}
 }
 
@@ -264,6 +287,7 @@ Type_Descriptor particle_Data_Type_Descriptors[] = {
 	FIELD(Particle_Data, DT_STRING, sprite_Sheet_Name),
 	FIELD(Particle_Data, DT_INT, size),
 	FIELD(Particle_Data, DT_FLOAT, particles_Per_Second),
+	FIELD(Particle_Data, DT_INT, can_Collide_With_Terrain),
 	FIELD(Particle_Data, DT_FLOAT, max_Fade),
 	FIELD(Particle_Data, DT_FLOAT, lifetime_Min),
 	FIELD(Particle_Data, DT_FLOAT, lifetime_Max),

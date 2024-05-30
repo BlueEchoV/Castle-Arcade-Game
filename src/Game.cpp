@@ -223,7 +223,6 @@ void process(Archive* ar, Castle& castle) {
 	process(ar, castle.arrow_Ammo);
 	process(ar, castle.arrow_Ammo_Cooldown);
 
-	process(ar, castle.unit_Level_Tracker);
 }
 
 void process(Archive* ar, Attached_Entity& attached_Entity) {
@@ -354,7 +353,7 @@ void start_Game(Game_Data& game_Data) {
 		LEVEL_1
 	);
 	Handle test_Handle = {};
-	spawn_Particle_System(
+	game_Data.particle_System_Rain_ID = spawn_Particle_System(
 		game_Data,
 		"PT_RAIN",
 		{ RESOLUTION_WIDTH / 2, -50 },
