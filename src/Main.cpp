@@ -424,6 +424,9 @@ int main(int argc, char** argv) {
                                                 projectile->destroyed = true;
                                             }
                                         }
+                                        if (projectile->current_Penetrations < 0) {
+                                            projectile->destroyed = true;
+                                        }
                                     }
                                 }
                             }
