@@ -176,7 +176,7 @@ struct Unit {
 	float current_Attack_Cooldown;
 	float attack_Range;
 	std::string projectile_Type;
-	bool fire_Projectiles;
+	bool fires_Projectiles;
 
 	Attached_Entity attached_Entities[Globals::MAX_ATTACHED_ENTITIES];
 	int attached_Entities_Size = 0;
@@ -279,11 +279,16 @@ void clear_Game_Data(Game_Data* game_Data);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
+void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
+
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map);
 bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2);
 bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_RB, Rigid_Body* target_RB);
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data);
-void check_Height_Map_Collision_With_Units(Game_Data& game_Data, std::vector<Handle>& units);
+void check_Units_Collisions_With_Terrain(Game_Data& game_Data, std::vector<Handle>& units);
+void check_Units_Collisions_With_Castle(Game_Data& game_Data, std::vector<Handle> units, Castle& target_Castle);
+void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle> origin_Units, std::vector<Handle> target_Units);
+void check_Projectiles_Collisions(Game_Data& game_Data, std::vector<Handle>& projectiles, Castle& target_Castle, std::vector<Handle>& target_Units, float delta_Time);
 
 V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
 float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos);
@@ -306,11 +311,9 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time);
-void update_Unit_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
+void update_Units_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
 void update_Projectile_Position(Projectile* projectile, float delta_Time);
-void update_Projectile_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time);
-
-void check_Projectile_Collisions(Game_Data& game_Data, std::vector<Handle>& projectiles, Castle& target_Castle, std::vector<Handle>& target_Units, float delta_Time);
+void update_Projectiles_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time);
 
 void draw_Castle(Castle* castle, bool flip);
 void draw_Projectile(Projectile* projectile, bool flip);

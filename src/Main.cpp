@@ -306,124 +306,31 @@ int main(int argc, char** argv) {
 #endif
 
                 // Update Units
-                update_Unit_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
-                update_Unit_Positions(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
-
+                update_Units_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
+                update_Units_Positions(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
 				// Update Projectiles
-                update_Projectile_Positions(game_Data, game_Data.player_Proj_IDS, delta_Time);
-                update_Projectile_Positions(game_Data, game_Data.enemy_Proj_IDS, delta_Time);
+                update_Projectiles_Positions(game_Data, game_Data.player_Proj_IDS, delta_Time);
+                update_Projectiles_Positions(game_Data, game_Data.enemy_Proj_IDS, delta_Time);
 
                 // Projectile Collision
-                check_Projectile_Collisions(game_Data, game_Data.player_Proj_IDS, game_Data.enemy_Castle, game_Data.enemy_Unit_IDS, delta_Time);
-                check_Projectile_Collisions(game_Data, game_Data.enemy_Proj_IDS, game_Data.player_Castle, game_Data.player_Unit_IDS, delta_Time);
+                check_Projectiles_Collisions(game_Data, game_Data.player_Proj_IDS, game_Data.enemy_Castle, game_Data.enemy_Unit_IDS, delta_Time);
+                check_Projectiles_Collisions(game_Data, game_Data.enemy_Proj_IDS, game_Data.player_Castle, game_Data.player_Unit_IDS, delta_Time);
 
                 // Units colliding with Terrain
-                check_Height_Map_Collision_With_Units(game_Data, game_Data.player_Unit_IDS);
-                check_Height_Map_Collision_With_Units(game_Data, game_Data.enemy_Unit_IDS);
+                check_Units_Collisions_With_Terrain(game_Data, game_Data.player_Unit_IDS);
+                check_Units_Collisions_With_Terrain(game_Data, game_Data.enemy_Unit_IDS);
 
-                // Initialize default values before collision check
-                for (uint32_t i = 0; i < game_Data.units.index_One_Past_Last; i++) {
-                    Unit* player_Unit = get_Unit(game_Data.units, game_Data.units.arr[i].handle);
-                    if (player_Unit != nullptr) {
-                        player_Unit->stop = false;
-                        player_Unit->current_Attack_Cooldown -= delta_Time;
-                    }
-                }
-				for (uint32_t i = 0; i < game_Data.units.index_One_Past_Last; i++) {
-					Unit* enemy_Unit = get_Unit(game_Data.units, game_Data.units.arr[i].handle);
-                    if (enemy_Unit != nullptr) {
-                        enemy_Unit->stop = false;
-                        enemy_Unit->current_Attack_Cooldown -= delta_Time;
-                    }
-                }
+                // Initialize default values before these collision check
+                update_Units_Variables(game_Data, game_Data.player_Unit_IDS, delta_Time);
+                update_Units_Variables(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
 
-                // Rigid Body Collision: Player units with enemy castle
-                for (uint32_t i = 0; i < game_Data.player_Unit_IDS.size(); i++) {
-                    Unit* player_Unit = get_Unit(game_Data.units, game_Data.player_Unit_IDS[i]);
-                    if (player_Unit != nullptr) {
-                        Castle* castle = &game_Data.enemy_Castle;
-                        if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
-                            player_Unit->stop = true;
-                            if (player_Unit->current_Attack_Cooldown < 0) {
-                                player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
-                                castle->health_Bar.current_HP -= player_Unit->damage;
-                            }
-                        }
-                    }
-                }
-                // Rigid Body Collision: Enemy units with player castle
-				for (uint32_t i = 0; i < game_Data.enemy_Unit_IDS.size(); i++) {
-					Unit* enemy_Unit = get_Unit(game_Data.units, game_Data.enemy_Unit_IDS[i]);
-                    if (enemy_Unit != nullptr) {
-                        Castle* castle = &game_Data.player_Castle;
-                        if (check_RB_Collision(&enemy_Unit->rigid_Body, &castle->rigid_Body)) {
-                            enemy_Unit->stop = true;
-                            if (enemy_Unit->current_Attack_Cooldown < 0) {
-                                enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
-                                castle->health_Bar.current_HP -= enemy_Unit->damage;
-                            }
-                        }
-                    }
-                }
-                // Rigid Body Collision: Player units colliding with Enemy units
-                for (uint32_t i = 0; i < game_Data.player_Unit_IDS.size(); i++) {
-                    Unit* player_Unit = get_Unit(game_Data.units, game_Data.player_Unit_IDS[i]);
-                    if (player_Unit != nullptr) {
-						for (uint32_t j = 0; j < game_Data.enemy_Unit_IDS.size(); j++) {
-							Unit* enemy_Unit = get_Unit(game_Data.units, game_Data.enemy_Unit_IDS[j]);
-                            if (enemy_Unit != nullptr) {
-                                if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
-                                    player_Unit->stop = true;
-                                    enemy_Unit->stop = true;
-                                    if (player_Unit->current_Attack_Cooldown <= 0) {
-                                        player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
-                                        enemy_Unit->health_Bar.current_HP -= player_Unit->damage;
-                                    }
-                                    if (enemy_Unit->current_Attack_Cooldown <= 0) {
-                                        enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
-                                        player_Unit->health_Bar.current_HP -= enemy_Unit->damage;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // Units colliding with castle
+                check_Units_Collisions_With_Castle(game_Data, game_Data.player_Unit_IDS, game_Data.enemy_Castle);
+                check_Units_Collisions_With_Castle(game_Data, game_Data.enemy_Unit_IDS, game_Data.player_Castle);
 
-                // Units that fire projectiles
-                for (uint32_t i = 0; i < game_Data.player_Unit_IDS.size(); i++) {
-                    Unit* player_Unit = get_Unit(game_Data.units, game_Data.player_Unit_IDS[i]);
-                    if (player_Unit != nullptr) {
-						for (uint32_t j = 0; j < game_Data.enemy_Unit_IDS.size(); j++) {
-							Unit* enemy_Unit = get_Unit(game_Data.units, game_Data.enemy_Unit_IDS[j]);
-                            if (enemy_Unit != nullptr) {
-                                if (player_Unit->projectile_Type != "") {
-                                    if (check_Attack_Range_Collision(player_Unit->attack_Range, &player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
-                                        // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
-                                        player_Unit->stop = true;
-                                        if (player_Unit->current_Attack_Cooldown <= 0) {
-                                            player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
-                                            V2 aim_Head = enemy_Unit->rigid_Body.position_WS;
-                                            aim_Head.x += get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
-                                            V2 arrow_Spawn_Location = player_Unit->rigid_Body.position_WS;
-                                            arrow_Spawn_Location.y -= get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker) / 2;
-                                            spawn_Projectile(game_Data, N_PLAYER, player_Unit->projectile_Type, player_Unit->damage, arrow_Spawn_Location, aim_Head);
-                                        }
-                                    }
-                                    else {
-                                        // change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
-                                    }
-                                    if (check_RB_Collision(&player_Unit->rigid_Body, &enemy_Unit->rigid_Body)) {
-                                        enemy_Unit->stop = true;
-                                        if (enemy_Unit->current_Attack_Cooldown <= 0) {
-                                            enemy_Unit->current_Attack_Cooldown = enemy_Unit->attack_Cooldown;
-                                            player_Unit->health_Bar.current_HP -= enemy_Unit->damage;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-				}
+                // Units colliding with Units
+                check_Units_Collisions_With_Units(game_Data, game_Data.player_Unit_IDS, game_Data.enemy_Unit_IDS);
+                check_Units_Collisions_With_Units(game_Data, game_Data.enemy_Unit_IDS, game_Data.player_Unit_IDS);
 
                 // TODO: Need to do a attack range collision check for the enemy as well
 				for (uint32_t i = 0; i < game_Data.player_Unit_IDS.size(); i++) {

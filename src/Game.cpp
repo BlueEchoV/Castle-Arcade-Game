@@ -242,7 +242,7 @@ void process(Archive* ar, Unit& unit) {
 	process(ar, unit.current_Attack_Cooldown);
 	process(ar, unit.attack_Range);
 	process(ar, unit.projectile_Type);
-	process(ar, unit.fire_Projectiles);
+	process(ar, unit.fires_Projectiles);
 
 	process(ar, unit.attached_Entities);
 	process(ar, unit.attached_Entities_Size);

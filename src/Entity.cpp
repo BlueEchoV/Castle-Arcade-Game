@@ -308,7 +308,7 @@ void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Ti
 	}
 }
 
-void update_Unit_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time) {
+void update_Units_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time) {
 	for (uint32_t i = 0; i < units.size(); i++) {
 		Unit* player_Unit = get_Unit(game_Data.units, units[i]);
 		if (player_Unit != nullptr) {
@@ -331,7 +331,7 @@ void update_Projectile_Position(Projectile* projectile, float delta_Time) {
 	}
 }
 
-void update_Projectile_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time) {
+void update_Projectiles_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time) {
 	for (uint32_t i = 0; i < projectiles.size(); i++) {
 		Projectile* projectile = get_Projectile(game_Data.projectiles, game_Data.player_Proj_IDS[i]);
 		if (projectile != nullptr) {
@@ -342,7 +342,17 @@ void update_Projectile_Positions(Game_Data& game_Data, std::vector<Handle>& proj
 	}
 }
 
-void check_Projectile_Collisions(Game_Data& game_Data, std::vector<Handle>& projectiles, Castle& target_Castle, std::vector<Handle>& target_Units, float delta_Time) {
+void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time) {
+	for (uint32_t i = 0; i < units.size(); i++) {
+		Unit* unit = get_Unit(game_Data.units, units[i]);
+		if (unit != nullptr) {
+			unit->stop = false;
+			unit->current_Attack_Cooldown -= delta_Time;
+		}
+	}
+}
+
+void check_Projectiles_Collisions(Game_Data& game_Data, std::vector<Handle>& projectiles, Castle& target_Castle, std::vector<Handle>& target_Units, float delta_Time) {
 	// Projectile Collision
 	for (uint32_t i = 0; i < projectiles.size(); i++) 
 	{
@@ -452,7 +462,7 @@ void check_Projectile_Collisions(Game_Data& game_Data, std::vector<Handle>& proj
 	}
 }
 
-void check_Height_Map_Collision_With_Units(Game_Data& game_Data, std::vector<Handle>& units) {
+void check_Units_Collisions_With_Terrain(Game_Data& game_Data, std::vector<Handle>& units) {
 	for (uint32_t i = 0; i < units.size(); i++) {
 		Unit* unit = get_Unit(game_Data.units, units[i]);
 		if (unit != nullptr) {
@@ -461,6 +471,73 @@ void check_Height_Map_Collision_With_Units(Game_Data& game_Data, std::vector<Han
 				float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)unit->rigid_Body.position_WS.x];
 
 				unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
+			}
+		}
+	}
+}
+
+void check_Units_Collisions_With_Castle(Game_Data& game_Data, std::vector<Handle> units, Castle& target_Castle) {
+	for (uint32_t i = 0; i < units.size(); i++) {
+		Unit* unit = get_Unit(game_Data.units, units[i]);
+		if (unit != nullptr) {
+			Castle* castle = &target_Castle;
+			//if (check_RB_Collision(&unit->rigid_Body, &castle->rigid_Body)) {
+			if (check_Attack_Range_Collision(unit->attack_Range, &unit->rigid_Body, &castle->rigid_Body)) {
+				unit->stop = true;
+				if (!unit->fires_Projectiles) {
+					if (unit->current_Attack_Cooldown < 0) {
+						unit->current_Attack_Cooldown = unit->attack_Cooldown;
+						castle->health_Bar.current_HP -= unit->damage;
+					}
+				} else {
+					if (unit->current_Attack_Cooldown <= 0) {
+						unit->current_Attack_Cooldown = unit->attack_Cooldown;
+						V2 aim_Head = castle->rigid_Body.position_WS;
+						aim_Head.x += get_Sprite_Radius(&castle->sprite_Sheet_Tracker);
+						V2 arrow_Spawn_Location = unit->rigid_Body.position_WS;
+						arrow_Spawn_Location.y -= get_Sprite_Radius(&castle->sprite_Sheet_Tracker) / 2;
+						spawn_Projectile(game_Data, N_PLAYER, unit->projectile_Type, unit->damage, arrow_Spawn_Location, aim_Head);
+					}
+				}
+			}
+		}
+	}
+}
+
+void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle> origin_Units, std::vector<Handle> target_Units) {
+	for (uint32_t i = 0; i < origin_Units.size(); i++) {
+		Unit* origin_Unit = get_Unit(game_Data.units, origin_Units[i]);
+		// Check if the unit is a ranged unit or not
+		if (origin_Unit != nullptr) {
+			for (uint32_t j = 0; j < target_Units.size(); j++) {
+				Unit* target_Unit = get_Unit(game_Data.units, target_Units[j]);
+				if (target_Unit != nullptr) {
+					if (check_Attack_Range_Collision(origin_Unit->attack_Range, &origin_Unit->rigid_Body, &target_Unit->rigid_Body)) {
+						origin_Unit->stop = true;
+						if (!origin_Unit->fires_Projectiles) {
+							if (origin_Unit->current_Attack_Cooldown <= 0) {
+								origin_Unit->current_Attack_Cooldown = origin_Unit->attack_Cooldown;
+								target_Unit->health_Bar.current_HP -= origin_Unit->damage;
+							}
+						}
+						else {
+							// change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
+							if (origin_Unit->current_Attack_Cooldown <= 0) {
+								origin_Unit->current_Attack_Cooldown = origin_Unit->attack_Cooldown;
+								V2 aim_Head = target_Unit->rigid_Body.position_WS;
+								aim_Head.x += get_Sprite_Radius(&target_Unit->sprite_Sheet_Tracker);
+								V2 arrow_Spawn_Location = origin_Unit->rigid_Body.position_WS;
+								arrow_Spawn_Location.y -= get_Sprite_Radius(&target_Unit->sprite_Sheet_Tracker) / 2;
+								spawn_Projectile(game_Data, N_PLAYER, origin_Unit->projectile_Type, origin_Unit->damage, arrow_Spawn_Location, aim_Head);
+							}
+							// change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
+						}
+					}
+					//if (target_Unit->current_Attack_Cooldown <= 0) {
+					//	target_Unit->current_Attack_Cooldown = target_Unit->attack_Cooldown;
+					//	origin_Unit->health_Bar.current_HP -= target_Unit->damage;
+					//}
+				}
 			}
 		}
 	}
@@ -541,6 +618,7 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 
 	Projectile_Data projectile_Data = get_Projectile_Data(projectile_Type);
 	projectile.type = projectile_Data.type;
+
 	projectile.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(projectile_Data.type);
 	projectile.rigid_Body = create_Rigid_Body(origin_Pos, true);
 
@@ -612,6 +690,9 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	if (unit_Data.projectile_Type != "") {
 		Projectile_Data projectile_Data = get_Projectile_Data(unit_Data.projectile_Type);
 		unit.projectile_Type = projectile_Data.type;
+		unit.fires_Projectiles = true;
+	} else {
+		unit.fires_Projectiles = false;
 	}
 
 	add_Collider(&unit.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
