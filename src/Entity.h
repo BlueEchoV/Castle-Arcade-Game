@@ -308,6 +308,7 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 // Anytime something is different in the spawn functions, add it to the .csv file. All units should 
 // be treated the exact same.
 void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
+void spawn_Unit_At_Castle(Game_Data& game_Data, Summonable_Unit& summonable_Unit);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time);

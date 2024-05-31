@@ -714,6 +714,33 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	// Could push onto the active_Entites vector here as well
 }
 
+void spawn_Unit_At_Castle(Game_Data& game_Data, Summonable_Unit& summonable_Unit) {
+	Castle* origin_Castle;
+	Castle* target_Castle;
+	if (summonable_Unit.nation == N_PLAYER) {
+		origin_Castle = &game_Data.player_Castle;
+		target_Castle = &game_Data.enemy_Castle;
+	} else if (summonable_Unit.nation == N_ENEMY) {
+		origin_Castle = &game_Data.enemy_Castle;
+		target_Castle = &game_Data.player_Castle;
+	} else {
+		assert(false);
+		return;
+	}
+	spawn_Unit(
+		game_Data,
+		summonable_Unit.nation,
+		summonable_Unit.name,
+		summonable_Unit.level,
+		{
+			(float)origin_Castle->rigid_Body.position_WS.x,
+			((float)game_Data.terrain_Height_Map[(int)origin_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&origin_Castle->sprite_Sheet_Tracker))
+		},
+		target_Castle->rigid_Body.position_WS
+	);
+	summonable_Unit.is_Pressed = false;
+}
+
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color) {
 	float total_Lines = 30;
 	float line_Step = (float)(2 * M_PI) / total_Lines;

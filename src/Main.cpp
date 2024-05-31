@@ -243,23 +243,10 @@ int main(int argc, char** argv) {
                 }
                 game_Data.player_Castle.arrow_Ammo_Cooldown.remaining -= delta_Time;
 
-                // Spawn Player Warriors
+                // Spawn Player Units
                 for (Summonable_Unit& summonable_Unit : game_Data.player_Castle.summonable_Units) {
-					Castle* player_Castle = &game_Data.player_Castle;
-					Castle* enemy_Castle = &game_Data.enemy_Castle;
                     if (summonable_Unit.is_Pressed) {
-						spawn_Unit(
-							game_Data,
-                            summonable_Unit.nation,
-                            summonable_Unit.name,
-                            summonable_Unit.level,
-							{
-								(float)player_Castle->rigid_Body.position_WS.x,
-								((float)game_Data.terrain_Height_Map[(int)player_Castle->rigid_Body.position_WS.x] + get_Sprite_Radius(&player_Castle->sprite_Sheet_Tracker))
-							},
-							enemy_Castle->rigid_Body.position_WS
-						);
-                        summonable_Unit.is_Pressed = false;
+                        spawn_Unit_At_Castle(game_Data, summonable_Unit);
                     }
                 }
 
@@ -275,7 +262,7 @@ int main(int argc, char** argv) {
 					spawn_Unit(
 						game_Data,
 						N_ENEMY,
-						"warrior",
+						"archer",
                         1,
                         { x_Pos, y_Pos },
 						player_Castle->rigid_Body.position_WS
@@ -320,7 +307,7 @@ int main(int argc, char** argv) {
                 check_Units_Collisions_With_Terrain(game_Data, game_Data.player_Unit_IDS);
                 check_Units_Collisions_With_Terrain(game_Data, game_Data.enemy_Unit_IDS);
 
-                // Initialize default values before these collision check
+                // Initialize default values before the below collision checks
                 update_Units_Variables(game_Data, game_Data.player_Unit_IDS, delta_Time);
                 update_Units_Variables(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
 
@@ -332,7 +319,7 @@ int main(int argc, char** argv) {
                 check_Units_Collisions_With_Units(game_Data, game_Data.player_Unit_IDS, game_Data.enemy_Unit_IDS);
                 check_Units_Collisions_With_Units(game_Data, game_Data.enemy_Unit_IDS, game_Data.player_Unit_IDS);
 
-                // TODO: Need to do a attack range collision check for the enemy as well
+                // Updating animations
 				for (uint32_t i = 0; i < game_Data.player_Unit_IDS.size(); i++) {
 					Unit* player_Unit = get_Unit(game_Data.units, game_Data.player_Unit_IDS[i]);
                     if (player_Unit != nullptr) {
@@ -351,6 +338,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
+
             }
 
             if (game_Data.player_Castle.health_Bar.current_HP <= 0) {
