@@ -315,31 +315,11 @@ int main(int argc, char** argv) {
 
                 // Projectile Collision
                 check_Projectile_Collisions(game_Data, game_Data.player_Proj_IDS, game_Data.enemy_Castle, game_Data.enemy_Unit_IDS, delta_Time);
+                check_Projectile_Collisions(game_Data, game_Data.enemy_Proj_IDS, game_Data.player_Castle, game_Data.player_Unit_IDS, delta_Time);
 
-				// Collision player units with map
-				for (uint32_t i = 0; i < game_Data.player_Unit_IDS.size(); i++) {
-					Unit* player_Unit = get_Unit(game_Data.units, game_Data.player_Unit_IDS[i]);
-                    if (player_Unit != nullptr) {
-                        if (check_Height_Map_Collision(&player_Unit->rigid_Body, game_Data.terrain_Height_Map)) {
-                            float radius = get_Sprite_Radius(&player_Unit->sprite_Sheet_Tracker);
-                            float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)player_Unit->rigid_Body.position_WS.x];
-
-                            player_Unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
-                        }
-                    }
-				}
-                // Collision enemy units with map
-				for (uint32_t i = 0; i < game_Data.enemy_Unit_IDS.size(); i++) {
-					Unit* enemy_Unit = get_Unit(game_Data.units, game_Data.enemy_Unit_IDS[i]);
-                    if (enemy_Unit != nullptr) {
-                        if (check_Height_Map_Collision(&enemy_Unit->rigid_Body, game_Data.terrain_Height_Map)) {
-                            float radius = get_Sprite_Radius(&enemy_Unit->sprite_Sheet_Tracker);
-                            float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)enemy_Unit->rigid_Body.position_WS.x];
-
-                            enemy_Unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
-                        }
-                    }
-                }
+                // Units colliding with Terrain
+                check_Height_Map_Collision_With_Units(game_Data, game_Data.player_Unit_IDS);
+                check_Height_Map_Collision_With_Units(game_Data, game_Data.enemy_Unit_IDS);
 
                 // Initialize default values before collision check
                 for (uint32_t i = 0; i < game_Data.units.index_One_Past_Last; i++) {

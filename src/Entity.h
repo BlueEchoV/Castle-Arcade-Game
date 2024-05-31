@@ -283,6 +283,7 @@ bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height
 bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2);
 bool check_Attack_Range_Collision(float origin_Attack_Range, Rigid_Body* origin_RB, Rigid_Body* target_RB);
 void check_Player_Unit_Castle_Collision(Game_Data& game_Data);
+void check_Height_Map_Collision_With_Units(Game_Data& game_Data, std::vector<Handle>& units);
 
 V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
 float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos);

@@ -310,17 +310,14 @@ void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Ti
 
 void update_Unit_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time) {
 	for (uint32_t i = 0; i < units.size(); i++) {
-		// Only update if it's a unit storage 
-		if (units[i].storage_Type == ST_Units) {
-			Unit* player_Unit = get_Unit(game_Data.units, units[i]);
-			if (player_Unit != nullptr) {
-				if (!player_Unit->destroyed) {
-					update_Unit_Position(
-						&player_Unit->rigid_Body,
-						player_Unit->stop,
-						delta_Time
-					);
-				}
+		Unit* player_Unit = get_Unit(game_Data.units, units[i]);
+		if (player_Unit != nullptr) {
+			if (!player_Unit->destroyed) {
+				update_Unit_Position(
+					&player_Unit->rigid_Body,
+					player_Unit->stop,
+					delta_Time
+				);
 			}
 		}
 	}
@@ -336,13 +333,10 @@ void update_Projectile_Position(Projectile* projectile, float delta_Time) {
 
 void update_Projectile_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time) {
 	for (uint32_t i = 0; i < projectiles.size(); i++) {
-		// Only update if it's a projectiles storage 
-		if (projectiles[i].storage_Type == ST_Projectile) {
-			Projectile* projectile = get_Projectile(game_Data.projectiles, game_Data.player_Proj_IDS[i]);
-			if (projectile != nullptr) {
-				if (!projectile->destroyed) {
-					update_Projectile_Position(projectile, delta_Time);
-				}
+		Projectile* projectile = get_Projectile(game_Data.projectiles, game_Data.player_Proj_IDS[i]);
+		if (projectile != nullptr) {
+			if (!projectile->destroyed) {
+				update_Projectile_Position(projectile, delta_Time);
 			}
 		}
 	}
@@ -453,6 +447,20 @@ void check_Projectile_Collisions(Game_Data& game_Data, std::vector<Handle>& proj
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+void check_Height_Map_Collision_With_Units(Game_Data& game_Data, std::vector<Handle>& units) {
+	for (uint32_t i = 0; i < units.size(); i++) {
+		Unit* unit = get_Unit(game_Data.units, units[i]);
+		if (unit != nullptr) {
+			if (check_Height_Map_Collision(&unit->rigid_Body, game_Data.terrain_Height_Map)) {
+				float radius = get_Sprite_Radius(&unit->sprite_Sheet_Tracker);
+				float pos_Y_HM = (float)game_Data.terrain_Height_Map[(int)unit->rigid_Body.position_WS.x];
+
+				unit->rigid_Body.position_WS.y = ((RESOLUTION_HEIGHT - pos_Y_HM) - radius);
 			}
 		}
 	}
