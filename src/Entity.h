@@ -108,6 +108,7 @@ struct Summonable_Unit {
 	int level = 1;
 	bool is_Pressed;
 	Nation nation;
+	float food_Cost;
 };
 
 struct Castle {
@@ -171,6 +172,8 @@ struct Projectile {
 // Applies to all units
 struct Unit_Data {
 	std::string type;
+	// Stored in the summonable unit struct
+	float food_Cost;
 	std::string sprite_Sheet_Name;
 	std::string projectile_Type;
 	float base_HP;
@@ -307,6 +310,7 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
 void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
 void update_Resource_Bar(Resource_Bar& bar, float delta_Time);
+void update_Nation_Resource_Bars(/*Game_Data& game_Data, */Castle& castle, /*std::vector<Handle>& units,*/ float delta_Time);
 
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map);
 bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2);

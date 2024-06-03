@@ -47,8 +47,6 @@ int main(int argc, char** argv) {
     sprite_Sheet_CSV_Data.file_Path = "data/Sprite_Sheet_Data.csv";
 	load_Sprite_Sheet_Data_CSV(&sprite_Sheet_CSV_Data);
 
-	start_Game(game_Data);
-
     // Buttons
     SDL_Rect test = {};
     test.x = RESOLUTION_WIDTH / 2;
@@ -78,6 +76,8 @@ int main(int argc, char** argv) {
     CSV_Data projectile_CSV_Data = create_Open_CSV_File("data/Projectile_Data.csv");
     load_Projectile_Data_CSV(&projectile_CSV_Data);
     close_CSV_File(&projectile_CSV_Data);
+
+	start_Game(game_Data);
 
     while (running) {
         mouse_Down_This_Frame = false;
@@ -244,11 +244,13 @@ int main(int argc, char** argv) {
 
                 // Spawn Player Units
                 for (Summonable_Unit& summonable_Unit : game_Data.player_Castle.summonable_Units) {
-                    if (summonable_Unit.is_Pressed) {
+                    Resource_Bar* food_Bar = &game_Data.player_Castle.food_Bar;
+                    if (summonable_Unit.is_Pressed && food_Bar->current_Resource >= summonable_Unit.food_Cost) {
+                        food_Bar->current_Resource -= summonable_Unit.food_Cost;
                         spawn_Unit_At_Castle(game_Data, summonable_Unit);
                     }
                 }
-
+                // Spawn Enemy Units
 				for (Summonable_Unit& summonable_Unit : game_Data.enemy_Castle.summonable_Units) {
 					if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
 						spawn_Unit_At_Castle(game_Data, summonable_Unit);
@@ -258,6 +260,7 @@ int main(int argc, char** argv) {
 			    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
 
                 update_Resource_Bar(game_Data.player_Castle.food_Bar, delta_Time);
+                update_Resource_Bar(game_Data.enemy_Castle.food_Bar, delta_Time);
 
                 // Update Units
                 update_Units_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
@@ -322,10 +325,6 @@ int main(int argc, char** argv) {
             draw_Layer(get_Sprite_Sheet_Texture("collision_Terrain_1"));
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
-            // Debugging code for testing the new food system
-            if (button_Text("Consume Resource", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 300, 50, 2)) {
-                game_Data.player_Castle.food_Bar.current_Resource -= 25;
-            }
 
             SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 

@@ -4,8 +4,8 @@
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_Unit_Data = {
-	//	Type		sprite_Sheet	max_Resource	damage	speed	attack_Cooldown		attack_Range	spell_Type;
-	   "warrior",	"warrior_Stop", "",		100,	25,		50,		1.0f,				150//,		    ""         
+	//	Type		food_Cost	sprite_Sheet	max_Resource	damage	speed	attack_Cooldown		attack_Range	spell_Type;
+	   "warrior",	25,			"warrior_Stop", "",		100,	25,		50,		1.0f,				150//,		    ""         
 };
 
 const Unit_Data& get_Unit_Data(std::string key) {
@@ -184,6 +184,8 @@ void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::str
 	summonable_Unit.level = 1;
 	summonable_Unit.name = unit_Name;
 	summonable_Unit.nation = nation;
+	Unit_Data data = get_Unit_Data(unit_Name);
+	summonable_Unit.food_Cost = data.food_Cost;
 
 	if (summonable_Unit.nation == N_PLAYER) {
 		game_Data.player_Castle.summonable_Units.push_back(summonable_Unit);
@@ -360,12 +362,23 @@ void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, fl
 
 void update_Resource_Bar(Resource_Bar& bar, float delta_Time) {
 	bar.accumulated_Time += delta_Time;
-	// Every second
+	// It seems appropriate to keep this value within the scope of this function for now
 	float invervals = 100;
-	if (bar.accumulated_Time >= (1 / invervals)) {
+	float inverval_Time = 1 / invervals;
+	// Every second (While loop incase delta_Time is large)
+	while (bar.accumulated_Time >= inverval_Time) {
 		bar.current_Resource += (bar.regen / invervals);
-		bar.accumulated_Time -= (1 / invervals);
+		bar.accumulated_Time -= inverval_Time;
 	}
+}
+
+void update_Nation_Resource_Bars(/*Game_Data& game_Data, */Castle& castle, /*std::vector<Handle>& units,*/ float delta_Time) {
+	update_Resource_Bar(castle.food_Bar, delta_Time);
+	// For if I wanted to add unit regen 
+	//for (Handle handle : units) {
+	//	Unit* unit = get_Unit(game_Data.units, handle);
+	//	update_Resource_Bar(unit->health_Bar, delta_Time);
+	//}
 }
 
 void check_Projectiles_Collisions(Game_Data& game_Data, std::vector<Handle>& projectiles, Castle& target_Castle, std::vector<Handle>& target_Units, float delta_Time) {
@@ -988,6 +1001,7 @@ float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos) {
 // Array size will be determined based off total number of initializations
 Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_STRING, type),
+	FIELD(Unit_Data, DT_FLOAT, food_Cost),
 	FIELD(Unit_Data, DT_STRING, sprite_Sheet_Name),
 	FIELD(Unit_Data, DT_STRING, projectile_Type),
 	FIELD(Unit_Data, DT_FLOAT, base_HP),
