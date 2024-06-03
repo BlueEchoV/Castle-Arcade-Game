@@ -573,8 +573,10 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	return tokens[0];
 }
 
-void spawn_Player_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
+void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Level level) {
 	Castle castle = {};
+
+	castle.nation = nation;
 
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
 
@@ -588,28 +590,11 @@ void spawn_Player_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
 	castle.arrow_Ammo_Cooldown = castle_Stats_Array[level].arrow_Ammo_Cooldown;
 
 	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
-
-	game_Data.player_Castle = castle;
-}
-
-void spawn_Enemy_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
-	Castle castle = {};
-
-	// Would be the appropriate way to do it but it breaks the serialization
-	// castle.stats_Info = &castle_Stats_Array[level];
-
-	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
-
-	castle.rigid_Body = create_Rigid_Body(position_WS, false);
-
-	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp, RBCS_HP_Bar);
-
-	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
-	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
-
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
-
-	game_Data.enemy_Castle = castle;
+	if (castle.nation == N_PLAYER) {
+		game_Data.player_Castle = castle;
+	} else if (castle.nation == N_ENEMY) {
+		game_Data.enemy_Castle = castle;
+	}
 }
 
 // The damage of the projectile is based off the unit's damage

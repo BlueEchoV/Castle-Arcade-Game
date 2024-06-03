@@ -76,6 +76,8 @@ struct Cooldown {
 
 struct Castle_Stats {
 	float hp;
+	float food_Bar_Max;
+	float food_Bar_Regen_Rate;
 
 	Cooldown fire_Cooldown;
 	Cooldown spawn_Cooldown;
@@ -83,13 +85,13 @@ struct Castle_Stats {
 	int arrow_Ammo;
 	Cooldown arrow_Ammo_Cooldown;
 
-	Stored_Units stored_Units;
+	// Stored_Units stored_Units;
 };
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
-	// hp    |    fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown  |  stored_Units
-	{  100.0f,    {0.1f, 0.0f},     {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     },
-	{  100.0f,    {1.0f, 0.0f},      {1.0f, 0.0f},       0,                {0.25f, 0.0f},          {0, 3}     }
+	// hp    |    food_Bar_Max | food_Bar_Regen_Rate |fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown
+	{  100.0f,    100.0f,		 5.0f,				  {0.1f, 0.0f},     {1.0f, 0.0f},        0,                {0.25f, 0.0f}},
+	{  100.0f,    100.0f,		 5.0f,				  {1.0f, 0.0f},     {1.0f, 0.0f},        0,                {0.25f, 0.0f}}
 };
 
 struct Unit_Level_Tracker {
@@ -106,6 +108,7 @@ struct Summonable_Unit {
 };
 
 struct Castle {
+	Nation nation;
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
 	Resource_Bar health_Bar;
@@ -117,6 +120,7 @@ struct Castle {
 	Cooldown arrow_Ammo_Cooldown;
 
 	std::vector<Summonable_Unit> summonable_Units;
+	Resource_Bar food_Bar;
 
 	// Stored_Units stored_Units;
 };
@@ -319,8 +323,7 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 
 void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
 
-void spawn_Player_Castle(Game_Data& game_Data, V2 position_WS, Level level);
-void spawn_Enemy_Castle(Game_Data& game_Data, V2 position_WS, Level level);
+void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Level level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.
