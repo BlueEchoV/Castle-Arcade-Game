@@ -193,8 +193,8 @@ void process(Archive* ar, Rigid_Body& rigid_Body) {
 }
 
 void process(Archive* ar, Resource_Bar& health_Bar) {
-	process(ar, health_Bar.max_HP);
-	process(ar, health_Bar.current_HP);
+	process(ar, health_Bar.max_Resource);
+	process(ar, health_Bar.current_Resource);
 	process(ar, health_Bar.width);
 	process(ar, health_Bar.height);
 	process(ar, health_Bar.y_Offset);

@@ -4,7 +4,7 @@
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_Unit_Data = {
-	//	Type		sprite_Sheet	max_HP	damage	speed	attack_Cooldown		attack_Range	spell_Type;
+	//	Type		sprite_Sheet	max_Resource	damage	speed	attack_Cooldown		attack_Range	spell_Type;
 	   "warrior",	"warrior_Stop", "",		100,	25,		50,		1.0f,				150//,		    ""         
 };
 
@@ -67,7 +67,7 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		if (unit == nullptr) {
 			return true;
 		}
-		if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
+		if (unit->destroyed || unit->health_Bar.current_Resource <= 0) {
 			delete_Handle(game_Data.units, unit->handle);
 			*unit = {};
 			// Remove the handle from player_Unit_IDS
@@ -93,7 +93,7 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		if (unit == nullptr) {
 			return true;
 		}
-		if (unit->destroyed || unit->health_Bar.current_HP <= 0) {
+		if (unit->destroyed || unit->health_Bar.current_Resource <= 0) {
 			delete_Handle(game_Data.units, unit->handle);
 			*unit = {};
 			return true;
@@ -135,6 +135,7 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
 
 void draw_Castle(Castle* castle, bool flip) {
 	draw_Resource_Bar(castle->health_Bar, castle->rigid_Body.position_WS);
+	draw_Resource_Bar(castle->food_Bar, castle->rigid_Body.position_WS);
 	SDL_Rect temp = {};
 	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(castle->sprite_Sheet_Tracker.sprite_Sheet_Name);
 	Sprite* sprite = &sprite_Sheet->sprites[0];
@@ -363,7 +364,7 @@ void check_Projectiles_Collisions(Game_Data& game_Data, std::vector<Handle>& pro
 			Castle* castle = &target_Castle;
 			if (check_RB_Collision(&projectile->rigid_Body, &castle->rigid_Body)) 
 			{
-				castle->health_Bar.current_HP -= projectile->damage;
+				castle->health_Bar.current_Resource -= projectile->damage;
 				projectile->destroyed = true;
 			}
 			// Collision with map
@@ -416,7 +417,7 @@ void check_Projectiles_Collisions(Game_Data& game_Data, std::vector<Handle>& pro
 									//	target_Unit->handle,
 									//	false
 									//);
-									target_Unit->health_Bar.current_HP -= projectile->damage;
+									target_Unit->health_Bar.current_Resource -= projectile->damage;
 									projectile->parent = target_Unit->handle;
 									// Reset it every time we hit an enemy
 									projectile->attached_Entity_Delay.remaining = projectile->attached_Entity_Delay.duration;
@@ -488,7 +489,7 @@ void check_Units_Collisions_With_Castle(Game_Data& game_Data, std::vector<Handle
 				if (!unit->fires_Projectiles) {
 					if (unit->current_Attack_Cooldown < 0) {
 						unit->current_Attack_Cooldown = unit->attack_Cooldown;
-						castle->health_Bar.current_HP -= unit->damage;
+						castle->health_Bar.current_Resource -= unit->damage;
 					}
 				} else {
 					if (unit->current_Attack_Cooldown <= 0) {
@@ -519,7 +520,7 @@ void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle>
 						if (!origin_Unit->fires_Projectiles) {
 							if (origin_Unit->current_Attack_Cooldown <= 0) {
 								origin_Unit->current_Attack_Cooldown = origin_Unit->attack_Cooldown;
-								target_Unit->health_Bar.current_HP -= origin_Unit->damage;
+								target_Unit->health_Bar.current_Resource -= origin_Unit->damage;
 							}
 						}
 						else {
@@ -537,7 +538,7 @@ void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle>
 					}
 					//if (target_Unit->current_Attack_Cooldown <= 0) {
 					//	target_Unit->current_Attack_Cooldown = target_Unit->attack_Cooldown;
-					//	origin_Unit->health_Bar.current_HP -= target_Unit->damage;
+					//	origin_Unit->health_Bar.current_Resource -= target_Unit->damage;
 					//}
 				}
 			}
@@ -552,8 +553,8 @@ Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickn
 	result.height = height;
 	result.y_Offset = y_Offset;
 	result.thickness = thickness;
-	result.max_HP = hp;
-	result.current_HP = result.max_HP;
+	result.max_Resource = hp;
+	result.current_Resource = result.max_Resource;
 	result.selected_Colors = colors;
 
 	return result;
@@ -584,6 +585,7 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Level lev
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
 	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp, RBCS_HP_Bar);
+	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, castle_Stats_Array[level].food_Bar_Max, RBCS_Mana_Bar);
 
 	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
 	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
@@ -806,7 +808,7 @@ void draw_Resource_Bar(Resource_Bar& resource_Bar, V2 pos) {
 	Color left_Side = resource_Bar_Colors[resource_Bar.selected_Colors].left_Rect;
 	Color right_Side = resource_Bar_Colors[resource_Bar.selected_Colors].right_Rect;
 
-	float remaining_HP_Percent = (resource_Bar.current_HP / resource_Bar.max_HP);
+	float remaining_HP_Percent = (resource_Bar.current_Resource / resource_Bar.max_Resource);
 	if (remaining_HP_Percent < 0) {
 		remaining_HP_Percent = 0;
 	}
@@ -942,7 +944,7 @@ void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 			player_Unit->stop = true;
 			if (player_Unit->current_Attack_Cooldown < 0) {
 				player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
-				castle->health_Bar.current_HP -= player_Unit->damage;
+				castle->health_Bar.current_Resource -= player_Unit->damage;
 			}
 		}
 	}

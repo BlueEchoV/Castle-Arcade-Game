@@ -17,8 +17,8 @@ enum Resource_Bar_Color_Selector {
 };
 
 struct Resource_Bar {
-	float max_HP;
-	float current_HP;
+	float max_Resource;
+	float current_Resource;
 	int width;
 	int height;
 	int y_Offset;
@@ -27,9 +27,9 @@ struct Resource_Bar {
 };
 
 const Resource_Bar_Color resource_Bar_Colors[RBCS_Total] = {
-	// Left rect	 Right rect
-	{ {0, 255, 0},	{255, 0, 0} }, // HP Bar
-	{ {0, 0, 255},	{255, 0, 0} }  // Mana Bar
+	// Left rect		 Right rect
+	{ {0, 255, 0},		{255, 0, 0} }, // HP Bar
+	{ {177, 156, 217},	{255, 255, 255} }  // Mana Bar
 };
 
 enum Nation {

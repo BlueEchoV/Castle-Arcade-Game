@@ -492,7 +492,7 @@ void draw_Unit_Data(Unit& unit, V2 pos) {
 	// HP Text
 	// Set the color mod for the font
 	SDL_SetTextureColorMod(font_1.texture, 0, 0, 0);
-	std::string hp_String = std::to_string((int)unit.health_Bar.current_HP);
+	std::string hp_String = std::to_string((int)unit.health_Bar.current_Resource);
 	draw_String(hp_String.c_str(), (int)pos.x, ((int)pos.y - unit.health_Bar.y_Offset) + (unit.health_Bar.height / 2), 1, true);
 	// Reset the color mod for the font
 	SDL_SetTextureColorMod(font_1.texture, 255, 255, 255);

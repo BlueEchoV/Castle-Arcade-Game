@@ -306,11 +306,11 @@ int main(int argc, char** argv) {
 
             }
 
-            if (game_Data.player_Castle.health_Bar.current_HP <= 0) {
+            if (game_Data.player_Castle.health_Bar.current_Resource <= 0) {
                 push_To_Menu_Stack(MM_Menu_Game_Over_Screen);
                 current_Game_State = GS_GAMEOVER;
             }
-			if (game_Data.enemy_Castle.health_Bar.current_HP <= 0) {
+			if (game_Data.enemy_Castle.health_Bar.current_Resource <= 0) {
                 push_To_Menu_Stack(MM_Menu_Victory_Screen);
                 current_Game_State = GS_VICTORY;
 			}
