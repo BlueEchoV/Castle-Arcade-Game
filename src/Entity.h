@@ -5,27 +5,36 @@
 #include <stdint.h>
 #include <assert.h>
 
-enum Nation {
-	N_PLAYER,
-	N_ENEMY
+struct Resource_Bar_Color {
+	Color left_Rect;
+	Color right_Rect;
 };
 
-struct Health_Bar {
+enum Resource_Bar_Color_Selector {
+	RBCS_HP_Bar,
+	RBCS_Mana_Bar,
+	RBCS_Total
+};
+
+struct Resource_Bar {
 	float max_HP;
 	float current_HP;
 	int width;
 	int height;
 	int y_Offset;
 	int thickness;
+	Resource_Bar_Color_Selector selected_Colors;
 };
 
-struct Mana_Bar {
-	float max_Mana;
-	float current_Mana;
-	int width;
-	int height;
-	int y_Offset;
-	int thickness;
+const Resource_Bar_Color resource_Bar_Colors[RBCS_Total] = {
+	// Left rect	 Right rect
+	{ {0, 255, 0},	{0, 255, 0} }, // HP Bar
+	{ {0, 0, 255},	{0, 255, 0} }  // Mana Bar
+};
+
+enum Nation {
+	N_PLAYER,
+	N_ENEMY
 };
 
 struct Collider_Data {
@@ -99,7 +108,7 @@ struct Summonable_Unit {
 struct Castle {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
-	Health_Bar health_Bar;
+	Resource_Bar health_Bar;
 
 	Cooldown fire_Cooldown;
 	Cooldown spawn_Cooldown;
@@ -178,7 +187,7 @@ struct Unit {
 	Nation nation;
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
-	Health_Bar health_Bar;
+	Resource_Bar health_Bar;
 
 	float speed;
 	float damage;
@@ -335,7 +344,7 @@ void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Color_Index color);
 
 void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Name);
 
-Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness, float hp);
+Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickness, float hp, Resource_Bar_Color_Selector colors);
 Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name);
 std::vector<int> create_Height_Map(const char* filename);

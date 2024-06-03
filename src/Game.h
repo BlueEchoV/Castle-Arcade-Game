@@ -125,7 +125,7 @@ void process(Archive* ar, Particle_System& particle_System);
 void process(Archive* ar, std::vector<Particle_System>& particle_Systems);
 void process(Archive* ar, V2& vector);
 void process(Archive* ar, Rigid_Body& rigid_Body);
-void process(Archive* ar, Health_Bar& health_Bar);
+void process(Archive* ar, Resource_Bar& health_Bar);
 void process(Archive* ar, Cooldown& cooldown);
 void process(Archive* ar, Castle& castle);
 void process(Archive* ar, Projectile& projectile);

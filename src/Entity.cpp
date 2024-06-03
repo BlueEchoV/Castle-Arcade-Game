@@ -544,8 +544,8 @@ void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle>
 	}
 }
 
-Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness, float hp) {
-	Health_Bar result;
+Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickness, float hp, Resource_Bar_Color_Selector colors) {
+	Resource_Bar result;
 
 	result.width = width;
 	result.height = height;
@@ -553,6 +553,7 @@ Health_Bar create_Health_Bar(int width, int height, int y_Offset, int thickness,
 	result.thickness = thickness;
 	result.max_HP = hp;
 	result.current_HP = result.max_HP;
+	result.selected_Colors = colors;
 
 	return result;
 }
@@ -579,7 +580,7 @@ void spawn_Player_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
-	castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp);
+	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp, RBCS_HP_Bar);
 
 	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
 	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
@@ -601,7 +602,7 @@ void spawn_Enemy_Castle(Game_Data& game_Data, V2 position_WS, Level level) {
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
-	castle.health_Bar = create_Health_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp);
+	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp, RBCS_HP_Bar);
 
 	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
 	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
@@ -669,7 +670,8 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 
 	// ***Level based ***
 	float updated_HP = unit_Data.base_HP + ((level - 1.0f) * ((unit_Data.hp_Multiplier * unit_Data.base_HP) - unit_Data.base_HP));
-	unit.health_Bar = create_Health_Bar(50, 13, 60, 2, updated_HP);
+
+	unit.health_Bar = create_Resource_Bar(50, 13, 60, 2, updated_HP, RBCS_HP_Bar);
 	
 	float updated_Damage = unit_Data.base_Damage + ((level - 1.0f) * ((unit_Data.damage_Multiplier * unit_Data.base_Damage) - unit_Data.base_Damage));
 	unit.damage = updated_Damage;

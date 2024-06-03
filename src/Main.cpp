@@ -383,8 +383,8 @@ int main(int argc, char** argv) {
                         &player_Unit->sprite_Sheet_Tracker,
                         false
                     );
-                    // draw_HP_Bar(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
-                    // draw_HP_Bar_With_Data(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
+                    // draw_Resource_Bar(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
+                    // draw_Resource_Bar_With_Data(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
                     draw_Unit_Data(*player_Unit, player_Unit->rigid_Body.position_WS);
                 }
             }
