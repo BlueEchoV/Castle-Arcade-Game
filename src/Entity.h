@@ -185,7 +185,7 @@ struct Unit_Data {
 	float base_Attack_Cooldown;
 	float attack_Cooldown_Multiplier;
 	float attack_Range;
-	// std::string spell_Type;
+	std::string spell_Type;
 };
 
 struct Attached_Entity {

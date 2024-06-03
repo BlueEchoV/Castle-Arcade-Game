@@ -4,8 +4,8 @@
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_Unit_Data = {
-	//	Type		food_Cost	sprite_Sheet	max_Resource	damage	speed	attack_Cooldown		attack_Range	spell_Type;
-	   "warrior",	25,			"warrior_Stop", "",		100,	25,		50,		1.0f,				150//,		    ""         
+	//	Type		food_Cost	sprite_Sheet	proj_Type	max_HP	hp_Multi	damage	damage_Mult speed	attack_Cooldown	ac_Multi	attack_Range	spell_Type;
+	   "warrior",	25,			"warrior_Stop", "",			100,	1.0f,		25,		1.0f,		50,		1.0f,			1.0f,		150,		    ""         
 };
 
 const Unit_Data& get_Unit_Data(std::string key) {
@@ -1018,7 +1018,7 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_FLOAT, base_Attack_Cooldown),
 	FIELD(Unit_Data, DT_FLOAT, attack_Cooldown_Multiplier),
 	FIELD(Unit_Data, DT_FLOAT, attack_Range),
-	// FIELD(Unit_Data, MT_STRING, spell_Type),
+	FIELD(Unit_Data, DT_STRING, spell_Type)
 };
 
 void load_Unit_Data_CSV(CSV_Data* csv_Data) {
