@@ -229,6 +229,10 @@ void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float del
 	}
 }
 
+//void update_Castle_Variables(float delta_Time) {
+//
+//}
+
 // Flickering when speed changes
 // Same animation frame
 // NEED MORE VARIABLE TO TRACK
@@ -351,6 +355,16 @@ void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, fl
 			unit->stop = false;
 			unit->current_Attack_Cooldown -= delta_Time;
 		}
+	}
+}
+
+void update_Resource_Bar(Resource_Bar& bar, float delta_Time) {
+	bar.accumulated_Time += delta_Time;
+	// Every second
+	float invervals = 100;
+	if (bar.accumulated_Time >= (1 / invervals)) {
+		bar.current_Resource += (bar.regen / invervals);
+		bar.accumulated_Time -= (1 / invervals);
 	}
 }
 
@@ -546,14 +560,15 @@ void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle>
 	}
 }
 
-Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickness, float hp, Resource_Bar_Color_Selector colors) {
+Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickness, float resource, float regen, Resource_Bar_Color_Selector colors) {
 	Resource_Bar result;
 
 	result.width = width;
 	result.height = height;
 	result.y_Offset = y_Offset;
 	result.thickness = thickness;
-	result.max_Resource = hp;
+	result.max_Resource = resource;
+	result.regen = regen;
 	result.current_Resource = result.max_Resource;
 	result.selected_Colors = colors;
 
@@ -584,13 +599,14 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Level lev
 
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 
-	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Stats_Array[level].hp, RBCS_HP_Bar);
-	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, castle_Stats_Array[level].food_Bar_Max, RBCS_Mana_Bar);
+	const Castle_Stats* data = &castle_Stats_Array[level];
+	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, data->base_HP, data->base_HP_Regen_Per_Sec, RBCS_HP_Bar);
+	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data->base_Food_Points, data->base_Food_Points_Per_Sec, RBCS_Mana_Bar);
 
-	castle.fire_Cooldown = castle_Stats_Array[level].fire_Cooldown;
-	castle.spawn_Cooldown = castle_Stats_Array[level].spawn_Cooldown;
-	castle.arrow_Ammo = castle_Stats_Array[level].arrow_Ammo;
-	castle.arrow_Ammo_Cooldown = castle_Stats_Array[level].arrow_Ammo_Cooldown;
+	castle.fire_Cooldown = data->fire_Cooldown;
+	castle.spawn_Cooldown = data->spawn_Cooldown;
+	castle.arrow_Ammo = data->arrow_Ammo;
+	castle.arrow_Ammo_Cooldown = data->arrow_Ammo_Cooldown;
 
 	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 	if (castle.nation == N_PLAYER) {
@@ -659,7 +675,7 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	// ***Level based ***
 	float updated_HP = unit_Data.base_HP + ((level - 1.0f) * ((unit_Data.hp_Multiplier * unit_Data.base_HP) - unit_Data.base_HP));
 
-	unit.health_Bar = create_Resource_Bar(50, 13, 60, 2, updated_HP, RBCS_HP_Bar);
+	unit.health_Bar = create_Resource_Bar(50, 13, 60, 2, updated_HP, 0, RBCS_HP_Bar);
 	
 	float updated_Damage = unit_Data.base_Damage + ((level - 1.0f) * ((unit_Data.damage_Multiplier * unit_Data.base_Damage) - unit_Data.base_Damage));
 	unit.damage = updated_Damage;

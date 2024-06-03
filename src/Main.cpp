@@ -257,6 +257,8 @@ int main(int argc, char** argv) {
 				}
 			    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
 
+                update_Resource_Bar(game_Data.player_Castle.food_Bar, delta_Time);
+
                 // Update Units
                 update_Units_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
                 update_Units_Positions(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
@@ -320,6 +322,10 @@ int main(int argc, char** argv) {
             draw_Layer(get_Sprite_Sheet_Texture("collision_Terrain_1"));
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
+            // Debugging code for testing the new food system
+            if (button_Text("Consume Resource", { RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2 }, 300, 50, 2)) {
+                game_Data.player_Castle.food_Bar.current_Resource -= 25;
+            }
 
             SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 

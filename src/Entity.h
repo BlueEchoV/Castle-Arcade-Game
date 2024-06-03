@@ -19,6 +19,8 @@ enum Resource_Bar_Color_Selector {
 struct Resource_Bar {
 	float max_Resource;
 	float current_Resource;
+	float regen;
+	float accumulated_Time = 0.0f;
 	int width;
 	int height;
 	int y_Offset;
@@ -75,9 +77,10 @@ struct Cooldown {
 };
 
 struct Castle_Stats {
-	float hp;
-	float food_Bar_Max;
-	float food_Bar_Regen_Rate;
+	float base_HP;
+	float base_HP_Regen_Per_Sec;
+	float base_Food_Points;
+	float base_Food_Points_Per_Sec;
 
 	Cooldown fire_Cooldown;
 	Cooldown spawn_Cooldown;
@@ -89,9 +92,9 @@ struct Castle_Stats {
 };
 
 const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
-	// hp    |    food_Bar_Max | food_Bar_Regen_Rate |fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown
-	{  100.0f,    100.0f,		 5.0f,				  {0.1f, 0.0f},     {1.0f, 0.0f},        0,                {0.25f, 0.0f}},
-	{  100.0f,    100.0f,		 5.0f,				  {1.0f, 0.0f},     {1.0f, 0.0f},        0,                {0.25f, 0.0f}}
+	// hp	|	hp_Per_Sec | food_Bar_Max | food_Bar_Regen_Rate |	fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown
+	{  100.0f,	5.0f,		 100.0f,		5.0f,				   {0.1f, 0.0f},      {1.0f, 0.0f},        0,               {0.25f, 0.0f}},
+	{  100.0f,	5.0f,		 100.0f,		5.0f,				   {1.0f, 0.0f},      {1.0f, 0.0f},        0,               {0.25f, 0.0f}}
 };
 
 struct Unit_Level_Tracker {
@@ -303,6 +306,7 @@ void clear_Game_Data(Game_Data* game_Data);
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
 void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
+void update_Resource_Bar(Resource_Bar& bar, float delta_Time);
 
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map);
 bool check_RB_Collision(Rigid_Body* rigid_Body_1, Rigid_Body* rigid_Body_2);
@@ -349,7 +353,7 @@ void draw_Resource_Bar(Resource_Bar& health_Bar, V2 pos);
 
 void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Name);
 
-Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickness, float hp, Resource_Bar_Color_Selector colors);
+Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickness, float resource, float regen, Resource_Bar_Color_Selector colors);
 Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name);
 std::vector<int> create_Height_Map(const char* filename);
