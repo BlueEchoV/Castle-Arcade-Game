@@ -28,8 +28,8 @@ struct Resource_Bar {
 
 const Resource_Bar_Color resource_Bar_Colors[RBCS_Total] = {
 	// Left rect	 Right rect
-	{ {0, 255, 0},	{0, 255, 0} }, // HP Bar
-	{ {0, 0, 255},	{0, 255, 0} }  // Mana Bar
+	{ {0, 255, 0},	{255, 0, 0} }, // HP Bar
+	{ {0, 0, 255},	{255, 0, 0} }  // Mana Bar
 };
 
 enum Nation {

@@ -405,16 +405,16 @@ void check_Projectiles_Collisions(Game_Data& game_Data, std::vector<Handle>& pro
 									}
 									// Store the hit enemy handle
 									projectile->penetrated_Enemy_IDS[projectile->penetrated_Enemy_IDS_Size++] = target_Unit->handle;
-									spawn_Particle_System(
-										game_Data,
-										"PT_BLOOD",
-										target_Unit->rigid_Body.position_WS,
-										0.5,
-										15,
-										15,
-										target_Unit->handle,
-										false
-									);
+									//spawn_Particle_System(
+									//	game_Data,
+									//	"PT_BLOOD",
+									//	target_Unit->rigid_Body.position_WS,
+									//	0.5,
+									//	15,
+									//	15,
+									//	target_Unit->handle,
+									//	false
+									//);
 									target_Unit->health_Bar.current_HP -= projectile->damage;
 									projectile->parent = target_Unit->handle;
 									// Reset it every time we hit an enemy

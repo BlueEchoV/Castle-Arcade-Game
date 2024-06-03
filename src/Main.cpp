@@ -386,6 +386,9 @@ int main(int argc, char** argv) {
                     // draw_Resource_Bar(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
                     // draw_Resource_Bar_With_Data(&player_Unit->rigid_Body.position_WS, &player_Unit->health_Bar);
                     draw_Unit_Data(*player_Unit, player_Unit->rigid_Body.position_WS);
+					for (int j = 0; j < player_Unit->attached_Entities_Size; j++) {
+						draw_Attached_Entity(&player_Unit->attached_Entities[j], player_Unit->rigid_Body.position_WS, false);
+					}
                 }
             }
 
