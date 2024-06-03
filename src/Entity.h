@@ -31,6 +31,7 @@ struct Resource_Bar {
 const Resource_Bar_Color resource_Bar_Colors[RBCS_Total] = {
 	// Left rect		 Right rect
 	{ {0, 255, 0},		{255, 0, 0} }, // HP Bar
+	// { { 255, 104, 31 },	{255, 255, 255} }  // Mana Bar
 	{ {177, 156, 217},	{255, 255, 255} }  // Mana Bar
 };
 

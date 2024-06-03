@@ -361,14 +361,20 @@ void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, fl
 }
 
 void update_Resource_Bar(Resource_Bar& bar, float delta_Time) {
-	bar.accumulated_Time += delta_Time;
-	// It seems appropriate to keep this value within the scope of this function for now
-	float invervals = 100;
-	float inverval_Time = 1 / invervals;
-	// Every second (While loop incase delta_Time is large)
-	while (bar.accumulated_Time >= inverval_Time) {
-		bar.current_Resource += (bar.regen / invervals);
-		bar.accumulated_Time -= inverval_Time;
+	if (bar.current_Resource < bar.max_Resource) {
+		bar.accumulated_Time += delta_Time;
+		// It seems appropriate to keep this value within the scope of this function for now
+		float invervals = 100;
+		float inverval_Time = 1 / invervals;
+		// Every second (While loop in case delta_Time is large)
+		while (bar.accumulated_Time >= inverval_Time) {
+			bar.current_Resource += (bar.regen / invervals);
+			// Set it equal to the max if it's above. (Clamp it)
+			if (bar.current_Resource > bar.max_Resource) {
+				bar.current_Resource = bar.max_Resource;
+			}
+			bar.accumulated_Time -= inverval_Time;
+		}
 	}
 }
 

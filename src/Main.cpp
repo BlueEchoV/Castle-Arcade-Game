@@ -259,12 +259,14 @@ int main(int argc, char** argv) {
 				}
 			    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
 
+                // Update Resource bars
                 update_Resource_Bar(game_Data.player_Castle.food_Bar, delta_Time);
                 update_Resource_Bar(game_Data.enemy_Castle.food_Bar, delta_Time);
 
                 // Update Units
                 update_Units_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
                 update_Units_Positions(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
+
 				// Update Projectiles
                 update_Projectiles_Positions(game_Data, game_Data.player_Proj_IDS, delta_Time);
                 update_Projectiles_Positions(game_Data, game_Data.enemy_Proj_IDS, delta_Time);
