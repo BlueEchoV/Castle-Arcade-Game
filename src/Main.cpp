@@ -206,11 +206,11 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED) {
             if (key_States[SDLK_UP].held_Down == true) {
-                time_Scalar += 0.01f;
+                time_Scalar += 0.05f;
             }
             if (key_States[SDLK_DOWN].held_Down == true) {
                 if (time_Scalar > 0) {
-                    time_Scalar -= 0.01f;
+                    time_Scalar -= 0.05f;
                 }
             }
            
@@ -237,7 +237,6 @@ int main(int argc, char** argv) {
                 
                 if (game_Data.player_Castle.arrow_Ammo_Cooldown.remaining < 0) {
                     Castle* player_Castle = &game_Data.player_Castle;
-
                     player_Castle->arrow_Ammo++;
                     player_Castle->arrow_Ammo_Cooldown.remaining = player_Castle->arrow_Ammo_Cooldown.duration;
                 }
@@ -272,7 +271,6 @@ int main(int argc, char** argv) {
                 else {
                     game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
                 }
-
 
 #if 0
 				if (arrow->stuck_To_Unit.is_Sticking) {

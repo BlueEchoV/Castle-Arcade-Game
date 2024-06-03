@@ -333,7 +333,7 @@ void update_Projectile_Position(Projectile* projectile, float delta_Time) {
 
 void update_Projectiles_Positions(Game_Data& game_Data, std::vector<Handle>& projectiles, float delta_Time) {
 	for (uint32_t i = 0; i < projectiles.size(); i++) {
-		Projectile* projectile = get_Projectile(game_Data.projectiles, game_Data.player_Proj_IDS[i]);
+		Projectile* projectile = get_Projectile(game_Data.projectiles, projectiles[i]);
 		if (projectile != nullptr) {
 			if (!projectile->destroyed) {
 				update_Projectile_Position(projectile, delta_Time);
@@ -496,7 +496,8 @@ void check_Units_Collisions_With_Castle(Game_Data& game_Data, std::vector<Handle
 						aim_Head.x += get_Sprite_Radius(&castle->sprite_Sheet_Tracker);
 						V2 arrow_Spawn_Location = unit->rigid_Body.position_WS;
 						arrow_Spawn_Location.y -= get_Sprite_Radius(&castle->sprite_Sheet_Tracker) / 2;
-						spawn_Projectile(game_Data, N_PLAYER, unit->projectile_Type, unit->damage, arrow_Spawn_Location, aim_Head);
+						if (unit->handle.storage_Type)
+						spawn_Projectile(game_Data, unit->nation, unit->projectile_Type, unit->damage, arrow_Spawn_Location, aim_Head);
 					}
 				}
 			}
@@ -528,7 +529,7 @@ void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle>
 								aim_Head.x += get_Sprite_Radius(&target_Unit->sprite_Sheet_Tracker);
 								V2 arrow_Spawn_Location = origin_Unit->rigid_Body.position_WS;
 								arrow_Spawn_Location.y -= get_Sprite_Radius(&target_Unit->sprite_Sheet_Tracker) / 2;
-								spawn_Projectile(game_Data, N_PLAYER, origin_Unit->projectile_Type, origin_Unit->damage, arrow_Spawn_Location, aim_Head);
+								spawn_Projectile(game_Data, origin_Unit->nation, origin_Unit->projectile_Type, origin_Unit->damage, arrow_Spawn_Location, aim_Head);
 							}
 							// change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Walk");
 						}
@@ -658,6 +659,7 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 
 void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
+	unit.nation = unit_Side;
 
 	Unit_Data unit_Data = get_Unit_Data(unit_Type);
 	unit.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(unit_Data.sprite_Sheet_Name);
@@ -700,12 +702,12 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	add_Collider(&unit.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
 
 	// unit.ID = allocate_Entity_ID(*game_Data);
-	if (unit_Side == N_PLAYER) {
+	if (unit.nation == N_PLAYER) {
 		unit.handle = create_Handle(game_Data.units);
 		game_Data.units.arr[unit.handle.index] = unit;
 
 		game_Data.player_Unit_IDS.push_back(unit.handle);
-	} else if (unit_Side == N_ENEMY) {
+	} else if (unit.nation == N_ENEMY) {
 		unit.handle = create_Handle(game_Data.units);
 		game_Data.units.arr[unit.handle.index] = unit;
 

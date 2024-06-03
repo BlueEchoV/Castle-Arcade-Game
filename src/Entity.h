@@ -166,6 +166,7 @@ struct Attached_Entity {
 };
 
 struct Unit {
+	Nation nation;
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
 	Health_Bar health_Bar;
