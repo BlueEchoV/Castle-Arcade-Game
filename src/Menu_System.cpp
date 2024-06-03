@@ -529,6 +529,16 @@ void draw_Summonable_Player_Units_Buttons() {
 		if (button_Image(get_Sprite_Sheet_Texture(displayed_Image), button_Name.c_str(), button_Pos, spawn_Unit_Button_W)) {
 			summonable_Unit.is_Pressed = true;
 		}
+
+		std::string unit_Cost = "Cost " + std::to_string((int)summonable_Unit.food_Cost);
+		draw_String(
+			unit_Cost.c_str(), 
+			(int)button_Pos.x, 
+			((int)button_Pos.y - (spawn_Unit_Button_W / 2)) + 12, 
+			1, 
+			true
+		);
+		
 		button_Pos.x += spawn_Unit_Button_W;
 		
 		// *** Debugging purposes ***
