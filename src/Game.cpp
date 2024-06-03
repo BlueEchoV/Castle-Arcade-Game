@@ -341,7 +341,7 @@ void start_Game(Game_Data& game_Data) {
 	spawn_Castle(
 		game_Data,
 		N_PLAYER,
-		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) + 25.0f },
+		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) - 40.0f },
 		LEVEL_1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "warrior");
@@ -351,7 +351,7 @@ void start_Game(Game_Data& game_Data) {
 	spawn_Castle(
 		game_Data,
 		N_ENEMY,
-		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
+		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) - 40.0f },
 		LEVEL_1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");

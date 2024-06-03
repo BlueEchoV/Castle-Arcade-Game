@@ -723,7 +723,8 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	if (unit.spell.type != "") {
 		unit.spell.can_Cast_Spell = true;
 		Spell_Data spell_Data = get_Spell_Data(unit.spell.type);
-		unit.spell.time_To_Cast.remaining = 0.0f;
+		// So the spell doens't cast instantly
+		unit.spell.time_To_Cast.remaining = spell_Data.base_Cast_Time;
 		unit.spell.time_To_Cast.duration = spell_Data.base_Cast_Time;
 	} else {
 		unit.spell.can_Cast_Spell = false;
@@ -805,13 +806,13 @@ void cast_Raise_Dead(Game_Data& game_Data, Handle casting_Unit_ID) {
 	Unit* unit = get_Unit(game_Data.units, casting_Unit_ID);
 	if (unit != nullptr) {
 		Spell_Data spell_Data = get_Spell_Data(unit->spell.type);
-		int lower = -50;
-		int upper = 50;
-		int random_X_To_Summon = (rand() % (upper - lower + 1)) + lower;
+		int upper = 100;
+		int random_X_To_Summon = (rand() % upper) - (upper / 2);
 
 		V2 new_Pos;
 		new_Pos.x = (float)random_X_To_Summon + unit->rigid_Body.position_WS.x;
-		new_Pos.y = get_Height_Map_Pos_Y(game_Data, random_X_To_Summon);
+		new_Pos.y = get_Height_Map_Pos_Y(game_Data, (int)new_Pos.x);
+		new_Pos.y += (RESOLUTION_HEIGHT - new_Pos.y);
 
 		if (unit->nation == N_PLAYER) {
 			spawn_Unit(game_Data, unit->nation, spell_Data.summon_Type, 1, new_Pos, game_Data.enemy_Castle.rigid_Body.position_WS);
@@ -1056,7 +1057,10 @@ float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos) {
 	if (x_Pos >= game_Data.terrain_Height_Map.size()) {
 		x_Pos = (int)(game_Data.terrain_Height_Map.size() - 1);
 	}
-	return (float)game_Data.terrain_Height_Map[x_Pos];
+	// Account for the inversion of the map
+	float result = (float)game_Data.terrain_Height_Map[x_Pos];
+	result += (RESOLUTION_HEIGHT - ((float)game_Data.terrain_Height_Map[x_Pos] * 2.0f));
+	return result;
 }
 
 // Array size will be determined based off total number of initializations
