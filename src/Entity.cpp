@@ -4,8 +4,8 @@
 static std::unordered_map<std::string, Unit_Data> unit_Data_Map = {};
 
 const Unit_Data bad_Unit_Data = {
-	//	Type		food_Cost	sprite_Sheet	proj_Type	max_HP	hp_Multi	damage	damage_Mult speed	attack_Cooldown	ac_Multi	attack_Range	spell_Type;
-	   "warrior",	25,			"warrior_Stop", "",			100,	1.0f,		25,		1.0f,		50,		1.0f,			1.0f,		150,		    ""         
+	//	Type		food_Cost	sprite_Sheet	proj_Type	spell_Type, max_HP	hp_Multi	damage	damage_Mult speed	attack_Cooldown	ac_Multi	attack_Range
+	   "warrior",	25,			"warrior_Stop", "",			"",			100,	1.0f,		25,		1.0f,		50,		1.0f,			1.0f,		150
 };
 
 const Unit_Data& get_Unit_Data(std::string key) {
@@ -39,7 +39,30 @@ const Projectile_Data& get_Projectile_Data(std::string key) {
 	return bad_Projectile_Data;
 }
 
+static std::unordered_map<std::string, Spell_Data> spell_Data_Map = {};
+
+const Spell_Data bad_Spell_Data = {
+	//	Type			sprite_Sheet
+	   "raise_Dead",	"warrior"
+};
+
+const Spell_Data& get_Spell_Data(std::string key) {
+	auto it = spell_Data_Map.find(key);
+	if (it != spell_Data_Map.end()) {
+		// Key found
+		return it->second;
+	}
+
+	assert(false);
+	// Return garbage values
+	return bad_Spell_Data;
+}
+
 Unit* get_Unit(Storage<Unit>& storage, Handle handle) {
+	return get_Entity(storage, handle);
+}
+
+Spell* get_Spell(Storage<Spell>& storage, Handle handle) {
 	return get_Entity(storage, handle);
 }
 
@@ -696,6 +719,16 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 
 	unit.health_Bar = create_Resource_Bar(50, 13, 60, 2, updated_HP, 0, RBCS_HP_Bar);
 	
+	unit.spell.type= unit_Data.spell_Type;
+	if (unit.spell.type != "") {
+		unit.spell.can_Cast_Spell = true;
+		Spell_Data spell_Data = get_Spell_Data(unit.spell.type);
+		unit.spell.time_To_Cast.remaining = 0.0f;
+		unit.spell.time_To_Cast.duration = spell_Data.base_Cast_Time;
+	} else {
+		unit.spell.can_Cast_Spell = false;
+	}
+
 	float updated_Damage = unit_Data.base_Damage + ((level - 1.0f) * ((unit_Data.damage_Multiplier * unit_Data.base_Damage) - unit_Data.base_Damage));
 	unit.damage = updated_Damage;
 	//NOTE: 														  subtract this value because it's a cooldown
@@ -766,6 +799,36 @@ void spawn_Unit_At_Castle(Game_Data& game_Data, Summonable_Unit& summonable_Unit
 		target_Castle->rigid_Body.position_WS
 	);
 	summonable_Unit.is_Pressed = false;
+}
+
+void cast_Raise_Dead(Game_Data& game_Data, Handle casting_Unit_ID) {
+	Unit* unit = get_Unit(game_Data.units, casting_Unit_ID);
+	if (unit != nullptr) {
+		Spell_Data spell_Data = get_Spell_Data(unit->spell.type);
+		int lower = -50;
+		int upper = 50;
+		int random_X_To_Summon = (rand() % (upper - lower + 1)) + lower;
+
+		V2 new_Pos;
+		new_Pos.x = (float)random_X_To_Summon + unit->rigid_Body.position_WS.x;
+		new_Pos.y = get_Height_Map_Pos_Y(game_Data, random_X_To_Summon);
+
+		if (unit->nation == N_PLAYER) {
+			spawn_Unit(game_Data, unit->nation, spell_Data.summon_Type, 1, new_Pos, game_Data.enemy_Castle.rigid_Body.position_WS);
+		}
+		else if (unit->nation == N_ENEMY) {
+			spawn_Unit(game_Data, unit->nation, spell_Data.summon_Type, 1, new_Pos, game_Data.player_Castle.rigid_Body.position_WS);
+		}
+	}
+}
+
+void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID) {
+	Unit* unit = get_Unit(game_Data.units, casting_Unit_ID);
+	if (unit != nullptr) {
+		if (unit->spell.type == "raise_Dead") {
+			cast_Raise_Dead(game_Data, casting_Unit_ID);
+		}
+	}
 }
 
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color) {
@@ -985,14 +1048,6 @@ void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 	}
 }
 
-void fire_Projectile() {
-
-}
-
-void cast_Spell() {
-
-}
-
 // Doesn't account for empty height map
 float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos) {
 	if (x_Pos < 0) {
@@ -1010,6 +1065,7 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_FLOAT, food_Cost),
 	FIELD(Unit_Data, DT_STRING, sprite_Sheet_Name),
 	FIELD(Unit_Data, DT_STRING, projectile_Type),
+	FIELD(Unit_Data, DT_STRING, spell_Type),
 	FIELD(Unit_Data, DT_FLOAT, base_HP),
 	FIELD(Unit_Data, DT_FLOAT, hp_Multiplier),
 	FIELD(Unit_Data, DT_FLOAT, base_Damage),
@@ -1017,8 +1073,7 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_FLOAT, speed),
 	FIELD(Unit_Data, DT_FLOAT, base_Attack_Cooldown),
 	FIELD(Unit_Data, DT_FLOAT, attack_Cooldown_Multiplier),
-	FIELD(Unit_Data, DT_FLOAT, attack_Range),
-	FIELD(Unit_Data, DT_STRING, spell_Type)
+	FIELD(Unit_Data, DT_FLOAT, attack_Range)
 };
 
 void load_Unit_Data_CSV(CSV_Data* csv_Data) {
@@ -1067,5 +1122,26 @@ void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
 
 	for (Projectile_Data& iterator : projectile_Data) {
 		projectile_Data_Map[iterator.type] = iterator;
+	}
+}
+
+Type_Descriptor spell_Type_Descriptors[] = {
+	FIELD(Spell_Data, DT_STRING, type),
+	FIELD(Spell_Data, DT_STRING, summon_Type),
+	FIELD(Spell_Data, DT_FLOAT, base_Cast_Time)
+};
+
+void load_Spell_Data_CSV(CSV_Data* csv_Data) {
+	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
+
+	std::vector<Spell_Data> spell_Data;
+	spell_Data.resize(csv_Data->rows);
+
+	std::span<Type_Descriptor> spell_Descriptors(spell_Type_Descriptors);
+
+	load_CSV_Data(csv_Data, (char*)spell_Data.data(), sizeof(spell_Data[0]), spell_Descriptors);
+
+	for (Spell_Data& iterator : spell_Data) {
+		spell_Data_Map[iterator.type] = iterator;
 	}
 }

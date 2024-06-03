@@ -159,7 +159,7 @@ struct Projectile {
 	Cooldown attached_Entity_Delay;
 	int current_Penetrations;
 	int penetrated_Enemy_IDS_Size;
-	Handle penetrated_Enemy_IDS[25] = {};
+	Handle penetrated_Enemy_IDS[Globals::MAX_PROJECTILE_PENETRATIONS] = {};
 
 	Handle handle;
 	Handle parent;
@@ -170,6 +170,18 @@ struct Projectile {
 	bool destroyed;
 };
 
+struct Spell_Data {
+	std::string type;
+	std::string summon_Type;
+	float base_Cast_Time;
+};
+
+struct Spell {
+	std::string type;
+	bool can_Cast_Spell;
+	Cooldown time_To_Cast;
+};
+
 // Applies to all units
 struct Unit_Data {
 	std::string type;
@@ -177,6 +189,7 @@ struct Unit_Data {
 	float food_Cost;
 	std::string sprite_Sheet_Name;
 	std::string projectile_Type;
+	std::string spell_Type;
 	float base_HP;
 	float hp_Multiplier;
 	float base_Damage;
@@ -185,7 +198,6 @@ struct Unit_Data {
 	float base_Attack_Cooldown;
 	float attack_Cooldown_Multiplier;
 	float attack_Range;
-	std::string spell_Type;
 };
 
 struct Attached_Entity {
@@ -199,6 +211,9 @@ struct Unit {
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
 	Resource_Bar health_Bar;
+
+	Spell spell;
+	Resource_Bar spell_Cast_Bar;
 
 	float speed;
 	float damage;
@@ -268,16 +283,17 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 struct Game_Data {
 	Storage<Unit>							units = { .st = ST_Units };
 	Storage<Projectile>						projectiles = { .st = ST_Projectile };
+	Storage<Spell>							spells = { .st = ST_Spell };
 
 	Castle									player_Castle;
 	std::vector<Handle>						player_Unit_IDS;
 	std::vector<Handle>						player_Proj_IDS;
-	// Spells?
+	std::vector<Handle>						player_Spell_IDS;
 	
 	Castle									enemy_Castle;
 	std::vector<Handle>						enemy_Unit_IDS;
 	std::vector<Handle>						enemy_Proj_IDS;
-	// Spells?
+	std::vector<Handle>						enemy_Spell_IDS;
 
 	Storage<Particle_System>				particle_Systems = { .st = ST_Particle_System };
 	std::vector<Handle>						particle_System_IDS;
@@ -300,6 +316,7 @@ T* get_Entity(Storage<T>& storage, Handle handle) {
 }
 
 Unit* get_Unit(Storage<Unit>& storage, Handle handle);
+Spell* get_Spell(Storage<Spell>& storage, Handle handle);
 Projectile* get_Projectile(Storage<Projectile>& storage, Handle handle);
 Particle_System* get_Particle_System(Storage<Particle_System>& storage, Handle handle);
 bool compare_Handles(Handle handle_1, Handle handle_2);
@@ -341,6 +358,9 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
 void spawn_Unit_At_Castle(Game_Data& game_Data, Summonable_Unit& summonable_Unit);
 
+void cast_Raise_Dead(Game_Data& game_Data, Handle casting_Unit_ID);
+void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID);
+
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time);
 void update_Units_Positions(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
@@ -365,3 +385,4 @@ std::vector<int> create_Height_Map(const char* filename);
 
 void load_Unit_Data_CSV(CSV_Data* csv_Data);
 void load_Projectile_Data_CSV(CSV_Data* csv_Data);
+void load_Spell_Data_CSV(CSV_Data* csv_Data);

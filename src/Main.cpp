@@ -77,6 +77,10 @@ int main(int argc, char** argv) {
     load_Projectile_Data_CSV(&projectile_CSV_Data);
     close_CSV_File(&projectile_CSV_Data);
 
+	CSV_Data spell_CSV_Data = create_Open_CSV_File("data/Spell_Data.csv");
+	load_Spell_Data_CSV(&spell_CSV_Data);
+	close_CSV_File(&spell_CSV_Data);
+
 	start_Game(game_Data);
 
     while (running) {
@@ -259,6 +263,22 @@ int main(int argc, char** argv) {
 				}
 			    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
 
+                // Cast Player spells
+                for (Handle handle : game_Data.player_Unit_IDS) {
+                    Unit* unit = get_Unit(game_Data.units, handle);
+                    if (unit != nullptr) {
+                        if (unit->spell.can_Cast_Spell) {
+                            while (unit->spell.time_To_Cast.remaining <= 0) {
+                                cast_Spell(game_Data, unit->handle);
+                                unit->spell.time_To_Cast.remaining += unit->spell.time_To_Cast.duration;
+                            }
+                            unit->spell.time_To_Cast.remaining -= delta_Time;
+                        }
+                    }
+                }
+                // Cast Enemy Spells
+
+
                 // Update Resource bars
                 update_Resource_Bar(game_Data.player_Castle.food_Bar, delta_Time);
                 update_Resource_Bar(game_Data.enemy_Castle.food_Bar, delta_Time);
@@ -270,6 +290,8 @@ int main(int argc, char** argv) {
 				// Update Projectiles
                 update_Projectiles_Positions(game_Data, game_Data.player_Proj_IDS, delta_Time);
                 update_Projectiles_Positions(game_Data, game_Data.enemy_Proj_IDS, delta_Time);
+
+                // Cast spells
 
                 // Projectile Collision
                 check_Projectiles_Collisions(game_Data, game_Data.player_Proj_IDS, game_Data.enemy_Castle, game_Data.enemy_Unit_IDS, delta_Time);

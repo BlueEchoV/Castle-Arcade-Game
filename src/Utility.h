@@ -11,6 +11,7 @@
 enum Storage_Type : uint8_t {
 	ST_Units = 1,
 	ST_Projectile,
+	ST_Spell,
 	ST_Particle_System,
 };
 

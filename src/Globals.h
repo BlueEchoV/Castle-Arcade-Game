@@ -23,4 +23,5 @@ namespace Globals {
 	const int TOTAL_AVAILABLE_UNITS = 100;
 
 	const int MAX_SUMMONABLE_UNITS_PER_CASTLE = 10;
+	const int MAX_PROJECTILE_PENETRATIONS = 25;
 }
