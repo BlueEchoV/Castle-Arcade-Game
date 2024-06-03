@@ -485,78 +485,6 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, V2 pos, int 
 	return result;
 }
 
-
-void outline_Rect(SDL_Rect* rect, int outline_Thickness) {
-	SDL_Rect top_Rect = {};
-	top_Rect.x = rect->x;
-	top_Rect.y = rect->y;
-	top_Rect.w = rect->w;
-	top_Rect.h = outline_Thickness;
-	SDL_RenderFillRect(Globals::renderer, &top_Rect);
-
-	SDL_Rect bottom_Rect = {};
-	bottom_Rect.x = rect->x;
-	bottom_Rect.y = ((rect->y + rect->h) - outline_Thickness);
-	bottom_Rect.w = rect->w;
-	bottom_Rect.h = outline_Thickness;
-	SDL_RenderFillRect(Globals::renderer, &bottom_Rect);
-
-	SDL_Rect left_Rect = {};
-	left_Rect.x = rect->x;
-	left_Rect.y = rect->y;
-	left_Rect.w = outline_Thickness;
-	left_Rect.h = rect->h;
-	SDL_RenderFillRect(Globals::renderer, &left_Rect);
-
-	SDL_Rect right_Rect = {};
-	right_Rect.x = ((rect->x + rect->w) - outline_Thickness);
-	right_Rect.y = rect->y;
-	right_Rect.w = outline_Thickness;
-	right_Rect.h = rect->h;
-	SDL_RenderFillRect(Globals::renderer, &right_Rect);
-
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderDrawRect(Globals::renderer, rect);
-}
-
-void draw_Resource_Bar(Resource_Bar& resource_Bar, V2 pos) {
-	// Pull the data from the colors 
-	Color left_Side = resource_Bar_Colors[resource_Bar.selected_Colors].left_Rect;
-	Color right_Side = resource_Bar_Colors[resource_Bar.selected_Colors].right_Rect;
-	
-	float remaining_HP_Percent = (resource_Bar.current_HP / resource_Bar.max_HP);
-	if (remaining_HP_Percent < 0) {
-		remaining_HP_Percent = 0;
-	}
-
-	// Lerp of T = A * (1 - T) + B * T
-	// A is the left side, B is the right side, T is the health %
-	float lerp = linear_Interpolation(0, (float)resource_Bar.width, remaining_HP_Percent);
-
-	SDL_Rect left_Rect = {};
-	left_Rect.w = (int)lerp;
-	left_Rect.h = (int)resource_Bar.height;
-	left_Rect.x = (int)((pos.x) - resource_Bar.width / 2);
-	left_Rect.y = (int)((pos.y) - resource_Bar.y_Offset);
-	SDL_SetRenderDrawColor(Globals::renderer, left_Side.r, left_Side.g, left_Side.b, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &left_Rect);
-
-	SDL_Rect right_Rect = left_Rect;
-	right_Rect.w = resource_Bar.width - left_Rect.w;
-	right_Rect.x = (int)(left_Rect.x + left_Rect.w);
-	SDL_SetRenderDrawColor(Globals::renderer, right_Side.r, right_Side.g, right_Side.b, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &right_Rect);
-
-	// Outline HP bars
-	SDL_Rect outline = {};
-	outline.w = (int)resource_Bar.width;
-	outline.h = (int)resource_Bar.height;
-	outline.x = (int)((pos.x) - resource_Bar.width / 2);
-	outline.y = (int)((pos.y) - resource_Bar.y_Offset);
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	outline_Rect(&outline, resource_Bar.thickness);
-}
-
 void draw_Unit_Data(Unit& unit, V2 pos) {
 	// HP Bar
 	draw_Resource_Bar(unit.health_Bar, pos);
@@ -619,8 +547,6 @@ void draw_Summonable_Player_Units_Buttons() {
 }
 
 void draw_Player_Hud() {
-	draw_Resource_Bar(game_Data.player_Castle.health_Bar, game_Data.player_Castle.rigid_Body.position_WS);
-	draw_Resource_Bar(game_Data.enemy_Castle.health_Bar, game_Data.enemy_Castle.rigid_Body.position_WS);
 	draw_Timer(
 		game_Data,
 		{ RESOLUTION_WIDTH / 2, (RESOLUTION_HEIGHT / 9) * 0.5 },

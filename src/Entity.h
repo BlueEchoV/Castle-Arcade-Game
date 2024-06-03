@@ -344,6 +344,8 @@ void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, bool flip);
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color);
 void draw_RigidBody_Colliders(Rigid_Body* rigid_Body, Color_Index color);
+void outline_Rect(SDL_Rect* rect, int outline_Thickness);
+void draw_Resource_Bar(Resource_Bar& health_Bar, V2 pos);
 
 void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Name);
 

@@ -354,8 +354,9 @@ void start_Game(Game_Data& game_Data) {
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) + 25.0f },
 		LEVEL_1
 	);
-	//add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
 	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
+	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
+	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "necromancer");
 
 	Handle test_Handle = {};
 	game_Data.particle_System_Rain_ID = spawn_Particle_System(
