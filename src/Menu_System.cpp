@@ -579,6 +579,40 @@ void draw_Unit_Data(Unit& unit, V2 pos) {
 
 }
 
+void draw_Mana_Bar() {
+	float remaining_HP_Percent = (health_Bar.current_HP / health_Bar.max_HP);
+	if (remaining_HP_Percent < 0) {
+		remaining_HP_Percent = 0;
+	}
+
+	// Lerp of T = A * (1 - T) + B * T
+	// A is the left side, B is the right side, T is the health %
+	float lerp = linear_Interpolation(0, (float)health_Bar.width, remaining_HP_Percent);
+
+	SDL_Rect rect_Green = {};
+	rect_Green.w = (int)lerp;
+	rect_Green.h = (int)health_Bar.height;
+	rect_Green.x = (int)((pos.x) - health_Bar.width / 2);
+	rect_Green.y = (int)((pos.y) - health_Bar.y_Offset);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &rect_Green);
+
+	SDL_Rect rect_Red = rect_Green;
+	rect_Red.w = health_Bar.width - rect_Green.w;
+	rect_Red.x = (int)(rect_Green.x + rect_Green.w);
+	SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &rect_Red);
+
+	// Outline HP bars
+	SDL_Rect outline = {};
+	outline.w = (int)health_Bar.width;
+	outline.h = (int)health_Bar.height;
+	outline.x = (int)((pos.x) - health_Bar.width / 2);
+	outline.y = (int)((pos.y) - health_Bar.y_Offset);
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	outline_Rect(&outline, health_Bar.thickness);
+}
+
 void draw_Summonable_Player_Units_Buttons() {
 	Castle* player_Castle = &game_Data.player_Castle;
 

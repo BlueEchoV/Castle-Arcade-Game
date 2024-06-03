@@ -19,6 +19,15 @@ struct Health_Bar {
 	int thickness;
 };
 
+struct Mana_Bar {
+	float max_Mana;
+	float current_Mana;
+	int width;
+	int height;
+	int y_Offset;
+	int thickness;
+};
+
 struct Collider_Data {
 	std::string type;
 	float position_LS_X;

@@ -249,46 +249,13 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Spawn enemy Warriors
-                if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
-					Castle* player_Castle = &game_Data.player_Castle;
-					Castle* enemy_Castle = &game_Data.enemy_Castle;
-                    // Readability
-					float x_Pos = enemy_Castle->rigid_Body.position_WS.x;
-					float terrain_height = (float)game_Data.terrain_Height_Map[(int)x_Pos];
-					float radius = get_Sprite_Radius(&enemy_Castle->sprite_Sheet_Tracker);
-					float y_Pos = terrain_height + radius;
-					spawn_Unit(
-						game_Data,
-						N_ENEMY,
-						"archer",
-                        1,
-                        { x_Pos, y_Pos },
-						player_Castle->rigid_Body.position_WS
-					);
-                    enemy_Castle->spawn_Cooldown.remaining = enemy_Castle->spawn_Cooldown.duration;
-                }
-                else {
-                    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
-                }
-
-#if 0
-				if (arrow->stuck_To_Unit.is_Sticking) {
-					bool arrow_Currently_Stuck = false;
-					for (int j = 0; j < game_Data.enemy_Warriors.size(); j++) {
-						Warrior* warrior = &game_Data.enemy_Warriors[j];
-						if (arrow->stuck_To_Unit.ID == warrior->ID) {
-							arrow->rigid_Body.position_WS.x = warrior->rigid_Body.position_WS.x + arrow->stuck_To_Unit.offset.x;
-							arrow->rigid_Body.position_WS.y = warrior->rigid_Body.position_WS.y + arrow->stuck_To_Unit.offset.y;
-
-							arrow_Currently_Stuck = true;
-						}
-					}
-					if (!arrow_Currently_Stuck) {
-						arrow->destroyed = true;
+				for (Summonable_Unit& summonable_Unit : game_Data.enemy_Castle.summonable_Units) {
+					if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
+						spawn_Unit_At_Castle(game_Data, summonable_Unit);
+                        game_Data.enemy_Castle.spawn_Cooldown.remaining = game_Data.enemy_Castle.spawn_Cooldown.duration;
 					}
 				}
-#endif
+			    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
 
                 // Update Units
                 update_Units_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);
