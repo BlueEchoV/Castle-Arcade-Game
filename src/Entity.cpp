@@ -401,6 +401,17 @@ void update_Resource_Bar(Resource_Bar& bar, float delta_Time) {
 	}
 }
 
+void update_Units_Spell_Bars(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time) {
+	for (uint32_t i = 0; i < units.size(); i++) {
+		Unit* unit = get_Unit(game_Data.units, units[i]);
+		if (unit != nullptr) {
+			if (unit->spell.can_Cast_Spell) {
+				update_Resource_Bar(unit->spell_Bar, delta_Time);
+			}
+		}
+	}
+}
+
 void update_Nation_Resource_Bars(/*Game_Data& game_Data, */Castle& castle, /*std::vector<Handle>& units,*/ float delta_Time) {
 	update_Resource_Bar(castle.food_Bar, delta_Time);
 	// For if I wanted to add unit regen 
@@ -611,6 +622,7 @@ Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickn
 	result.thickness = thickness;
 	result.max_Resource = resource;
 	result.regen = regen;
+	// Set to max so it casts the spell right away
 	result.current_Resource = result.max_Resource;
 	result.selected_Colors = colors;
 
@@ -643,7 +655,7 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Level lev
 
 	const Castle_Stats* data = &castle_Stats_Array[level];
 	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, data->base_HP, data->base_HP_Regen_Per_Sec, RBCS_HP_Bar);
-	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data->base_Food_Points, data->base_Food_Points_Per_Sec, RBCS_Mana_Bar);
+	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data->base_Food_Points, data->base_Food_Points_Per_Sec, RBCS_Food_Bar);
 
 	castle.fire_Cooldown = data->fire_Cooldown;
 	castle.spawn_Cooldown = data->spawn_Cooldown;
@@ -723,9 +735,13 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	if (unit.spell.type != "") {
 		unit.spell.can_Cast_Spell = true;
 		Spell_Data spell_Data = get_Spell_Data(unit.spell.type);
-		// So the spell doens't cast instantly
+		// So the spell doesn't cast instantly
 		unit.spell.time_To_Cast.remaining = spell_Data.base_Cast_Time;
 		unit.spell.time_To_Cast.duration = spell_Data.base_Cast_Time;
+		// This bar is a visual indicator that just shows a display cd until the spell is cast again
+		// The bar needs to regen based off the duration / cd of a spell
+		float bar_Size = 100;
+		unit.spell_Bar = create_Resource_Bar(50, 7, 47, 2, bar_Size, (bar_Size / unit.spell.time_To_Cast.duration), RBCS_Spell_Bar);
 	} else {
 		unit.spell.can_Cast_Spell = false;
 	}
@@ -806,8 +822,14 @@ void cast_Raise_Dead(Game_Data& game_Data, Handle casting_Unit_ID) {
 	Unit* unit = get_Unit(game_Data.units, casting_Unit_ID);
 	if (unit != nullptr) {
 		Spell_Data spell_Data = get_Spell_Data(unit->spell.type);
-		int upper = 100;
-		int random_X_To_Summon = (rand() % upper) - (upper / 2);
+		int range_Offset_From_Unit = 25;
+		int spawn_Range = 100;
+		int random_X_To_Summon = rand() % spawn_Range;
+		random_X_To_Summon += range_Offset_From_Unit;
+		if (unit->nation == N_ENEMY) {
+			// Invert the range
+			random_X_To_Summon *= -1;
+		}
 
 		V2 new_Pos;
 		new_Pos.x = (float)random_X_To_Summon + unit->rigid_Body.position_WS.x;
@@ -827,6 +849,7 @@ void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID) {
 	Unit* unit = get_Unit(game_Data.units, casting_Unit_ID);
 	if (unit != nullptr) {
 		if (unit->spell.type == "raise_Dead") {
+			unit->spell_Bar.current_Resource -= unit->spell_Bar.max_Resource;
 			cast_Raise_Dead(game_Data, casting_Unit_ID);
 		}
 	}

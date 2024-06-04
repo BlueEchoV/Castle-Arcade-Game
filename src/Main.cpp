@@ -279,9 +279,13 @@ int main(int argc, char** argv) {
                 // Cast Enemy Spells
 
 
-                // Update Resource bars
+                // Update Castle Food bars
                 update_Resource_Bar(game_Data.player_Castle.food_Bar, delta_Time);
                 update_Resource_Bar(game_Data.enemy_Castle.food_Bar, delta_Time);
+
+                // Update Units Spell Bars
+                update_Units_Spell_Bars(game_Data, game_Data.player_Unit_IDS, delta_Time);
+                update_Units_Spell_Bars(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
 
                 // Update Units
                 update_Units_Positions(game_Data, game_Data.player_Unit_IDS, delta_Time);

@@ -488,6 +488,9 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, V2 pos, int 
 void draw_Unit_Data(Unit& unit, V2 pos) {
 	// HP Bar
 	draw_Resource_Bar(unit.health_Bar, pos);
+	if (unit.spell.can_Cast_Spell) {
+		draw_Resource_Bar(unit.spell_Bar, pos);
+	}
 
 	// HP Text
 	// Set the color mod for the font

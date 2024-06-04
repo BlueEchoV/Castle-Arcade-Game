@@ -12,7 +12,8 @@ struct Resource_Bar_Color {
 
 enum Resource_Bar_Color_Selector {
 	RBCS_HP_Bar,
-	RBCS_Mana_Bar,
+	RBCS_Spell_Bar,
+	RBCS_Food_Bar,
 	RBCS_Total
 };
 
@@ -213,7 +214,7 @@ struct Unit {
 	Resource_Bar health_Bar;
 
 	Spell spell;
-	Resource_Bar spell_Cast_Bar;
+	Resource_Bar spell_Bar;
 
 	float speed;
 	float damage;
@@ -328,6 +329,8 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
 void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
 void update_Resource_Bar(Resource_Bar& bar, float delta_Time);
+void update_Units_Spell_Bars(Game_Data& game_Data, std::vector<Handle>& units, float delta_Time);
+// Not liking this function atm but I'm going to keep it temporarily until I finish this api
 void update_Nation_Resource_Bars(/*Game_Data& game_Data, */Castle& castle, /*std::vector<Handle>& units,*/ float delta_Time);
 
 bool check_Height_Map_Collision(Rigid_Body* rigid_Body, std::vector<int>& height_Map);
