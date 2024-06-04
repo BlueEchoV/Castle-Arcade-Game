@@ -855,6 +855,22 @@ void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID) {
 	}
 }
 
+void cast_Units_Spells(Game_Data& game_Data, std::vector<Handle> units, float delta_Time) {
+	for (Handle handle : units) {
+		Unit* unit = get_Unit(game_Data.units, handle);
+		if (unit != nullptr) {
+			if (unit->spell.can_Cast_Spell) {
+				while (unit->spell.time_To_Cast.remaining <= 0) {
+					cast_Spell(game_Data, unit->handle);
+					unit->spell.time_To_Cast.remaining += unit->spell.time_To_Cast.duration;
+				}
+				unit->spell.time_To_Cast.remaining -= delta_Time;
+			}
+		}
+	}
+}
+
+
 void draw_Circle(float center_X, float center_Y, float radius, Color_Index color) {
 	float total_Lines = 30;
 	float line_Step = (float)(2 * M_PI) / total_Lines;

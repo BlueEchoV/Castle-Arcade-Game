@@ -256,28 +256,18 @@ int main(int argc, char** argv) {
                 }
                 // Spawn Enemy Units
 				for (Summonable_Unit& summonable_Unit : game_Data.enemy_Castle.summonable_Units) {
-					if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0) {
-						spawn_Unit_At_Castle(game_Data, summonable_Unit);
-                        game_Data.enemy_Castle.spawn_Cooldown.remaining = game_Data.enemy_Castle.spawn_Cooldown.duration;
+                    Resource_Bar* food_Bar = &game_Data.enemy_Castle.food_Bar;
+					if (game_Data.enemy_Castle.spawn_Cooldown.remaining < 0 && food_Bar->current_Resource >= summonable_Unit.food_Cost) {
+						food_Bar->current_Resource -= summonable_Unit.food_Cost;
+						game_Data.enemy_Castle.spawn_Cooldown.remaining = game_Data.enemy_Castle.spawn_Cooldown.duration;
+                        spawn_Unit_At_Castle(game_Data, summonable_Unit);
 					}
 				}
 			    game_Data.enemy_Castle.spawn_Cooldown.remaining -= delta_Time;
 
-                // Cast Player spells
-                for (Handle handle : game_Data.player_Unit_IDS) {
-                    Unit* unit = get_Unit(game_Data.units, handle);
-                    if (unit != nullptr) {
-                        if (unit->spell.can_Cast_Spell) {
-                            while (unit->spell.time_To_Cast.remaining <= 0) {
-                                cast_Spell(game_Data, unit->handle);
-                                unit->spell.time_To_Cast.remaining += unit->spell.time_To_Cast.duration;
-                            }
-                            unit->spell.time_To_Cast.remaining -= delta_Time;
-                        }
-                    }
-                }
-                // Cast Enemy Spells
-
+                // Cast Units Spells
+                cast_Units_Spells(game_Data, game_Data.player_Unit_IDS, delta_Time);
+                cast_Units_Spells(game_Data, game_Data.enemy_Unit_IDS, delta_Time);
 
                 // Update Castle Food bars
                 update_Resource_Bar(game_Data.player_Castle.food_Bar, delta_Time);

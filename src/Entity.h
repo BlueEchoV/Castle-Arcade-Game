@@ -12,8 +12,8 @@ struct Resource_Bar_Color {
 
 enum Resource_Bar_Color_Selector {
 	RBCS_HP_Bar,
-	RBCS_Spell_Bar,
 	RBCS_Food_Bar,
+	RBCS_Spell_Bar,
 	RBCS_Total
 };
 
@@ -32,8 +32,8 @@ struct Resource_Bar {
 const Resource_Bar_Color resource_Bar_Colors[RBCS_Total] = {
 	// Left rect		 Right rect
 	{ {0, 255, 0},		{255, 0, 0} }, // HP Bar
-	// { { 255, 104, 31 },	{255, 255, 255} }  // Mana Bar
-	{ {177, 156, 217},	{255, 255, 255} }  // Mana Bar
+	{ {255, 95, 31},	{255, 255, 255} },  // Food Bar
+	{ {171, 32, 253},	{255, 255, 255} }  // Spell Bar
 };
 
 enum Nation {
@@ -360,9 +360,9 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 // be treated the exact same.
 void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position);
 void spawn_Unit_At_Castle(Game_Data& game_Data, Summonable_Unit& summonable_Unit);
-
 void cast_Raise_Dead(Game_Data& game_Data, Handle casting_Unit_ID);
 void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID);
+void cast_Units_Spells(Game_Data& game_Data, std::vector<Handle> units, float delta_Time);
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time);
 void update_Unit_Position(Rigid_Body* rigid_Body, bool stop_Unit, float delta_Time);
