@@ -657,7 +657,6 @@ Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity) {
 	return result;
 }
 
-
 std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	std::vector<std::string> tokens = split(sprite_Sheet_Name, '_');
 	return tokens[0];
@@ -671,8 +670,8 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, 
 	castle.castle_Type = castle_Type;
 	castle.projectile_Type = castle_Data.projectile_Type;
 	castle.projectile_Ammo = 0;
-	// Convert ammo per second to a duration
 	const Projectile_Data projectile_Data = get_Projectile_Data(castle_Data.projectile_Type);
+	// Convert ammo per second to a duration
 	float ammo_Per_Sec_Per_Level = projectile_Data.castle_Base_Ammo_Per_Sec * projectile_Data.castle_Ammo_Per_Sec_Multiplier;
 	float updated_Ammo_Per_Sec = ammo_Per_Sec_Per_Level * castle.level;;
 	float updated_Ammo_Duration = 1.0f / updated_Ammo_Per_Sec;
@@ -680,7 +679,7 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, 
 	castle.projectile_Ammo_Cooldown.remaining = 0.0f;
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(castle_Data.sprite_Sheet_Name);
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
-	// Lower the castle some
+	// Lower the castle onto the map by 25% of the size of the castle sprite
 	float image_Radius = get_Sprite_Radius(&castle.sprite_Sheet_Tracker);
 	castle.rigid_Body.position_WS.y -= image_Radius / 2.0f;
 	// *********************

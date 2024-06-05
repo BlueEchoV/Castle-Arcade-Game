@@ -253,9 +253,13 @@ int main(int argc, char** argv) {
                 // Spawn Player Units
                 for (Summonable_Unit& summonable_Unit : game_Data.player_Castle.summonable_Units) {
                     Resource_Bar* food_Bar = &game_Data.player_Castle.food_Bar;
-                    if (summonable_Unit.is_Pressed && food_Bar->current_Resource >= summonable_Unit.food_Cost) {
-                        food_Bar->current_Resource -= summonable_Unit.food_Cost;
-                        spawn_Unit_At_Castle(game_Data, summonable_Unit);
+                    if (summonable_Unit.is_Pressed) {
+                        if (food_Bar->current_Resource >= summonable_Unit.food_Cost) {
+                            food_Bar->current_Resource -= summonable_Unit.food_Cost;
+                            spawn_Unit_At_Castle(game_Data, summonable_Unit);
+                        } else {
+                            summonable_Unit.is_Pressed = false;
+                        }
                     }
                 }
                 // Spawn Enemy Units
