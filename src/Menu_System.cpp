@@ -236,7 +236,7 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, V2 po
 	std::string title_String = "Info";
 	const char* title_ptr = title_String.c_str();
 
-	int total_Arrows = (int)selected_Game_Data.player_Castle.arrow_Ammo;
+	int total_Arrows = (int)selected_Game_Data.player_Castle.projectile_Ammo;
 	std::string total_Arrows_String = "Player Ammo: " + std::to_string(total_Arrows);
 	const char* total_Arrows_Ptr = total_Arrows_String.c_str();
 
@@ -568,7 +568,7 @@ void draw_Player_Hud() {
 		3
 	);
 	draw_Arrow_Ammo_Tracker(
-		game_Data.player_Castle.arrow_Ammo,
+		game_Data.player_Castle.projectile_Ammo,
 		{ ((RESOLUTION_WIDTH / 16) * 2), ((RESOLUTION_HEIGHT / 9) * 0.5) },
 		3
 	);

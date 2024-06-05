@@ -1,0 +1,3 @@
+type,sprite_Sheet_Name,enhancement,base_HP,base_HP_Regen,base_Food_Points,base_Food_Points_Regen
+infernal,infernal_Castle,,100,5,100,5
+ancient,ancient_Castle,,100,5,100,5

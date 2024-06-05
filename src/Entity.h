@@ -31,9 +31,9 @@ struct Resource_Bar {
 
 const Resource_Bar_Color resource_Bar_Colors[RBCS_Total] = {
 	// Left rect		 Right rect
-	{ {0, 255, 0},		{255, 0, 0} }, // HP Bar
+	{ {0, 255, 0},		{255, 0, 0} },		// HP Bar
 	{ {255, 95, 31},	{255, 255, 255} },  // Food Bar
-	{ {171, 32, 253},	{255, 255, 255} }  // Spell Bar
+	{ {171, 32, 253},	{255, 255, 255} }	// Spell Bar
 };
 
 enum Nation {
@@ -67,10 +67,10 @@ struct Stored_Units {
 	int max;
 };
 
-enum Level {
-	LEVEL_1,
-	LEVEL_2,
-	TOTAL_LEVELS
+enum Castle_Level {
+	CL_LEVEL_1,
+	CL_LEVEL_2,
+	CL_TOTAL_LEVELS
 };
 
 struct Cooldown {
@@ -78,23 +78,20 @@ struct Cooldown {
 	float remaining;
 };
 
-struct Castle_Stats {
+struct Castle_Data {
+	std::string type;
+	std::string sprite_Sheet_Name;
+	std::string enhancement;
+
 	float base_HP;
 	float base_HP_Regen_Per_Sec;
 	float base_Food_Points;
 	float base_Food_Points_Per_Sec;
-
-	Cooldown fire_Cooldown;
-	Cooldown spawn_Cooldown;
-
-	int arrow_Ammo;
-	Cooldown arrow_Ammo_Cooldown;
-
 	// Stored_Units stored_Units;
 };
 
-const Castle_Stats castle_Stats_Array[TOTAL_LEVELS] = {
-	// hp	|	hp_Per_Sec | food_Bar_Max | food_Bar_Regen_Rate |	fire_Cooldown   |  spawn_Cooldown   |  arrow_Ammo    |   arrow_Ammo_Cooldown
+const Castle_Data bad_Castle_Data_Array[CL_TOTAL_LEVELS] = {
+	// hp	|	hp_Per_Sec | food_Bar_Max | food_Bar_Regen_Rate |	fire_Cooldown   |  spawn_Cooldown   |  projectile_Ammo    |   projectile_Ammo_Cooldown
 	{  100.0f,	5.0f,		 100.0f,		5.0f,				   {0.1f, 0.0f},      {1.0f, 0.0f},        0,               {0.25f, 0.0f}},
 	{  100.0f,	5.0f,		 100.0f,		5.0f,				   {1.0f, 0.0f},      {1.0f, 0.0f},        0,               {0.25f, 0.0f}}
 };
@@ -115,6 +112,8 @@ struct Summonable_Unit {
 
 struct Castle {
 	Nation nation;
+	int level;
+
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
 	Resource_Bar health_Bar;
@@ -122,8 +121,8 @@ struct Castle {
 	Cooldown fire_Cooldown;
 	Cooldown spawn_Cooldown;
 
-	int arrow_Ammo;
-	Cooldown arrow_Ammo_Cooldown;
+	int projectile_Ammo;
+	Cooldown projectile_Ammo_Cooldown;
 
 	std::vector<Summonable_Unit> summonable_Units;
 	Resource_Bar food_Bar;
@@ -146,6 +145,8 @@ struct Projectile_Data {
 	float collider_Pos_LS_X;
 	float collider_Pos_LS_Y;
 	float collider_Radius;
+
+	float castle_Ammo_Cooldown;
 };
 
 struct Projectile {
@@ -209,6 +210,7 @@ struct Attached_Entity {
 
 struct Unit {
 	Nation nation;
+	int level;
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
 	Rigid_Body rigid_Body;
 	Resource_Bar health_Bar;
@@ -347,12 +349,13 @@ float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos);
 
 const Unit_Data& get_Unit_Data(std::string key);
 const Projectile_Data& get_Projectile_Data(std::string key);
+const Castle_Data& get_Castle_Data(std::string key);
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
 void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Level level);
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, V2 position_WS, Castle_Level level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.

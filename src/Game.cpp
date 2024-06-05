@@ -220,8 +220,8 @@ void process(Archive* ar, Castle& castle) {
 	process(ar, castle.fire_Cooldown);
 	process(ar, castle.spawn_Cooldown);
 
-	process(ar, castle.arrow_Ammo);
-	process(ar, castle.arrow_Ammo_Cooldown);
+	process(ar, castle.projectile_Ammo);
+	process(ar, castle.projectile_Ammo_Cooldown);
 
 }
 
@@ -342,7 +342,7 @@ void start_Game(Game_Data& game_Data) {
 		game_Data,
 		N_PLAYER,
 		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) - 40.0f },
-		LEVEL_1
+		CL_LEVEL_1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "warrior");
 	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "archer");
@@ -352,7 +352,7 @@ void start_Game(Game_Data& game_Data) {
 		game_Data,
 		N_ENEMY,
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) - 40.0f },
-		LEVEL_1
+		CL_LEVEL_1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
 	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
@@ -393,8 +393,50 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 	}
 }
 
+//void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Castle_Level level) {
+//	Castle castle = {};
+//
+//	castle.nation = nation;
+//
+//	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
+//
+//	castle.rigid_Body = create_Rigid_Body(position_WS, false);
+//
+//	const Castle_Data* data = &castle_Stats_Array[level];
+//	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, data->base_HP, data->base_HP_Regen_Per_Sec, RBCS_HP_Bar);
+//	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data->base_Food_Points, data->base_Food_Points_Per_Sec, RBCS_Food_Bar);
+//
+//	castle.fire_Cooldown = data->fire_Cooldown;
+//	castle.spawn_Cooldown = data->spawn_Cooldown;
+//	castle.projectile_Ammo = data->projectile_Ammo;
+//	castle.projectile_Ammo_Cooldown = data->projectile_Ammo_Cooldown;
+//
+//	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
+//	if (castle.nation == N_PLAYER) {
+//		game_Data.player_Castle = castle;
+//	}
+//	else if (castle.nation == N_ENEMY) {
+//		game_Data.enemy_Castle = castle;
+//	}
+//}
+
+// I could have different castles types that are specified inside a castle.csv file that are pulled from
+void create_Enemy_Castle() {
+
+}
+
 void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_Data& cache_Data) {
 	save_Game(game_Data, save_Game_enum);
 	std::string save_Game_File_Name = create_Save_Game_File_Name(save_Game_enum);
 	cache_Data.cache[save_Game_File_Name] = game_Data;
+}
+
+Level create_Level(std::string background, std::string terrain) {
+	Level result;
+
+	result.enemy_Castle = spawn_Castle();
+	result.background = background;
+	result.terrain = terrain;
+
+	return Level;
 }

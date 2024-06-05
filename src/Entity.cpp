@@ -58,6 +58,26 @@ const Spell_Data& get_Spell_Data(std::string key) {
 	return bad_Spell_Data;
 }
 
+static std::unordered_map<std::string, Castle_Data> castle_Data_Map = {};
+
+const Castle_Data bad_Castle_Data = {
+	// type			sprite_Sheet_Name	enhancement	 base_HP	 base_HP_Regen_Per_Sec	base_Food_Points	base_Food_Points_Per_Sec
+	  "infernal",  "infernal_Castle",	"",			 100,		 5,						100,				5
+};
+
+const Castle_Data& get_Castle_Data(std::string key) {
+	auto it = castle_Data_Map.find(key);
+	if (it != castle_Data_Map.end()) {
+		// Key found
+		return it->second;
+	}
+
+	assert(false);
+	// Return garbage values
+	return bad_Castle_Data;
+}
+
+
 Unit* get_Unit(Storage<Unit>& storage, Handle handle) {
 	return get_Entity(storage, handle);
 }
@@ -643,24 +663,25 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	return tokens[0];
 }
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Level level) {
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, V2 position_WS, Castle_Level level) {
+	const Castle_Data data = get_Castle_Data(castle_Type);
+	
 	Castle castle = {};
-
 	castle.nation = nation;
-
+	castle.level = level;
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
-
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
-
-	const Castle_Stats* data = &castle_Stats_Array[level];
-	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, data->base_HP, data->base_HP_Regen_Per_Sec, RBCS_HP_Bar);
-	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data->base_Food_Points, data->base_Food_Points_Per_Sec, RBCS_Food_Bar);
-
-	castle.fire_Cooldown = data->fire_Cooldown;
-	castle.spawn_Cooldown = data->spawn_Cooldown;
-	castle.arrow_Ammo = data->arrow_Ammo;
-	castle.arrow_Ammo_Cooldown = data->arrow_Ammo_Cooldown;
-
+	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, data.base_HP, data.base_HP_Regen_Per_Sec, RBCS_HP_Bar);
+	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data.base_Food_Points, data.base_Food_Points_Per_Sec, RBCS_Food_Bar);
+	castle.fire_Cooldown.duration = 0.25f;
+	castle.fire_Cooldown.remaining = 0.0f;
+	// These values may get removed
+	castle.spawn_Cooldown.duration = 2.0f;
+	castle.spawn_Cooldown.remaining = 0.0f;
+	// ****************************
+	castle.projectile_Ammo = 0.0f;
+	castle.projectile_Ammo_Cooldown.duration = 0.25f;
+	castle.projectile_Ammo_Cooldown.remaining = 0.0f;
 	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 	if (castle.nation == N_PLAYER) {
 		game_Data.player_Castle = castle;
@@ -717,6 +738,7 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 
 void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
+	unit.level = level;
 	unit.nation = unit_Side;
 
 	Unit_Data unit_Data = get_Unit_Data(unit_Type);
@@ -837,15 +859,15 @@ void cast_Raise_Dead(Game_Data& game_Data, Handle casting_Unit_ID) {
 		new_Pos.y += (RESOLUTION_HEIGHT - new_Pos.y);
 
 		if (unit->nation == N_PLAYER) {
-			spawn_Unit(game_Data, unit->nation, spell_Data.summon_Type, 1, new_Pos, game_Data.enemy_Castle.rigid_Body.position_WS);
+			spawn_Unit(game_Data, unit->nation, spell_Data.summon_Type, unit->level, new_Pos, game_Data.enemy_Castle.rigid_Body.position_WS);
 		}
 		else if (unit->nation == N_ENEMY) {
-			spawn_Unit(game_Data, unit->nation, spell_Data.summon_Type, 1, new_Pos, game_Data.player_Castle.rigid_Body.position_WS);
+			spawn_Unit(game_Data, unit->nation, spell_Data.summon_Type, unit->level, new_Pos, game_Data.player_Castle.rigid_Body.position_WS);
 		}
 	}
 }
 
-void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID, int spell_Level) {
+void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID) {
 	Unit* unit = get_Unit(game_Data.units, casting_Unit_ID);
 	if (unit != nullptr) {
 		if (unit->spell.type == "raise_Dead") {
@@ -1151,6 +1173,7 @@ Type_Descriptor projectile_Type_Descriptors[] = {
 	FIELD(Projectile_Data, DT_FLOAT, collider_Pos_LS_X),
 	FIELD(Projectile_Data, DT_FLOAT, collider_Pos_LS_Y),
 	FIELD(Projectile_Data, DT_FLOAT, collider_Radius),
+	FIELD(Projectile_Data, DT_FLOAT, castle_Ammo_Cooldown),
 };
 
 void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
@@ -1165,6 +1188,27 @@ void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
 
 	for (Projectile_Data& iterator : projectile_Data) {
 		projectile_Data_Map[iterator.type] = iterator;
+	}
+}
+
+Type_Descriptor spell_Type_Descriptors[] = {
+	FIELD(Spell_Data, DT_STRING, type),
+	FIELD(Spell_Data, DT_STRING, summon_Type),
+	FIELD(Spell_Data, DT_FLOAT, base_Cast_Time)
+};
+
+void load_Spell_Data_CSV(CSV_Data* csv_Data) {
+	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
+
+	std::vector<Spell_Data> spell_Data;
+	spell_Data.resize(csv_Data->rows);
+
+	std::span<Type_Descriptor> spell_Descriptors(spell_Type_Descriptors);
+
+	load_CSV_Data(csv_Data, (char*)spell_Data.data(), sizeof(spell_Data[0]), spell_Descriptors);
+
+	for (Spell_Data& iterator : spell_Data) {
+		spell_Data_Map[iterator.type] = iterator;
 	}
 }
 

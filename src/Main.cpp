@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
             if (current_Game_State == GS_GAMELOOP && time_Scalar > 0) 
             {
                 // Spawn Arrows and update lifetime
-                if (key_States[SDLK_SPACE].held_Down == true && game_Data.player_Castle.arrow_Ammo > 0) {
+                if (key_States[SDLK_SPACE].held_Down == true && game_Data.player_Castle.projectile_Ammo > 0) {
                     if (game_Data.player_Castle.fire_Cooldown.remaining < 0) {
                         V2 target_Mouse = {};
                         int x, y = 0;
@@ -230,21 +230,21 @@ int main(int argc, char** argv) {
                         target_Mouse = { (float)x,(float)y };
                         spawn_Projectile(game_Data, N_PLAYER, "arrow_Short", 10, game_Data.player_Castle.rigid_Body.position_WS, target_Mouse);
                         game_Data.player_Castle.fire_Cooldown.remaining = game_Data.player_Castle.fire_Cooldown.duration;
-                        if (game_Data.player_Castle.arrow_Ammo > 0) {
-                            game_Data.player_Castle.arrow_Ammo--;
+                        if (game_Data.player_Castle.projectile_Ammo > 0) {
+                            game_Data.player_Castle.projectile_Ammo--;
                         } else {
-                            game_Data.player_Castle.arrow_Ammo = 0;
+                            game_Data.player_Castle.projectile_Ammo = 0;
                         }
                     }
                 }
                 game_Data.player_Castle.fire_Cooldown.remaining -= delta_Time;
                 
-                if (game_Data.player_Castle.arrow_Ammo_Cooldown.remaining < 0) {
+                if (game_Data.player_Castle.projectile_Ammo_Cooldown.remaining < 0) {
                     Castle* player_Castle = &game_Data.player_Castle;
-                    player_Castle->arrow_Ammo++;
-                    player_Castle->arrow_Ammo_Cooldown.remaining = player_Castle->arrow_Ammo_Cooldown.duration;
+                    player_Castle->projectile_Ammo++;
+                    player_Castle->projectile_Ammo_Cooldown.remaining = player_Castle->projectile_Ammo_Cooldown.duration;
                 }
-                game_Data.player_Castle.arrow_Ammo_Cooldown.remaining -= delta_Time;
+                game_Data.player_Castle.projectile_Ammo_Cooldown.remaining -= delta_Time;
 
                 // Spawn Player Units
                 for (Summonable_Unit& summonable_Unit : game_Data.player_Castle.summonable_Units) {

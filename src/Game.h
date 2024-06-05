@@ -141,3 +141,25 @@ void start_Game(Game_Data& game_Data);
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache);
 void load_Game_Data_Cache(Cache_Data& cache_Data);
 void save_Game_To_Cache(Saved_Games save_Game, Game_Data& game_Data, Cache_Data& cache_Data);
+
+struct Level {
+	Castle enemy_Castle;
+	std::string background;
+	std::string terrain;
+	// Unit stats for the enemy that are independent for the player
+	// Unit AI
+	// Rewards for the player
+};
+
+struct Level_Map {
+	std::vector<Level> levels;
+};
+
+// As the map number increases, so does the difficulty and rewards
+Level create_Level(std::string background, std::string terrain);
+void create_Level_Map(int current_Map_Number);
+// Override the current game_Data and init the character castle values to zero that 
+// need to be initialized to zero
+void load_Level(Game_Data& game_Data, Level_Map level_Map, Level level);
+void update_Level_Map();
+void draw_Level_Map();
