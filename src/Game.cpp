@@ -342,8 +342,7 @@ void start_Game(Game_Data& game_Data) {
 		game_Data,
 		N_PLAYER,
 		"infernal",
-		"shadow_Orb",
-		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) - 40.0f },
+		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f)))},
 		1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "warrior");
@@ -354,8 +353,7 @@ void start_Game(Game_Data& game_Data) {
 		game_Data,
 		N_ENEMY,
 		"infernal",
-		"arrow_Short",
-		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) - 40.0f },
+		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f)))},
 		1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
@@ -424,23 +422,39 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 //	}
 //}
 
-// I could have different castles types that are specified inside a castle.csv file that are pulled from
-void create_Enemy_Castle() {
-
-}
-
 void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_Data& cache_Data) {
 	save_Game(game_Data, save_Game_enum);
 	std::string save_Game_File_Name = create_Save_Game_File_Name(save_Game_enum);
 	cache_Data.cache[save_Game_File_Name] = game_Data;
 }
 
-Level create_Level(std::string background, std::string terrain) {
-	Level result;
+Castle_Info create_Castle_Info(Nation nation, std::string castle_Type, int castle_Level, V2 position_WS) {
+	Castle_Info result;
+
+	result.nation = nation;
+	result.castle_Type = castle_Type;
+	result.castle_Level = castle_Level;
+	result.position_WS = position_WS;
+
+	return result;
+}
+
+Game_Level create_Game_Level(std::string background, std::string terrain) {
+	Game_Level result;
 
 	// result.enemy_Castle = spawn_Castle();
 	result.background = background;
 	result.terrain = terrain;
 
 	return result;
+}
+
+// Here is where we modify game_Data
+void load_Level(Game_Data& game_Data, Castle player_Castle, Game_Level game_Level) {
+	game_Data = {};
+
+	game_Data.terrain_Height_Map = create_Height_Map(game_Level.terrain.c_str());
+	V2 player_Castle_Pos = { (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) - 40.0f };
+	// spawn_Castle(game_Data, N_PLAYER, player_Castle.castle_Type, player_Castle_Pos, player_Castle.level);
+	V2 enemy_Castle_Pos = { (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) - 40.0f };
 }

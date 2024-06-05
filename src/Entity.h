@@ -81,6 +81,7 @@ struct Castle_Data {
 	float base_HP_Regen;
 	float base_Food_Points;
 	float base_Food_Points_Regen;
+	std::string projectile_Type;
 	// Stored_Units stored_Units;
 };
 
@@ -207,6 +208,7 @@ struct Summonable_Unit {
 
 struct Castle {
 	Nation nation;
+	std::string castle_Type;
 	int level;
 
 	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
@@ -339,7 +341,7 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 
 void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, std::string projectile_Type, V2 position_WS, int castle_Level);
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, V2 position_WS, int castle_Level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.
