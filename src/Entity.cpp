@@ -845,7 +845,7 @@ void cast_Raise_Dead(Game_Data& game_Data, Handle casting_Unit_ID) {
 	}
 }
 
-void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID) {
+void cast_Spell(Game_Data& game_Data, Handle casting_Unit_ID, int spell_Level) {
 	Unit* unit = get_Unit(game_Data.units, casting_Unit_ID);
 	if (unit != nullptr) {
 		if (unit->spell.type == "raise_Dead") {
