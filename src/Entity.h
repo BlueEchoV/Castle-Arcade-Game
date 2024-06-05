@@ -67,12 +67,6 @@ struct Stored_Units {
 	int max;
 };
 
-enum Castle_Level {
-	CL_LEVEL_1,
-	CL_LEVEL_2,
-	CL_TOTAL_LEVELS
-};
-
 struct Cooldown {
 	float duration;
 	float remaining;
@@ -84,49 +78,9 @@ struct Castle_Data {
 	std::string enhancement;
 
 	float base_HP;
-	float base_HP_Regen_Per_Sec;
+	float base_HP_Regen;
 	float base_Food_Points;
-	float base_Food_Points_Per_Sec;
-	// Stored_Units stored_Units;
-};
-
-const Castle_Data bad_Castle_Data_Array[CL_TOTAL_LEVELS] = {
-	// hp	|	hp_Per_Sec | food_Bar_Max | food_Bar_Regen_Rate |	fire_Cooldown   |  spawn_Cooldown   |  projectile_Ammo    |   projectile_Ammo_Cooldown
-	{  100.0f,	5.0f,		 100.0f,		5.0f,				   {0.1f, 0.0f},      {1.0f, 0.0f},        0,               {0.25f, 0.0f}},
-	{  100.0f,	5.0f,		 100.0f,		5.0f,				   {1.0f, 0.0f},      {1.0f, 0.0f},        0,               {0.25f, 0.0f}}
-};
-
-struct Unit_Level_Tracker {
-	int warrior = 1;
-	int archer = 1;
-	int necromancer = 1;
-};
-
-struct Summonable_Unit {
-	std::string name;
-	int level = 1;
-	bool is_Pressed;
-	Nation nation;
-	float food_Cost;
-};
-
-struct Castle {
-	Nation nation;
-	int level;
-
-	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
-	Rigid_Body rigid_Body;
-	Resource_Bar health_Bar;
-
-	Cooldown fire_Cooldown;
-	Cooldown spawn_Cooldown;
-
-	int projectile_Ammo;
-	Cooldown projectile_Ammo_Cooldown;
-
-	std::vector<Summonable_Unit> summonable_Units;
-	Resource_Bar food_Bar;
-
+	float base_Food_Points_Regen;
 	// Stored_Units stored_Units;
 };
 
@@ -146,7 +100,9 @@ struct Projectile_Data {
 	float collider_Pos_LS_Y;
 	float collider_Radius;
 
-	float castle_Ammo_Cooldown;
+	float castle_Base_Ammo_Per_Sec;
+	float castle_Ammo_Per_Sec_Multiplier;
+	float castle_Max_Ammo_Per_Sec;
 };
 
 struct Projectile {
@@ -235,12 +191,40 @@ struct Unit {
 	Handle handle;
 };
 
-//struct Unit_Storage {
-//	Generation generations[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
-//	uint32_t index_One_Past_Last = 0;
-//	// Array of units
-//	Unit arr[Globals::MAX_ENTITY_ARRAY_LENGTH] = {};
-//};
+struct Unit_Level_Tracker {
+	int warrior = 1;
+	int archer = 1;
+	int necromancer = 1;
+};
+
+struct Summonable_Unit {
+	std::string name;
+	int level = 1;
+	bool is_Pressed;
+	Nation nation;
+	float food_Cost;
+};
+
+struct Castle {
+	Nation nation;
+	int level;
+
+	Sprite_Sheet_Tracker sprite_Sheet_Tracker;
+	Rigid_Body rigid_Body;
+	Resource_Bar health_Bar;
+
+	Cooldown fire_Cooldown;
+	Cooldown spawn_Cooldown;
+
+	std::string projectile_Type;
+	int projectile_Ammo;
+	Cooldown projectile_Ammo_Cooldown;
+
+	std::vector<Summonable_Unit> summonable_Units;
+	Resource_Bar food_Bar;
+
+	// Stored_Units stored_Units;
+};
 
 template <typename T>
 struct Storage {
@@ -355,7 +339,7 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 
 void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, V2 position_WS, Castle_Level level);
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, std::string projectile_Type, V2 position_WS, int castle_Level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.
@@ -392,3 +376,4 @@ std::vector<int> create_Height_Map(const char* filename);
 void load_Unit_Data_CSV(CSV_Data* csv_Data);
 void load_Projectile_Data_CSV(CSV_Data* csv_Data);
 void load_Spell_Data_CSV(CSV_Data* csv_Data);
+void load_Castle_Data_CSV(CSV_Data* csv_Data);

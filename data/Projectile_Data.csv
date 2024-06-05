@@ -1,4 +1,4 @@
-type,sprite_Sheet_Name,collider,max_Penetrations,can_Attach,gravity_Multiplier,speed,life_Time,collider_Pos_LS_X,collider_Pos_LS_Y,collider_Radius,castle_Ammo_Cooldown
-arrow_Short,arrow,arrow_Short,1,1,3,700,10,10,0,5,0.2
-arrow_Long,arrow,arrow_Long,1,1,0,700,10,10,0,5,0.3
-shadow_Orb,shadow_Orb,shadow_Orb,0,0,0,400,15,0,0,5,0.05
+type,sprite_Sheet_Name,collider,max_Penetrations,can_Attach,gravity_Multiplier,speed,life_Time,collider_Pos_LS_X,collider_Pos_LS_Y,collider_Radius,castle_Base_Ammo_Per_Sec,castle_Ammo_Per_Sec_Multiplier,castle_Max_Ammo_Per_Sec
+arrow_Short,arrow,arrow_Short,1,1,3,700,10,10,0,5,1,1.5,10
+arrow_Long,arrow,arrow_Long,1,1,0,700,10,10,0,5,1,1.5,10
+shadow_Orb,shadow_Orb,shadow_Orb,0,0,0,400,15,0,0,5,1,1.5,10

@@ -663,25 +663,35 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	return tokens[0];
 }
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, V2 position_WS, Castle_Level level) {
-	const Castle_Data data = get_Castle_Data(castle_Type);
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, std::string projectile_Type, V2 position_WS, int castle_Level) {
+	const Castle_Data castle_Data = get_Castle_Data(castle_Type);
+	const Projectile_Data projectile_Data = get_Projectile_Data(projectile_Type);
 	
 	Castle castle = {};
 	castle.nation = nation;
-	castle.level = level;
+	castle.level = castle_Level;
+	castle.projectile_Type = projectile_Type;
+	castle.projectile_Ammo = 0;
+	// Convert ammo per second to a duration
+	float ammo_Per_Sec_Per_Level = projectile_Data.castle_Base_Ammo_Per_Sec * projectile_Data.castle_Ammo_Per_Sec_Multiplier;
+	float updated_Ammo_Per_Sec = ammo_Per_Sec_Per_Level * castle.level;;
+	float updated_Ammo_Duration = 1.0f / updated_Ammo_Per_Sec;
+	castle.projectile_Ammo_Cooldown.duration = updated_Ammo_Duration;
+	castle.projectile_Ammo_Cooldown.remaining = 0.0f;
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
-	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, data.base_HP, data.base_HP_Regen_Per_Sec, RBCS_HP_Bar);
-	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data.base_Food_Points, data.base_Food_Points_Per_Sec, RBCS_Food_Bar);
-	castle.fire_Cooldown.duration = 0.25f;
+	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Data.base_HP, castle_Data.base_HP_Regen, RBCS_HP_Bar);
+	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, castle_Data.base_Food_Points, castle_Data.base_Food_Points_Regen, RBCS_Food_Bar);
+	// NOTE: This value is just the interval 
+	// at which a projectiles are fired if 
+	// the fire button is held down.
+	castle.fire_Cooldown.duration = 0.05f;
 	castle.fire_Cooldown.remaining = 0.0f;
-	// These values may get removed
+	//  ***************************
+	// NOTE: These values may get removed
 	castle.spawn_Cooldown.duration = 2.0f;
 	castle.spawn_Cooldown.remaining = 0.0f;
 	// ****************************
-	castle.projectile_Ammo = 0.0f;
-	castle.projectile_Ammo_Cooldown.duration = 0.25f;
-	castle.projectile_Ammo_Cooldown.remaining = 0.0f;
 	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 	if (castle.nation == N_PLAYER) {
 		game_Data.player_Castle = castle;
@@ -1173,7 +1183,9 @@ Type_Descriptor projectile_Type_Descriptors[] = {
 	FIELD(Projectile_Data, DT_FLOAT, collider_Pos_LS_X),
 	FIELD(Projectile_Data, DT_FLOAT, collider_Pos_LS_Y),
 	FIELD(Projectile_Data, DT_FLOAT, collider_Radius),
-	FIELD(Projectile_Data, DT_FLOAT, castle_Ammo_Cooldown),
+	FIELD(Projectile_Data, DT_FLOAT, castle_Base_Ammo_Per_Sec),
+	FIELD(Projectile_Data, DT_FLOAT, castle_Ammo_Per_Sec_Multiplier),
+	FIELD(Projectile_Data, DT_FLOAT, castle_Max_Ammo_Per_Sec),
 };
 
 void load_Projectile_Data_CSV(CSV_Data* csv_Data) {
@@ -1212,23 +1224,27 @@ void load_Spell_Data_CSV(CSV_Data* csv_Data) {
 	}
 }
 
-Type_Descriptor spell_Type_Descriptors[] = {
-	FIELD(Spell_Data, DT_STRING, type),
-	FIELD(Spell_Data, DT_STRING, summon_Type),
-	FIELD(Spell_Data, DT_FLOAT, base_Cast_Time)
+Type_Descriptor castle_Type_Descriptors[] = {
+	FIELD(Castle_Data, DT_STRING, type),
+	FIELD(Castle_Data, DT_STRING, sprite_Sheet_Name),
+	FIELD(Castle_Data, DT_STRING, enhancement),
+	FIELD(Castle_Data, DT_FLOAT, base_HP),
+	FIELD(Castle_Data, DT_FLOAT, base_HP_Regen),
+	FIELD(Castle_Data, DT_FLOAT, base_Food_Points),
+	FIELD(Castle_Data, DT_FLOAT, base_Food_Points_Regen)
 };
 
-void load_Spell_Data_CSV(CSV_Data* csv_Data) {
+void load_Castle_Data_CSV(CSV_Data* csv_Data) {
 	csv_Data->last_Modified_Time = file_Last_Modified(csv_Data->file_Path);
 
-	std::vector<Spell_Data> spell_Data;
-	spell_Data.resize(csv_Data->rows);
+	std::vector<Castle_Data> castle_Data;
+	castle_Data.resize(csv_Data->rows);
 
-	std::span<Type_Descriptor> spell_Descriptors(spell_Type_Descriptors);
+	std::span<Type_Descriptor> castle_Descriptors(castle_Type_Descriptors);
 
-	load_CSV_Data(csv_Data, (char*)spell_Data.data(), sizeof(spell_Data[0]), spell_Descriptors);
+	load_CSV_Data(csv_Data, (char*)castle_Data.data(), sizeof(castle_Data[0]), castle_Descriptors);
 
-	for (Spell_Data& iterator : spell_Data) {
-		spell_Data_Map[iterator.type] = iterator;
+	for (Castle_Data& iterator : castle_Data) {
+		castle_Data_Map[iterator.type] = iterator;
 	}
 }

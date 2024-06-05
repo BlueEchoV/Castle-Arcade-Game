@@ -341,8 +341,10 @@ void start_Game(Game_Data& game_Data) {
 	spawn_Castle(
 		game_Data,
 		N_PLAYER,
+		"infernal",
+		"shadow_Orb",
 		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) - 40.0f },
-		CL_LEVEL_1
+		1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "warrior");
 	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "archer");
@@ -351,8 +353,10 @@ void start_Game(Game_Data& game_Data) {
 	spawn_Castle(
 		game_Data,
 		N_ENEMY,
+		"infernal",
+		"arrow_Short",
 		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) - 40.0f },
-		CL_LEVEL_1
+		1
 	);
 	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
 	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
@@ -434,9 +438,9 @@ void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_
 Level create_Level(std::string background, std::string terrain) {
 	Level result;
 
-	result.enemy_Castle = spawn_Castle();
+	// result.enemy_Castle = spawn_Castle();
 	result.background = background;
 	result.terrain = terrain;
 
-	return Level;
+	return result;
 }

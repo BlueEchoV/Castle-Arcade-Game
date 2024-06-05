@@ -81,6 +81,10 @@ int main(int argc, char** argv) {
 	load_Spell_Data_CSV(&spell_CSV_Data);
 	close_CSV_File(&spell_CSV_Data);
 
+    CSV_Data castle_CSV_Data = create_Open_CSV_File("data/Castle_Data.csv");
+    load_Castle_Data_CSV(&castle_CSV_Data);
+    close_CSV_File(&castle_CSV_Data);
+
 	start_Game(game_Data);
 
     while (running) {
