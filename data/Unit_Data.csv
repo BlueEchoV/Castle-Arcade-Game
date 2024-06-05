@@ -1,4 +1,5 @@
 type,food_Cost,sprite_Sheet_Name,projectile_Type,spell_Type,base_HP,hp_Multiplier,base_Damage,damage_Multiplier,speed,base_Attack_Cooldown,attack_Cooldown_Multiplier,attack_Range
 warrior,25,warrior_Stop,,,100,1.25,25,1.1,75,1.5,1.1,25
 archer,25,archer_Stop,arrow_Long,,100,1.25,10,1.1,50,1.5,1.1,800
-necromancer,50,necromancer_Stop,shadow_Orb,raise_Dead,200,1.25,2.5,1.1,75,1,1.1,700
+necromancer,50,necromancer_Stop,shadow_Orb,raise_Dead,200,1.25,2.5,1.1,40,1,1.1,700
+ghoul,10,ghoul_Stop,,,50,1.25,10,1.1,75,0.75,1.1,15
