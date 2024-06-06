@@ -266,10 +266,33 @@ void delete_Handle(Storage<T>& storage, const Handle handle) {
 	}
 }
 
+struct Castle_Info {
+	Nation nation;
+	std::string castle_Type;
+	V2 position_WS;
+	int castle_Level;
+};
+
+struct Game_Level {
+	Castle_Info enemy_Castle;
+	std::string background;
+	std::string terrain;
+	// Unit stats for the enemy that are independent for the player
+	// Unit AI
+	// Rewards for the player
+};
+
+struct Game_Level_Map {
+	int power_Level;
+	std::vector<Game_Level> game_Levels;
+};
+
 // Setting a max number of units could be the best approach. (Non dynamic arrays)
 // I could use a C array (Chris would use this) or a C++ array
 // If I started with a vector, it would just be for allocation and NO deleting
 struct Game_Data {
+	Game_Level_Map							game_Level_Map;
+	
 	Storage<Unit>							units = { .st = ST_Units };
 	Storage<Projectile>						projectiles = { .st = ST_Projectile };
 	Storage<Spell>							spells = { .st = ST_Spell };
@@ -303,6 +326,17 @@ T* get_Entity(Storage<T>& storage, Handle handle) {
 	}
 	return nullptr;
 }
+
+// As the map number increases, so does the difficulty and rewards
+void add_Game_Level_To_Map(Game_Level_Map game_Level_Map, std::string background, std::string terrain, int power_Level);
+Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level);
+Game_Level_Map create_Game_Level_Map(int power_Level);
+
+void create_Game_Level_Storage(int current_Map_Number);
+// Override the current game_Data and init the character castle values to zero that 
+// need to be initialized to zero
+void load_Game_Level(Game_Data& game_Data, Game_Level_Map level_Map, Game_Level game_Level);
+void update_Game_Level_Map();
 
 Unit* get_Unit(Storage<Unit>& storage, Handle handle);
 Spell* get_Spell(Storage<Spell>& storage, Handle handle);

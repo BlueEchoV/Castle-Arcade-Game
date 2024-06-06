@@ -673,6 +673,50 @@ void draw_Sub_Menu_Paused() {
 		push_To_Menu_Stack(MM_Sub_Menu_Save_Game);
 	}
 	button_Pos_Paused.y += button_Height_Paused;
+	if (button_Text("Debug: Game Map", button_Pos_Paused, button_Width_Paused, button_Height_Paused, string_Size_Paused)) {
+		push_To_Menu_Stack(MM_Sub_Menu_Debug_Map);
+	}
+	button_Pos_Paused.y += button_Height_Paused;
+}
+
+void draw_Sub_Menu_Debug_Map() {
+	SDL_Rect background;
+	background.w = (RESOLUTION_WIDTH / 4) * 3;
+	background.h = (RESOLUTION_HEIGHT / 4) * 3;
+	background.x = (RESOLUTION_WIDTH / 2) - background.w / 2;
+	background.y = (RESOLUTION_HEIGHT / 2) - background.h / 2;
+	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(Globals::renderer, &background);
+
+	SDL_Rect rect;
+	rect.w = 50;
+	rect.h = 50;
+	rect.x = background.x - (rect.w / 2);
+	rect.y = background.y - (rect.h / 2);
+
+	int current_Row = 0;
+	int max_Rows = 3;
+	int current_Column = 1;
+	int max_Columns = 4;
+	int total_Nodes = 12;
+
+	int column_Separation = background.w / (max_Columns + 1);
+	int row_Separation = background.h / (max_Rows + 1);
+	SDL_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+	for (int i = 0; i < total_Nodes; i++) {
+		current_Row++;
+
+		SDL_Rect node_Rect = rect;
+		node_Rect.y += (row_Separation * current_Row);
+		node_Rect.x += (column_Separation * current_Column);
+
+		SDL_RenderFillRect(Globals::renderer, &node_Rect);
+		if (current_Row == max_Rows) {
+			current_Row = 0;
+			current_Column++;
+		}
+		// SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	}
 }
 
 void draw_Sub_Menu_Save_Game() {
@@ -796,6 +840,11 @@ void draw_Menu() {
 	case MM_Sub_Menu_Paused:
 	{
 		draw_Sub_Menu_Paused();
+		break;
+	}
+	case MM_Sub_Menu_Debug_Map:
+	{
+		draw_Sub_Menu_Debug_Map();
 		break;
 	}
 	case MM_Sub_Menu_Save_Game:

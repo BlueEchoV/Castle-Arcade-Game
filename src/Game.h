@@ -141,37 +141,3 @@ void start_Game(Game_Data& game_Data);
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache);
 void load_Game_Data_Cache(Cache_Data& cache_Data);
 void save_Game_To_Cache(Saved_Games save_Game, Game_Data& game_Data, Cache_Data& cache_Data);
-
-struct Castle_Info {
-	Nation nation;
-	std::string castle_Type;
-	V2 position_WS;
-	int castle_Level;
-};
-
-struct Game_Level {
-	Castle_Info enemy_Castle;
-	std::string background;
-	std::string terrain;
-	// Unit stats for the enemy that are independent for the player
-	// Unit AI
-	// Rewards for the player
-};
-
-struct Game_Level_Map {
-	int power_Level;
-	std::vector<Game_Level> game_Levels;
-};
-
-// As the map number increases, so does the difficulty and rewards
-void add_Game_Level_To_Map(Game_Level_Map game_Level_Map, std::string background, std::string terrain);
-
-Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level);
-Game_Level_Map create_Game_Level_Map(int power_Level);
-
-void create_Game_Level_Storage(int current_Map_Number);
-// Override the current game_Data and init the character castle values to zero that 
-// need to be initialized to zero
-void load_Game_Level(Game_Data& game_Data, Game_Level_Map level_Map, Game_Level game_Level);
-void update_Game_Level_Map();
-void draw_Game_Level_Map();

@@ -78,7 +78,7 @@ const Castle_Data& get_Castle_Data(std::string key) {
 }
 
 int get_Castle_Data_Size() {
-	return castle_Data_Map.size();
+	return (int)castle_Data_Map.size();
 }
 
 
@@ -171,6 +171,56 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		}
 		return false;
 		});
+}
+
+
+Game_Level_Map create_Game_Level_Map(int power_Level) {
+	Game_Level_Map result = {};
+	result.power_Level = power_Level;
+	return result;
+}
+
+Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) {
+	Castle_Info result;
+
+	result.nation = N_ENEMY;
+	result.castle_Type = castle_Type;
+	result.castle_Level = castle_Level;
+
+	return result;
+}
+
+void add_Game_Level_To_Map(Game_Level_Map game_Level_Map, std::string background, std::string terrain, int power_Level) {
+	Game_Level result;
+	int random_Castle = rand() & 3;
+	if (random_Castle == 1) {
+		result.enemy_Castle = create_Enemy_Castle_Info("standard", power_Level);
+	}
+	else if (random_Castle == 2) {
+		result.enemy_Castle = create_Enemy_Castle_Info("infernal", power_Level);
+	}
+	else if (random_Castle == 3) {
+		result.enemy_Castle = create_Enemy_Castle_Info("ancient", power_Level);
+	}
+	result.background = background;
+	result.terrain = terrain;
+
+	game_Level_Map.game_Levels.push_back(result);
+}
+
+// Here is where we modify game_Data
+// We are only loading the enemy. The player castle stays the same
+void load_Level(Game_Data& game_Data, Castle player_Castle, Game_Level game_Level, int power_Level) {
+	game_Data = {};
+
+	game_Data.terrain_Height_Map = create_Height_Map(game_Level.terrain.c_str());
+	spawn_Castle(game_Data, N_PLAYER, player_Castle.castle_Type, player_Castle.level);
+	game_Data.player_Castle.summonable_Units = player_Castle.summonable_Units;
+	spawn_Castle(game_Data, N_ENEMY, game_Level.enemy_Castle.castle_Type, power_Level);
+	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
+	//add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
+	//add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "necromancer");
+
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
@@ -697,7 +747,7 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, 
 	}
 	// Lower the castle onto the map by 25% of the size of the castle sprite
 	float image_Radius = get_Sprite_Radius(&castle.sprite_Sheet_Tracker);
-	position_WS.y -= image_Radius / 2.0f;
+	position_WS.y -= image_Radius / 1.5f;
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 	// *********************
 	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Data.base_HP, castle_Data.base_HP_Regen, RBCS_HP_Bar);

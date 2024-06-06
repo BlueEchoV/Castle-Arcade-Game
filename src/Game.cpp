@@ -334,45 +334,6 @@ void save_Game(Game_Data& game_Data, Saved_Games save_Game) {
 std::unordered_map<std::string, Game_Data> saved_Games_Cache = {};
 Cache_Data save_Game_Cache_Data;
 
-void start_Game(Game_Data& game_Data) {
-	// This could just be an array
-	save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
-	game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
-	spawn_Castle(
-		game_Data,
-		N_PLAYER,
-		"infernal",
-		{ (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f)))},
-		1
-	);
-	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "warrior");
-	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "archer");
-	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "necromancer");
-
-	spawn_Castle(
-		game_Data,
-		N_ENEMY,
-		"infernal",
-		{ (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f)))},
-		1
-	);
-	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
-	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
-	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "necromancer");
-
-	Handle test_Handle = {};
-	game_Data.particle_System_Rain_ID = spawn_Particle_System(
-		game_Data,
-		"PT_RAIN",
-		{ RESOLUTION_WIDTH / 2, -50 },
-		1000,
-		RESOLUTION_WIDTH,
-		50,
-		test_Handle,
-		false
-	);
-}
-
 Cache_Data create_Cache_Data(std::unordered_map<std::string, Game_Data>& cache) {
 	//                    Loaded | Cache
 	Cache_Data result = { false,   cache };
@@ -395,75 +356,39 @@ void load_Game_Data_Cache(Cache_Data& cache_Data) {
 	}
 }
 
-//void spawn_Castle(Game_Data& game_Data, Nation nation, V2 position_WS, Castle_Level level) {
-//	Castle castle = {};
-//
-//	castle.nation = nation;
-//
-//	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker("castle");
-//
-//	castle.rigid_Body = create_Rigid_Body(position_WS, false);
-//
-//	const Castle_Data* data = &castle_Stats_Array[level];
-//	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, data->base_HP, data->base_HP_Regen_Per_Sec, RBCS_HP_Bar);
-//	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, data->base_Food_Points, data->base_Food_Points_Per_Sec, RBCS_Food_Bar);
-//
-//	castle.fire_Cooldown = data->fire_Cooldown;
-//	castle.spawn_Cooldown = data->spawn_Cooldown;
-//	castle.projectile_Ammo = data->projectile_Ammo;
-//	castle.projectile_Ammo_Cooldown = data->projectile_Ammo_Cooldown;
-//
-//	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
-//	if (castle.nation == N_PLAYER) {
-//		game_Data.player_Castle = castle;
-//	}
-//	else if (castle.nation == N_ENEMY) {
-//		game_Data.enemy_Castle = castle;
-//	}
-//}
-
 void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_Data& cache_Data) {
 	save_Game(game_Data, save_Game_enum);
 	std::string save_Game_File_Name = create_Save_Game_File_Name(save_Game_enum);
 	cache_Data.cache[save_Game_File_Name] = game_Data;
 }
 
-Game_Level_Map create_Game_Level_Map(int power_Level) {
-	Game_Level_Map result = {};
-	result.power_Level = power_Level;
-	return result;
-}
+void start_Game(Game_Data& game_Data) {
+	// This could just be an array
+	save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
+	game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
 
-Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) {
-	Castle_Info result;
+	spawn_Castle(
+		game_Data,
+		N_PLAYER,
+		"standard",
+		1
+	);
+	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "warrior");
+	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "archer");
+	add_Summonable_Unit_To_Castle(game_Data, N_PLAYER, "necromancer");
 
-	result.nation = N_ENEMY;
-	result.castle_Type = castle_Type;
-	result.castle_Level = castle_Level;
+	spawn_Castle(game_Data, N_ENEMY, "infernal", 1);
+	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
 
-	return result;
-}
-
-void add_Game_Level_To_Map(Game_Level_Map game_Level_Map, std::string background, std::string terrain) {
-	Game_Level result;
-	int random_Castle = rand() & 3;
-	if (random_Castle == 1) {
-		result.enemy_Castle = create_Enemy_Castle_Info("standard", 1);
-	} else if (random_Castle == 2) {
-		result.enemy_Castle = create_Enemy_Castle_Info("infernal", 1);
-	} else if (random_Castle == 3) {
-		result.enemy_Castle = create_Enemy_Castle_Info("ancient", 1);
-	}
-	result.background = background;
-	result.terrain = terrain;
-	
-	game_Level_Map.game_Levels.push_back(result);
-}
-
-// Here is where we modify game_Data
-void load_Level(Game_Data& game_Data, Castle player_Castle, Game_Level game_Level) {
-	game_Data = {};
-
-	game_Data.terrain_Height_Map = create_Height_Map(game_Level.terrain.c_str());
-
+	//Handle test_Handle = {};
+	//game_Data.particle_System_Rain_ID = spawn_Particle_System(
+	//	game_Data,
+	//	"PT_RAIN",
+	//	{ RESOLUTION_WIDTH / 2, -50 },
+	//	1000,
+	//	RESOLUTION_WIDTH,
+	//	50,
+	//	test_Handle,
+	//	false
+	//);
 }
