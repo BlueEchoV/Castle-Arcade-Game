@@ -689,8 +689,8 @@ void draw_Sub_Menu_Debug_Map() {
 	SDL_RenderFillRect(Globals::renderer, &background);
 
 	SDL_Rect rect;
-	rect.w = 50;
-	rect.h = 50;
+	rect.w = 100;
+	rect.h = 100;
 	rect.x = background.x - (rect.w / 2);
 	rect.y = background.y - (rect.h / 2);
 
@@ -698,12 +698,11 @@ void draw_Sub_Menu_Debug_Map() {
 	int max_Rows = 3;
 	int current_Column = 1;
 	int max_Columns = 4;
-	int total_Nodes = 12;
 
 	int column_Separation = background.w / (max_Columns + 1);
 	int row_Separation = background.h / (max_Rows + 1);
 	SDL_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-	for (int i = 0; i < total_Nodes; i++) {
+	for (int i = 0; i < Globals::MAX_GAME_LEVELS; i++) {
 		current_Row++;
 
 		SDL_Rect node_Rect = rect;
@@ -715,7 +714,14 @@ void draw_Sub_Menu_Debug_Map() {
 			current_Row = 0;
 			current_Column++;
 		}
-		// SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+		Game_Level* level = &game_Data.game_Level_Map.game_Levels[i];
+		assert(level != nullptr);
+
+		const Castle_Data castle_Data = get_Castle_Data(level->enemy_Castle.castle_Type);
+		SDL_Texture* castle_Texture = get_Sprite_Sheet_Texture(castle_Data.sprite_Sheet_Name);
+		// SDL_Texture* bkg = get_Sprite_Sheet_Texture(level->background);
+		//SDL_Texture* terrain = get_Sprite_Sheet_Texture(level->terrain);
+		SDL_RenderCopyEx(Globals::renderer, castle_Texture, NULL, &node_Rect, 0, NULL, SDL_FLIP_NONE);
 	}
 }
 

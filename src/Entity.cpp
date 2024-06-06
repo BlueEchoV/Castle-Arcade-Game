@@ -190,16 +190,16 @@ Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) 
 	return result;
 }
 
-void add_Game_Level_To_Map(Game_Level_Map game_Level_Map, std::string background, std::string terrain, int power_Level) {
+void add_Game_Level_To_Map(Game_Level_Map& game_Level_Map, std::string background, std::string terrain, int power_Level) {
 	Game_Level result;
-	int random_Castle = rand() & 3;
-	if (random_Castle == 1) {
+	int random_Castle = rand() % 3;
+	if (random_Castle == 0) {
 		result.enemy_Castle = create_Enemy_Castle_Info("standard", power_Level);
 	}
-	else if (random_Castle == 2) {
+	else if (random_Castle == 1) {
 		result.enemy_Castle = create_Enemy_Castle_Info("infernal", power_Level);
 	}
-	else if (random_Castle == 3) {
+	else if (random_Castle == 2) {
 		result.enemy_Castle = create_Enemy_Castle_Info("ancient", power_Level);
 	}
 	result.background = background;

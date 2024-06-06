@@ -328,7 +328,7 @@ T* get_Entity(Storage<T>& storage, Handle handle) {
 }
 
 // As the map number increases, so does the difficulty and rewards
-void add_Game_Level_To_Map(Game_Level_Map game_Level_Map, std::string background, std::string terrain, int power_Level);
+void add_Game_Level_To_Map(Game_Level_Map& game_Level_Map, std::string background, std::string terrain, int power_Level);
 Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level);
 Game_Level_Map create_Game_Level_Map(int power_Level);
 

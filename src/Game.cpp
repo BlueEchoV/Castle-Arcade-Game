@@ -365,8 +365,12 @@ void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_
 void start_Game(Game_Data& game_Data) {
 	// This could just be an array
 	save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
+	game_Data.game_Level_Map = create_Game_Level_Map(1);
+	for (int i = 0; i < Globals::MAX_GAME_LEVELS; i++) {
+		add_Game_Level_To_Map(game_Data.game_Level_Map, "bkg_Gameloop", "collision_Terrain_1", game_Data.game_Level_Map.power_Level);
+	}
 	game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
-
+	
 	spawn_Castle(
 		game_Data,
 		N_PLAYER,
