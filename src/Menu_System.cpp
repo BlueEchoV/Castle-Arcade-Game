@@ -1,7 +1,6 @@
 #include "Menu_System.h"
 #include "stack"
 
-
 Font font_1 = {};
 Game_State current_Game_State = GS_GAMELOOP;
 Game_Data game_Data_New_Game = {};
@@ -639,6 +638,10 @@ void draw_Main_Menu() {
 		push_To_Menu_Stack(MM_Sub_Menu_Load_Game);
 	}
 	button_Pos.y += 100;
+	if (button_Text("Map", button_Pos, button_Width, button_Height, string_Size)) {
+		push_To_Menu_Stack(MM_Sub_Menu_Debug_Map);
+	}
+	button_Pos.y += 100;
 	if (button_Text("Options", button_Pos, button_Width, button_Height, string_Size)) {
 
 	}
@@ -680,6 +683,10 @@ void draw_Sub_Menu_Paused() {
 }
 
 void draw_Sub_Menu_Debug_Map() {
+	if (current_Game_State == GS_MAIN_MENU) {
+		draw_Layer(get_Sprite_Sheet_Texture("bkg_Menu"));
+	}
+	
 	SDL_Rect background;
 	background.w = (RESOLUTION_WIDTH / 4) * 3;
 	background.h = (RESOLUTION_HEIGHT / 4) * 3;
@@ -703,7 +710,7 @@ void draw_Sub_Menu_Debug_Map() {
 	int row_Separation = background.h / (max_Rows + 1);
 
 	SDL_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-	for (Game_Level game_Level : game_Data.game_Level_Map.game_Levels) {
+	for (Game_Level& game_Level : game_Data.game_Level_Map.game_Levels) {
 		current_Row++;
 
 		SDL_Rect node_Rect = rect;
@@ -718,7 +725,7 @@ void draw_Sub_Menu_Debug_Map() {
 		const Castle_Data castle_Data = get_Castle_Data(game_Level.enemy_Castle.castle_Type);
 		SDL_Texture* castle_Texture = get_Sprite_Sheet_Texture(castle_Data.sprite_Sheet_Name);
 
-		//								 This value is init in add_Game_Level_To_Map
+		//								 This hash is init in add_Game_Level_To_Map
 		if (button_Image(castle_Texture, game_Level.button_Hash.c_str(), { (float)node_Rect.x, (float)node_Rect.y}, node_Rect.w)) {
 			game_Level.is_Pressed = true;
 		}
@@ -874,4 +881,24 @@ void draw_Menu() {
 		break;
 	}
 	}
+}
+
+// Here is where we modify game_Data
+// We are only loading the enemy. The player castle stays the same
+void load_Game_Level(Game_Level_Map game_Level_Map, Castle player_Castle, Game_Level game_Level) {
+	current_Game_State = GS_GAMELOOP;
+	empty_Menu_Stack();
+	
+	game_Data = game_Data_New_Game;
+	game_Data.game_Level_Map = game_Level_Map;
+	game_Data.terrain_Height_Map = create_Height_Map(game_Level.terrain.c_str());
+	// Player Castle
+	spawn_Castle(game_Data, N_PLAYER, player_Castle.castle_Type, player_Castle.level);
+	game_Data.player_Castle.summonable_Units = player_Castle.summonable_Units;
+	// Enemy Castle
+	spawn_Castle(game_Data, N_ENEMY, game_Level.enemy_Castle.castle_Type, game_Data.game_Level_Map.power_Level);
+	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
+	//add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
+	//add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "necromancer");
+
 }

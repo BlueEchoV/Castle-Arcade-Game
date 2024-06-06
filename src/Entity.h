@@ -330,25 +330,12 @@ T* get_Entity(Storage<T>& storage, Handle handle) {
 	return nullptr;
 }
 
-// As the map number increases, so does the difficulty and rewards
-void add_Game_Level_To_Map(Game_Level_Map& game_Level_Map, std::string background, std::string terrain, int power_Level);
-Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level);
-Game_Level_Map create_Game_Level_Map(int power_Level);
-
-void create_Game_Level_Storage(int current_Map_Number);
-// Override the current game_Data and init the character castle values to zero that 
-// need to be initialized to zero
-void load_Game_Level(Game_Data& game_Data, Game_Level_Map level_Map, Game_Level game_Level);
-void update_Game_Level_Map();
-
 Unit* get_Unit(Storage<Unit>& storage, Handle handle);
 Spell* get_Spell(Storage<Spell>& storage, Handle handle);
 Projectile* get_Projectile(Storage<Projectile>& storage, Handle handle);
 Particle_System* get_Particle_System(Storage<Particle_System>& storage, Handle handle);
 bool compare_Handles(Handle handle_1, Handle handle_2);
 void delete_Expired_Entity_Handles(Game_Data& game_Data);
-
-void clear_Game_Data(Game_Data* game_Data);
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius);
 
@@ -411,7 +398,7 @@ void change_Animation(Sprite_Sheet_Tracker* tracker, std::string sprite_Sheet_Na
 Resource_Bar create_Resource_Bar(int width, int height, int y_Offset, int thickness, float resource, float regen, Resource_Bar_Color_Selector colors);
 Rigid_Body create_Rigid_Body(V2 position_WS, bool rigid_Body_Faces_Velocity);
 std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name);
-std::vector<int> create_Height_Map(const char* filename);
+std::vector<int> create_Height_Map(std::string map_Name);
 
 void load_Unit_Data_CSV(CSV_Data* csv_Data);
 void load_Projectile_Data_CSV(CSV_Data* csv_Data);

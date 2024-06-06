@@ -151,6 +151,13 @@ int main(int argc, char** argv) {
             }
 		}
 
+        for (Game_Level& game_Level : game_Data.game_Level_Map.game_Levels) {
+            if (game_Level.is_Pressed) {
+                load_Game_Level(game_Data.game_Level_Map, game_Data.player_Castle, game_Level);
+                game_Level.is_Pressed = false;
+            }
+        }
+
         current_frame_Hot_Name = next_Frame_Hot_Name;
         next_Frame_Hot_Name = "";
         SDL_GetMouseState(&mouse_X, &mouse_Y);

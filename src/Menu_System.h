@@ -86,3 +86,5 @@ void pop_Menu_From_Stack();
 void pop_Menu_From_Stack_Keep_First();
 
 void draw_Menu();
+
+void load_Game_Level(Game_Level_Map game_Level_Map, Castle player_Castle, Game_Level game_Level);

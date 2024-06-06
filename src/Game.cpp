@@ -369,7 +369,7 @@ void start_Game(Game_Data& game_Data) {
 	for (int i = 0; i < Globals::MAX_GAME_LEVELS; i++) {
 		add_Game_Level_To_Map(game_Data.game_Level_Map, "bkg_Gameloop", "collision_Terrain_1", game_Data.game_Level_Map.power_Level);
 	}
-	game_Data.terrain_Height_Map = create_Height_Map("images/collision_Terrain_1.png");
+	game_Data.terrain_Height_Map = create_Height_Map("collision_Terrain_1");
 	
 	spawn_Castle(
 		game_Data,
@@ -395,4 +395,32 @@ void start_Game(Game_Data& game_Data) {
 	//	test_Handle,
 	//	false
 	//);
+}
+
+Game_Level_Map create_Game_Level_Map(int power_Level) {
+	Game_Level_Map result = {};
+	result.power_Level = power_Level;
+	return result;
+}
+
+Uint32 game_Level_Hash = 0;
+void add_Game_Level_To_Map(Game_Level_Map& game_Level_Map, std::string background, std::string terrain, int power_Level) {
+	Game_Level result;
+	result.is_Pressed = false;
+	int random_Castle = rand() % 3;
+	if (random_Castle == 0) {
+		result.enemy_Castle = create_Enemy_Castle_Info("standard", power_Level);
+	}
+	else if (random_Castle == 1) {
+		result.enemy_Castle = create_Enemy_Castle_Info("infernal", power_Level);
+	}
+	else if (random_Castle == 2) {
+		result.enemy_Castle = create_Enemy_Castle_Info("ancient", power_Level);
+	}
+	result.background = background;
+	result.terrain = terrain;
+
+	result.button_Hash = result.enemy_Castle.castle_Type + std::to_string(game_Level_Hash);
+	game_Level_Hash++;
+	game_Level_Map.game_Levels.push_back(result);
 }

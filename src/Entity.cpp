@@ -173,13 +173,6 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		});
 }
 
-
-Game_Level_Map create_Game_Level_Map(int power_Level) {
-	Game_Level_Map result = {};
-	result.power_Level = power_Level;
-	return result;
-}
-
 Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) {
 	Castle_Info result;
 
@@ -188,43 +181,6 @@ Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) 
 	result.castle_Level = castle_Level;
 
 	return result;
-}
-
-Uint32 game_Level_Hash = 0;
-void add_Game_Level_To_Map(Game_Level_Map& game_Level_Map, std::string background, std::string terrain, int power_Level) {
-	Game_Level result;
-	result.is_Pressed = false;
-	int random_Castle = rand() % 3;
-	if (random_Castle == 0) {
-		result.enemy_Castle = create_Enemy_Castle_Info("standard", power_Level);
-	}
-	else if (random_Castle == 1) {
-		result.enemy_Castle = create_Enemy_Castle_Info("infernal", power_Level);
-	}
-	else if (random_Castle == 2) {
-		result.enemy_Castle = create_Enemy_Castle_Info("ancient", power_Level);
-	}
-	result.background = background;
-	result.terrain = terrain;
-
-	result.button_Hash = result.enemy_Castle.castle_Type + std::to_string(game_Level_Hash);
-	game_Level_Hash++;
-	game_Level_Map.game_Levels.push_back(result);
-}
-
-// Here is where we modify game_Data
-// We are only loading the enemy. The player castle stays the same
-void load_Level(Game_Data& game_Data, Castle player_Castle, Game_Level game_Level, int power_Level) {
-	game_Data = {};
-
-	game_Data.terrain_Height_Map = create_Height_Map(game_Level.terrain.c_str());
-	spawn_Castle(game_Data, N_PLAYER, player_Castle.castle_Type, player_Castle.level);
-	game_Data.player_Castle.summonable_Units = player_Castle.summonable_Units;
-	spawn_Castle(game_Data, N_ENEMY, game_Level.enemy_Castle.castle_Type, power_Level);
-	add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "warrior");
-	//add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "archer");
-	//add_Summonable_Unit_To_Castle(game_Data, N_ENEMY, "necromancer");
-
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
@@ -1086,11 +1042,12 @@ void draw_Resource_Bar(Resource_Bar& resource_Bar, V2 pos) {
 }
 
 
-std::vector<int> create_Height_Map(const char* filename) {
+std::vector<int> create_Height_Map(std::string map_Name) {
+	std::string file_Path = "images/" + map_Name + ".png";
 	int channels = 0;
 	int terrain_Width = 0;
 	int terrain_Height = 0;
-	unsigned char* data = stbi_load(filename, &terrain_Width, &terrain_Height, &channels, 4);
+	unsigned char* data = stbi_load(file_Path.c_str(), &terrain_Width, &terrain_Height, &channels, 4);
 
 	if (data == NULL) {
 		SDL_Log("ERROR: stbi_load returned NULL");
