@@ -398,7 +398,11 @@ void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, fl
 		Unit* unit = get_Unit(game_Data.units, units[i]);
 		if (unit != nullptr) {
 			unit->stop = false;
-			unit->current_Attack_Cooldown -= delta_Time;
+			if (unit->current_Attack_Cooldown > 0.0f) {
+				unit->current_Attack_Cooldown -= delta_Time;
+			} else {
+				unit->current_Attack_Cooldown = 0.0f;
+			}
 		}
 	}
 }
