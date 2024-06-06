@@ -695,6 +695,9 @@ void draw_Sub_Menu_Debug_Map() {
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(Globals::renderer, &background);
 
+	std::string title = "Map Level: " + std::to_string(game_Data.game_Level_Map.power_Level);
+	draw_String_With_Background(title.c_str(), background.x + (background.w / 2), background.y + 50, 5, true, CI_BLACK, 2);
+
 	SDL_Rect rect;
 	rect.w = 125;
 	rect.h = 125;
