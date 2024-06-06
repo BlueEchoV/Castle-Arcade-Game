@@ -689,10 +689,10 @@ void draw_Sub_Menu_Debug_Map() {
 	SDL_RenderFillRect(Globals::renderer, &background);
 
 	SDL_Rect rect;
-	rect.w = 100;
-	rect.h = 100;
-	rect.x = background.x - (rect.w / 2);
-	rect.y = background.y - (rect.h / 2);
+	rect.w = 125;
+	rect.h = 125;
+	rect.x = background.x;
+	rect.y = background.y;
 
 	int current_Row = 0;
 	int max_Rows = 3;
@@ -701,27 +701,27 @@ void draw_Sub_Menu_Debug_Map() {
 
 	int column_Separation = background.w / (max_Columns + 1);
 	int row_Separation = background.h / (max_Rows + 1);
+
 	SDL_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-	for (int i = 0; i < Globals::MAX_GAME_LEVELS; i++) {
+	for (Game_Level game_Level : game_Data.game_Level_Map.game_Levels) {
 		current_Row++;
 
 		SDL_Rect node_Rect = rect;
 		node_Rect.y += (row_Separation * current_Row);
 		node_Rect.x += (column_Separation * current_Column);
 
-		SDL_RenderFillRect(Globals::renderer, &node_Rect);
 		if (current_Row == max_Rows) {
 			current_Row = 0;
 			current_Column++;
 		}
-		Game_Level* level = &game_Data.game_Level_Map.game_Levels[i];
-		assert(level != nullptr);
 
-		const Castle_Data castle_Data = get_Castle_Data(level->enemy_Castle.castle_Type);
+		const Castle_Data castle_Data = get_Castle_Data(game_Level.enemy_Castle.castle_Type);
 		SDL_Texture* castle_Texture = get_Sprite_Sheet_Texture(castle_Data.sprite_Sheet_Name);
-		// SDL_Texture* bkg = get_Sprite_Sheet_Texture(level->background);
-		//SDL_Texture* terrain = get_Sprite_Sheet_Texture(level->terrain);
-		SDL_RenderCopyEx(Globals::renderer, castle_Texture, NULL, &node_Rect, 0, NULL, SDL_FLIP_NONE);
+
+		//								 This value is init in add_Game_Level_To_Map
+		if (button_Image(castle_Texture, game_Level.button_Hash.c_str(), { (float)node_Rect.x, (float)node_Rect.y}, node_Rect.w)) {
+			game_Level.is_Pressed = true;
+		}
 	}
 }
 

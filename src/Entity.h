@@ -274,6 +274,9 @@ struct Castle_Info {
 };
 
 struct Game_Level {
+	bool is_Pressed;
+	std::string button_Hash;
+
 	Castle_Info enemy_Castle;
 	std::string background;
 	std::string terrain;
