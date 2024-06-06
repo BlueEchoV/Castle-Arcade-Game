@@ -293,8 +293,6 @@ int main(int argc, char** argv) {
                 update_Projectiles_Positions(game_Data, game_Data.player_Proj_IDS, delta_Time);
                 update_Projectiles_Positions(game_Data, game_Data.enemy_Proj_IDS, delta_Time);
 
-                // Cast spells
-
                 // Projectile Collision
                 check_Projectiles_Collisions(game_Data, game_Data.player_Proj_IDS, game_Data.enemy_Castle, game_Data.enemy_Unit_IDS, delta_Time);
                 check_Projectiles_Collisions(game_Data, game_Data.enemy_Proj_IDS, game_Data.player_Castle, game_Data.player_Unit_IDS, delta_Time);

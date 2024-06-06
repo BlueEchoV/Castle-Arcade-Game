@@ -77,6 +77,10 @@ const Castle_Data& get_Castle_Data(std::string key) {
 	return bad_Castle_Data;
 }
 
+int get_Castle_Data_Size() {
+	return castle_Data_Map.size();
+}
+
 
 Unit* get_Unit(Storage<Unit>& storage, Handle handle) {
 	return get_Entity(storage, handle);
@@ -666,7 +670,7 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	return tokens[0];
 }
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, V2 position_WS, int castle_Level) {
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int castle_Level) {
 	const Castle_Data castle_Data = get_Castle_Data(castle_Type);
 	Castle castle = {};
 	castle.nation = nation;
@@ -682,10 +686,19 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, 
 	castle.projectile_Ammo_Cooldown.duration = updated_Ammo_Duration;
 	castle.projectile_Ammo_Cooldown.remaining = 0.0f;
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(castle_Data.sprite_Sheet_Name);
-	castle.rigid_Body = create_Rigid_Body(position_WS, false);
+	// Place the castles onto the map
+	V2 position_WS = {};
+	if (nation == N_PLAYER) {
+		position_WS = { (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) };
+	} else if (nation == N_ENEMY) {
+		position_WS = { (RESOLUTION_WIDTH * 0.95f), get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) };
+	} else {
+		assert(false);
+	}
 	// Lower the castle onto the map by 25% of the size of the castle sprite
 	float image_Radius = get_Sprite_Radius(&castle.sprite_Sheet_Tracker);
-	castle.rigid_Body.position_WS.y -= image_Radius / 2.0f;
+	position_WS.y -= image_Radius / 2.0f;
+	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 	// *********************
 	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Data.base_HP, castle_Data.base_HP_Regen, RBCS_HP_Bar);
 	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, castle_Data.base_Food_Points, castle_Data.base_Food_Points_Regen, RBCS_Food_Bar);

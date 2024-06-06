@@ -428,25 +428,36 @@ void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_
 	cache_Data.cache[save_Game_File_Name] = game_Data;
 }
 
-Castle_Info create_Castle_Info(Nation nation, std::string castle_Type, int castle_Level, V2 position_WS) {
+Game_Level_Map create_Game_Level_Map(int power_Level) {
+	Game_Level_Map result = {};
+	result.power_Level = power_Level;
+	return result;
+}
+
+Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) {
 	Castle_Info result;
 
-	result.nation = nation;
+	result.nation = N_ENEMY;
 	result.castle_Type = castle_Type;
 	result.castle_Level = castle_Level;
-	result.position_WS = position_WS;
 
 	return result;
 }
 
-Game_Level create_Game_Level(std::string background, std::string terrain) {
+void add_Game_Level_To_Map(Game_Level_Map game_Level_Map, std::string background, std::string terrain) {
 	Game_Level result;
-
-	// result.enemy_Castle = spawn_Castle();
+	int random_Castle = rand() & 3;
+	if (random_Castle == 1) {
+		result.enemy_Castle = create_Enemy_Castle_Info("standard", 1);
+	} else if (random_Castle == 2) {
+		result.enemy_Castle = create_Enemy_Castle_Info("infernal", 1);
+	} else if (random_Castle == 3) {
+		result.enemy_Castle = create_Enemy_Castle_Info("ancient", 1);
+	}
 	result.background = background;
 	result.terrain = terrain;
-
-	return result;
+	
+	game_Level_Map.game_Levels.push_back(result);
 }
 
 // Here is where we modify game_Data
@@ -454,7 +465,5 @@ void load_Level(Game_Data& game_Data, Castle player_Castle, Game_Level game_Leve
 	game_Data = {};
 
 	game_Data.terrain_Height_Map = create_Height_Map(game_Level.terrain.c_str());
-	V2 player_Castle_Pos = { (RESOLUTION_WIDTH * 0.05f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.05f))) - 40.0f };
-	// spawn_Castle(game_Data, N_PLAYER, player_Castle.castle_Type, player_Castle_Pos, player_Castle.level);
-	V2 enemy_Castle_Pos = { (RESOLUTION_WIDTH * 0.95f) , get_Height_Map_Pos_Y(game_Data, (int)((RESOLUTION_WIDTH * 0.95f))) - 40.0f };
+
 }

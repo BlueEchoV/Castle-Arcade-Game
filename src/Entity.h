@@ -336,12 +336,13 @@ float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos);
 const Unit_Data& get_Unit_Data(std::string key);
 const Projectile_Data& get_Projectile_Data(std::string key);
 const Castle_Data& get_Castle_Data(std::string key);
+int get_Castle_Data_Size();
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
 void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, V2 position_WS, int castle_Level);
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int castle_Level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.
