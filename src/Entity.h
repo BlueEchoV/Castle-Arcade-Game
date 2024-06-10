@@ -155,8 +155,9 @@ struct Unit_Data {
 	float base_Damage;
 	float damage_Multiplier;
 	float speed;
-	float base_Attack_Cooldown;
-	float attack_Cooldown_Multiplier;
+	float base_Attacks_Per_Second;
+	float attacks_Per_Second_Multiplier;
+	float max_Attacks_Per_Second;
 	float attack_Range;
 };
  
@@ -178,8 +179,7 @@ struct Unit {
 
 	float speed;
 	float damage;
-	float attack_Cooldown;
-	float current_Attack_Cooldown;
+	Cooldown attack_CD;
 	float attack_Range;
 	std::string projectile_Type;
 	bool fires_Projectiles;
@@ -366,6 +366,9 @@ int get_Castle_Data_Size();
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset);
 
 void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
+
+// For leveling up values
+float update_Value(float value, float multiplier, int level);
 
 void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int map_Power_Level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);

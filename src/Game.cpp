@@ -238,8 +238,8 @@ void process(Archive* ar, Unit& unit) {
 
 	process(ar, unit.speed);
 	process(ar, unit.damage);
-	process(ar, unit.attack_Cooldown);
-	process(ar, unit.current_Attack_Cooldown);
+	//process(ar, unit.attack_Cooldown);
+	//process(ar, unit.current_Attack_Cooldown);
 	process(ar, unit.attack_Range);
 	process(ar, unit.projectile_Type);
 	process(ar, unit.fires_Projectiles);

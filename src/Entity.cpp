@@ -402,10 +402,10 @@ void update_Units_Variables(Game_Data& game_Data, std::vector<Handle>& units, fl
 		Unit* unit = get_Unit(game_Data.units, units[i]);
 		if (unit != nullptr) {
 			unit->stop = false;
-			if (unit->current_Attack_Cooldown > 0.0f) {
-				unit->current_Attack_Cooldown -= delta_Time;
+			if (unit->attack_CD.remaining > 0.0f) {
+				unit->attack_CD.remaining -= delta_Time;
 			} else {
-				unit->current_Attack_Cooldown = 0.0f;
+				unit->attack_CD.remaining = 0.0f;
 			}
 		}
 	}
@@ -582,13 +582,13 @@ void check_Units_Collisions_With_Castle(Game_Data& game_Data, std::vector<Handle
 			if (check_Attack_Range_Collision(unit->attack_Range, &unit->rigid_Body, &castle->rigid_Body)) {
 				unit->stop = true;
 				if (!unit->fires_Projectiles) {
-					if (unit->current_Attack_Cooldown < 0) {
-						unit->current_Attack_Cooldown = unit->attack_Cooldown;
+					if (unit->attack_CD.remaining < 0) {
+						unit->attack_CD.remaining = unit->attack_CD.duration;
 						castle->health_Bar.current_Resource -= unit->damage;
 					}
 				} else {
-					if (unit->current_Attack_Cooldown <= 0) {
-						unit->current_Attack_Cooldown = unit->attack_Cooldown;
+					if (unit->attack_CD.remaining <= 0) {
+						unit->attack_CD.remaining = unit->attack_CD.duration;
 						V2 aim_Head = castle->rigid_Body.position_WS;
 						aim_Head.x += get_Sprite_Radius(&castle->sprite_Sheet_Tracker);
 						V2 arrow_Spawn_Location = unit->rigid_Body.position_WS;
@@ -613,15 +613,15 @@ void check_Units_Collisions_With_Units(Game_Data& game_Data, std::vector<Handle>
 					if (check_Attack_Range_Collision(origin_Unit->attack_Range, &origin_Unit->rigid_Body, &target_Unit->rigid_Body)) {
 						origin_Unit->stop = true;
 						if (!origin_Unit->fires_Projectiles) {
-							if (origin_Unit->current_Attack_Cooldown <= 0) {
-								origin_Unit->current_Attack_Cooldown = origin_Unit->attack_Cooldown;
+							if (origin_Unit->attack_CD.remaining <= 0) {
+								origin_Unit->attack_CD.remaining = origin_Unit->attack_CD.duration;
 								target_Unit->health_Bar.current_Resource -= origin_Unit->damage;
 							}
 						}
 						else {
 							// change_Animation(&player_Unit->sprite_Sheet_Tracker, "archer_Stop");
-							if (origin_Unit->current_Attack_Cooldown <= 0) {
-								origin_Unit->current_Attack_Cooldown = origin_Unit->attack_Cooldown;
+							if (origin_Unit->attack_CD.remaining <= 0) {
+								origin_Unit->attack_CD.remaining = origin_Unit->attack_CD.duration;
 								V2 aim_Head = target_Unit->rigid_Body.position_WS;
 								aim_Head.x += get_Sprite_Radius(&target_Unit->sprite_Sheet_Tracker);
 								V2 arrow_Spawn_Location = origin_Unit->rigid_Body.position_WS;
@@ -670,21 +670,51 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	return tokens[0];
 }
 
+float scale_Value(float base_Value, float multiplier, int level) {
+	return base_Value + ((base_Value * (multiplier - 1)) * (level - 1));
+}
+
+float scale_Castle_Food_Points(const Castle_Data castle_Data, int level) {
+	return scale_Value(castle_Data.base_Food_Points, castle_Data.food_Points_Multiplier, level);
+}
+
+// This is for values that are firing at a certain amount of times per second
+Cooldown scale_Times_Per_Second_Cooldown(float max_Value, float base_Value, float multiplier, int level) {
+	float times_Per_Sec = scale_Value(base_Value, multiplier, level);
+	// Flip it to get the time for the associated ammo per second
+	float scaled_Duration;
+	if (times_Per_Sec >= max_Value) {
+		scaled_Duration = 1.0f / max_Value;
+	}
+	else {
+		scaled_Duration = 1.0f / times_Per_Sec;
+	}
+	Cooldown result;
+	result.duration = scaled_Duration;
+	result.remaining = 0.0f;
+	return result;
+}
+
+Cooldown scale_Castle_Ammo_CD(const Castle_Data castle_Data, int level) {
+	const Projectile_Data projectile_Data = get_Projectile_Data(castle_Data.projectile_Type);
+	return scale_Times_Per_Second_Cooldown(
+		projectile_Data.castle_Max_Ammo_Per_Sec,
+		projectile_Data.castle_Base_Ammo_Per_Sec,
+		projectile_Data.castle_Max_Ammo_Per_Sec, 
+		level
+	);
+}
+
 void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int map_Power_Level) {
 	const Castle_Data castle_Data = get_Castle_Data(castle_Type);
+	
 	Castle castle = {};
 	castle.nation = nation;
 	castle.level = map_Power_Level;
 	castle.castle_Type = castle_Type;
 	castle.projectile_Type = castle_Data.projectile_Type;
 	castle.projectile_Ammo = 0;
-	const Projectile_Data projectile_Data = get_Projectile_Data(castle_Data.projectile_Type);
-	// Convert ammo per second to a duration
-	float ammo_Per_Sec_Per_Level = projectile_Data.castle_Base_Ammo_Per_Sec * projectile_Data.castle_Ammo_Per_Sec_Multiplier;
-	float updated_Ammo_Per_Sec = ammo_Per_Sec_Per_Level * castle.level;;
-	float updated_Ammo_Duration = 1.0f / updated_Ammo_Per_Sec;
-	castle.projectile_Ammo_Cooldown.duration = updated_Ammo_Duration;
-	castle.projectile_Ammo_Cooldown.remaining = 0.0f;
+	castle.projectile_Ammo_Cooldown = scale_Castle_Ammo_CD(castle_Data, map_Power_Level);
 	castle.sprite_Sheet_Tracker = create_Sprite_Sheet_Tracker(castle_Data.sprite_Sheet_Name);
 	// Place the castles onto the map
 	V2 position_WS = {};
@@ -702,9 +732,9 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, 
 	// *********************
 	float food_Points_Regen;
 	if (castle.nation == N_ENEMY) {
-		float fp_Per_Lvl = castle_Data.base_Food_Points_Regen * (castle_Data.food_Points_Multiplier - 1);
-		food_Points_Regen = castle_Data.base_Food_Points + (fp_Per_Lvl * map_Power_Level);
+		food_Points_Regen = scale_Castle_Food_Points(castle_Data, map_Power_Level);
 	} else {
+		// Don't scale the player right now
 		food_Points_Regen = castle_Data.base_Food_Points_Regen;
 	}
 	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Data.base_HP, castle_Data.base_HP_Regen, RBCS_HP_Bar);
@@ -778,6 +808,23 @@ void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projec
 	}
 }
 
+float scale_Unit_HP(const Unit_Data unit_Data, int unit_Level) {
+	return scale_Value(unit_Data.base_HP, unit_Data.hp_Multiplier, unit_Level);
+}
+
+float scale_Unit_Damage(const Unit_Data unit_Data, int unit_Level) {
+	return scale_Value(unit_Data.base_Damage, unit_Data.damage_Multiplier, unit_Level);
+}
+
+Cooldown scale_Unit_Attack_CD(const Unit_Data unit_Data, int unit_Level) {
+	return scale_Times_Per_Second_Cooldown(
+		unit_Data.max_Attacks_Per_Second,
+		unit_Data.base_Attacks_Per_Second,
+		unit_Data.attacks_Per_Second_Multiplier,
+		unit_Level
+	);
+}
+
 void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, int level, V2 spawn_Position, V2 target_Position) {
 	Unit unit = {};
 	unit.level = level;
@@ -790,10 +837,9 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 	unit.speed = unit_Data.speed;
 
 	// ***Level based ***
-	float updated_HP = unit_Data.base_HP + ((level - 1.0f) * ((unit_Data.hp_Multiplier * unit_Data.base_HP) - unit_Data.base_HP));
+	float scaled_HP = scale_Unit_HP(unit_Data, level);
+	unit.health_Bar = create_Resource_Bar(50, 13, 60, 2, scaled_HP, 0, RBCS_HP_Bar);
 
-	unit.health_Bar = create_Resource_Bar(50, 13, 60, 2, updated_HP, 0, RBCS_HP_Bar);
-	
 	unit.spell.type= unit_Data.spell_Type;
 	if (unit.spell.type != "") {
 		unit.spell.can_Cast_Spell = true;
@@ -810,14 +856,10 @@ void spawn_Unit(Game_Data& game_Data, Nation unit_Side, std::string unit_Type, i
 		unit.spell.can_Cast_Spell = false;
 	}
 
-	float updated_Damage = unit_Data.base_Damage + ((level - 1.0f) * ((unit_Data.damage_Multiplier * unit_Data.base_Damage) - unit_Data.base_Damage));
-	unit.damage = updated_Damage;
-	//NOTE: 														  subtract this value because it's a cooldown
-	float updated_Attack_Cooldown = unit_Data.base_Attack_Cooldown - ((level - 1.0f) * ((unit_Data.attack_Cooldown_Multiplier * unit_Data.base_Attack_Cooldown) - unit_Data.base_Attack_Cooldown));
-	unit.attack_Cooldown = updated_Attack_Cooldown;
-	// *****************
+	unit.damage = scale_Unit_Damage(unit_Data, level);
+	unit.attack_CD = scale_Unit_Attack_CD(unit_Data, level);
 
-	unit.current_Attack_Cooldown = 0.0f;
+	// *****************
 	unit.attack_Range = unit_Data.attack_Range;
 	unit.destroyed = false;
 	unit.stop = false;
@@ -1145,8 +1187,8 @@ void check_Player_Unit_Castle_Collision(Game_Data& game_Data) {
 		Castle* castle = &game_Data.enemy_Castle;
 		if (check_RB_Collision(&player_Unit->rigid_Body, &castle->rigid_Body)) {
 			player_Unit->stop = true;
-			if (player_Unit->current_Attack_Cooldown < 0) {
-				player_Unit->current_Attack_Cooldown = player_Unit->attack_Cooldown;
+			if (player_Unit->attack_CD.remaining < 0) {
+				player_Unit->attack_CD.remaining = player_Unit->attack_CD.duration;
 				castle->health_Bar.current_Resource -= player_Unit->damage;
 			}
 		}
@@ -1179,8 +1221,9 @@ Type_Descriptor unit_Type_Descriptors[] = {
 	FIELD(Unit_Data, DT_FLOAT, base_Damage),
 	FIELD(Unit_Data, DT_FLOAT, damage_Multiplier),
 	FIELD(Unit_Data, DT_FLOAT, speed),
-	FIELD(Unit_Data, DT_FLOAT, base_Attack_Cooldown),
-	FIELD(Unit_Data, DT_FLOAT, attack_Cooldown_Multiplier),
+	FIELD(Unit_Data, DT_FLOAT, base_Attacks_Per_Second),
+	FIELD(Unit_Data, DT_FLOAT, attacks_Per_Second_Multiplier),
+	FIELD(Unit_Data, DT_FLOAT, max_Attacks_Per_Second),
 	FIELD(Unit_Data, DT_FLOAT, attack_Range)
 };
 
