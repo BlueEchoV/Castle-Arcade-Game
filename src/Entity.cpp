@@ -61,8 +61,8 @@ const Spell_Data& get_Spell_Data(std::string key) {
 static std::unordered_map<std::string, Castle_Data> castle_Data_Map = {};
 
 const Castle_Data bad_Castle_Data = {
-	// type			sprite_Sheet_Name	enhancement	 base_HP	 base_HP_Regen_Per_Sec	base_Food_Points	base_Food_Points_Per_Sec
-	  "infernal",  "infernal_Castle",	"",			 100,		 5,						100,				5
+	// type			sprite_Sheet_Name	projectile	  enhancement	 base_HP	 base_HP_Regen_Per_Sec	base_Food_Points	base_Food_Points_Per_Sec FP_Multi
+	  "infernal",  "infernal_Castle",	"arrow_Short", "",			 100,		 5,						100,				5,					     1.1f
 };
 
 const Castle_Data& get_Castle_Data(std::string key) {
@@ -171,16 +171,6 @@ void delete_Expired_Entity_Handles(Game_Data& game_Data) {
 		}
 		return false;
 		});
-}
-
-Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) {
-	Castle_Info result;
-
-	result.nation = N_ENEMY;
-	result.castle_Type = castle_Type;
-	result.castle_Level = castle_Level;
-
-	return result;
 }
 
 void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {	
@@ -680,11 +670,11 @@ std::string create_Unit_Data_Map_Key(std::string sprite_Sheet_Name) {
 	return tokens[0];
 }
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int castle_Level) {
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int map_Power_Level) {
 	const Castle_Data castle_Data = get_Castle_Data(castle_Type);
 	Castle castle = {};
 	castle.nation = nation;
-	castle.level = castle_Level;
+	castle.level = map_Power_Level;
 	castle.castle_Type = castle_Type;
 	castle.projectile_Type = castle_Data.projectile_Type;
 	castle.projectile_Ammo = 0;
@@ -710,8 +700,15 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, 
 	position_WS.y -= image_Radius / 1.5f;
 	castle.rigid_Body = create_Rigid_Body(position_WS, false);
 	// *********************
+	float food_Points_Regen;
+	if (castle.nation == N_ENEMY) {
+		float fp_Per_Lvl = castle_Data.base_Food_Points_Regen * (castle_Data.food_Points_Multiplier - 1);
+		food_Points_Regen = castle_Data.base_Food_Points + (fp_Per_Lvl * map_Power_Level);
+	} else {
+		food_Points_Regen = castle_Data.base_Food_Points_Regen;
+	}
 	castle.health_Bar = create_Resource_Bar(90, 20, 115, 3, castle_Data.base_HP, castle_Data.base_HP_Regen, RBCS_HP_Bar);
-	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, castle_Data.base_Food_Points, castle_Data.base_Food_Points_Regen, RBCS_Food_Bar);
+	castle.food_Bar = create_Resource_Bar(90, 10, (115 - 20), 3, castle_Data.base_Food_Points, food_Points_Regen, RBCS_Food_Bar);
 	// NOTE: This value is just the interval 
 	// at which a projectiles are fired if 
 	// the fire button is held down.
@@ -1263,12 +1260,13 @@ void load_Spell_Data_CSV(CSV_Data* csv_Data) {
 Type_Descriptor castle_Type_Descriptors[] = {
 	FIELD(Castle_Data, DT_STRING, type),
 	FIELD(Castle_Data, DT_STRING, sprite_Sheet_Name),
+	FIELD(Castle_Data, DT_STRING, projectile_Type),
 	FIELD(Castle_Data, DT_STRING, enhancement),
 	FIELD(Castle_Data, DT_FLOAT, base_HP),
 	FIELD(Castle_Data, DT_FLOAT, base_HP_Regen),
 	FIELD(Castle_Data, DT_FLOAT, base_Food_Points),
 	FIELD(Castle_Data, DT_FLOAT, base_Food_Points_Regen),
-	FIELD(Castle_Data, DT_STRING, projectile_Type)
+	FIELD(Castle_Data, DT_FLOAT, food_Points_Multiplier)
 };
 
 void load_Castle_Data_CSV(CSV_Data* csv_Data) {

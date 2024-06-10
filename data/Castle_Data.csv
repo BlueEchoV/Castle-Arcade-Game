@@ -1,4 +1,4 @@
-type,sprite_Sheet_Name,projectile_Type,enhancement,base_HP,base_HP_Regen,base_Food_Points,base_Food_Points_Regen
-infernal,castle_Infernal,shadow_Orb,,100,5,100,5
-ancient,castle_Ancient,arrow_Long,,100,5,100,5
-standard,castle_Standard,arrow_Short,,100,5,100,5
+type,sprite_Sheet_Name,projectile_Type,enhancement,base_HP,base_HP_Regen,base_Food_Points,base_Food_Points_Regen,food_Points_Multiplier
+infernal,castle_Infernal,shadow_Orb,,100,5,100,5,1.1
+ancient,castle_Ancient,arrow_Long,,100,5,100,5,1.1
+standard,castle_Standard,arrow_Short,,100,5,100,5,1.1

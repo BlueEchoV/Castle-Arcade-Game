@@ -75,13 +75,14 @@ struct Cooldown {
 struct Castle_Data {
 	std::string type;
 	std::string sprite_Sheet_Name;
+	std::string projectile_Type;
 	std::string enhancement;
 
 	float base_HP;
 	float base_HP_Regen;
 	float base_Food_Points;
 	float base_Food_Points_Regen;
-	std::string projectile_Type;
+ 	float food_Points_Multiplier;
 	// Stored_Units stored_Units;
 };
 
@@ -366,7 +367,7 @@ Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angl
 
 void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::string unit_Name);
 
-void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int castle_Level);
+void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, int map_Power_Level);
 void spawn_Projectile(Game_Data& game_Data, Nation unit_Side, std::string projectile_Type, float damage, V2 origin_Pos, V2 target_Pos);
 // spawn_Unit("type", level (scalar));
 // Anytime I need a 'if' statement, add it in the csv.

@@ -365,7 +365,7 @@ void save_Game_To_Cache(Saved_Games save_Game_enum, Game_Data& game_Data, Cache_
 void start_Game(Game_Data& game_Data) {
 	// This could just be an array
 	save_Game_Cache_Data = create_Cache_Data(saved_Games_Cache);
-	game_Data.game_Level_Map = create_Game_Level_Map(1);
+	game_Data.game_Level_Map = create_Game_Level_Map(3);
 	for (int i = 0; i < Globals::MAX_GAME_LEVELS; i++) {
 		add_Game_Level_To_Map(game_Data.game_Level_Map, "bkg_Gameloop", "collision_Terrain_1", game_Data.game_Level_Map.power_Level);
 	}
@@ -397,6 +397,16 @@ void start_Game(Game_Data& game_Data) {
 	//);
 }
 
+Castle_Info create_Enemy_Castle_Info(std::string castle_Type, int castle_Level) {
+	Castle_Info result;
+
+	result.nation = N_ENEMY;
+	result.castle_Type = castle_Type;
+	result.castle_Level = castle_Level;
+
+	return result;
+}
+
 Game_Level_Map create_Game_Level_Map(int power_Level) {
 	Game_Level_Map result = {};
 	result.power_Level = power_Level;
@@ -420,6 +430,7 @@ void add_Game_Level_To_Map(Game_Level_Map& game_Level_Map, std::string backgroun
 	result.background = background;
 	result.terrain = terrain;
 
+	// This could be based off the handle. This is a temporary solution right now.
 	result.button_Hash = result.enemy_Castle.castle_Type + std::to_string(game_Level_Hash);
 	game_Level_Hash++;
 	game_Level_Map.game_Levels.push_back(result);
