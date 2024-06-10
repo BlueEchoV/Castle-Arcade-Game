@@ -722,7 +722,12 @@ void spawn_Castle(Game_Data& game_Data, Nation nation, std::string castle_Type, 
 	castle.spawn_Cooldown.duration = 2.0f;
 	castle.spawn_Cooldown.remaining = 0.0f;
 	// ****************************
-	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
+	float radius = get_Sprite_Radius(&castle.sprite_Sheet_Tracker);
+	add_Collider(&castle.rigid_Body, { 0.0f, -(radius / 2) }, (radius / 2));
+	add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, (radius / 2));
+	add_Collider(&castle.rigid_Body, { 0.0f, (radius / 2) }, (radius / 2));
+
+	//add_Collider(&castle.rigid_Body, { 0.0f, 0.0f }, get_Sprite_Radius(&castle.sprite_Sheet_Tracker));
 	if (castle.nation == N_PLAYER) {
 		game_Data.player_Castle = castle;
 	} else if (castle.nation == N_ENEMY) {

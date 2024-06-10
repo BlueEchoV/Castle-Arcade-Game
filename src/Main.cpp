@@ -14,7 +14,6 @@
 // Engine core
 SoLoud::Soloud soloud;
 
-// Testing
 int main(int argc, char** argv) {
     REF(argc);
     REF(argv);
@@ -360,18 +359,8 @@ int main(int argc, char** argv) {
 
             SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
-            draw_Circle(
-                game_Data.enemy_Castle.rigid_Body.position_WS.x, 
-                (float)(game_Data.enemy_Castle.rigid_Body.position_WS.y), 
-                (float)get_Sprite_Radius(&game_Data.enemy_Castle.sprite_Sheet_Tracker), 
-                CI_GREEN
-            );
-            draw_Circle(
-                game_Data.player_Castle.rigid_Body.position_WS.x, 
-                (float)(game_Data.player_Castle.rigid_Body.position_WS.y),
-                (float)get_Sprite_Radius(&game_Data.player_Castle.sprite_Sheet_Tracker), 
-                CI_GREEN
-            );
+            draw_RigidBody_Colliders(&game_Data.player_Castle.rigid_Body, CI_GREEN);
+            draw_RigidBody_Colliders(&game_Data.enemy_Castle.rigid_Body, CI_GREEN);
 
             // Draw player projectiles
 			for (uint32_t i = 0; i < game_Data.player_Proj_IDS.size(); i++) {
