@@ -1,8 +1,16 @@
 #pragma once
 #include "Menu_System.h"
 
+enum Console_State {
+CS_Closed,
+CS_Open_Small,
+CS_Open_Big
+};
+
 struct Console {
-	SDL_Rect dimension;
+	// The console area
+	SDL_Rect rect;
+	Console_State state;
 	float max_Openness;
 	// How open is the console right now
 	float current_Openness;
@@ -14,13 +22,8 @@ struct Console {
 	Color report_Background_Color;
 };
 
-enum Console_State {
-	CS_Closed,
-	CS_Open_Small,
-	CS_Open_Big
-};
-
-Console create_Console();
-void draw_Console();
-void update_Openness();
-void get_Console_Bottom();
+Console create_Console(float max_Openness, float rate_Of_Openness_DT);
+void draw_Console(Console& console, float delta_Time);
+void update_Openness(Console& console, float delta_Time);
+// void get_Console_Bottom();
+void open_Close_Console(Console& console);

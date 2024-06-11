@@ -5,6 +5,7 @@
 #include "Game.h"
 #include "Menu_System.h"
 #include "Particle_System.h"
+#include "Console.h"
 
 #include "soloud.h"
 #include "soloud_wav.h"
@@ -86,6 +87,9 @@ int main(int argc, char** argv) {
     close_CSV_File(&castle_CSV_Data);
 
 	start_Game(game_Data);
+
+    Console console = create_Console((RESOLUTION_HEIGHT / 4.0f * 3.0f), 7.0f);
+    console.state = CS_Open_Big;
 
     while (running) {
         mouse_Down_This_Frame = false;
@@ -463,6 +467,9 @@ int main(int argc, char** argv) {
         }
 
         draw_Menu();
+
+        draw_Console(console, delta_Time);
+        open_Close_Console(console);
 
         SDL_RenderPresent(Globals::renderer);
     }
