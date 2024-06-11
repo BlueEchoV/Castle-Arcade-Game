@@ -12,8 +12,8 @@ Console create_Console(float max_Openness, float rate_Of_Openness_DT) {
 	result.current_Openness = 0.0f;
 	result.target_Openness = 0.0f;
 	result.rate_Of_Openness_DT = rate_Of_Openness_DT;
-	result.input_Background_Color = { 255, 0, 0, 0 };
-	result.report_Background_Color = { 0, 255, 0, 0 };
+	result.input_Background_Color = { 139, 0, 0, SDL_ALPHA_OPAQUE };
+	result.report_Background_Color = { 0, 255, 0, SDL_ALPHA_OPAQUE };
 	return result;
 }
 
@@ -31,8 +31,6 @@ void update_Openness(Console& console, float delta_Time) {
 		}
 	}
 	console.rect.h = (int)console.current_Openness;
-	console.rect.x = RESOLUTION_WIDTH / 2;
-	console.rect.y = -(RESOLUTION_HEIGHT / 2);
 }
 
 void set_Render_Draw_Color(Color color) {
@@ -45,6 +43,7 @@ void draw_Console(Console& console, float delta_Time) {
 	
 	set_Render_Draw_Color(console.input_Background_Color);
 	SDL_RenderDrawRect(Globals::renderer, &console.rect);
+	SDL_RenderFillRect(Globals::renderer, &console.rect);
 }
 
 void open_Close_Console(Console& console) {

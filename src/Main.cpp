@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
 
 	start_Game(game_Data);
 
-    Console console = create_Console((RESOLUTION_HEIGHT / 4.0f * 3.0f), 7.0f);
+    Console console = create_Console((RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
     console.state = CS_Open_Big;
 
     while (running) {
@@ -122,6 +122,21 @@ int main(int argc, char** argv) {
             }
             }
         }
+
+        if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+            if (console.state == CS_Closed) {
+                console.state = CS_Open_Big;
+            } else {
+                console.state = CS_Closed;
+            }
+        }
+        else if (key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+            if (console.state == CS_Closed) {
+                console.state = CS_Open_Small;
+            } else {
+                console.state = CS_Closed;
+            }
+        } 
 
         // Chose to handle every game state for now
 		if (key_States[SDLK_ESCAPE].pressed_This_Frame) 
@@ -470,7 +485,7 @@ int main(int argc, char** argv) {
 
         draw_Console(console, delta_Time);
         open_Close_Console(console);
-
+        
         SDL_RenderPresent(Globals::renderer);
     }
 
