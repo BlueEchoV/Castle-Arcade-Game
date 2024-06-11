@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Console.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Globals.cpp" />
     <ClCompile Include="src\Image.cpp" />
@@ -162,6 +163,7 @@
     <ClCompile Include="src\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Console.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\Globals.h" />
     <ClInclude Include="src\Image.h" />
