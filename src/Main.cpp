@@ -89,7 +89,6 @@ int main(int argc, char** argv) {
 	start_Game(game_Data);
 
     Console console = create_Console((RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
-    console.state = CS_Open_Big;
 
     while (running) {
         mouse_Down_This_Frame = false;
@@ -484,7 +483,6 @@ int main(int argc, char** argv) {
         draw_Menu();
 
         draw_Console(console, delta_Time);
-        open_Close_Console(console);
         
         SDL_RenderPresent(Globals::renderer);
     }

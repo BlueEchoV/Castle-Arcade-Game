@@ -9,7 +9,9 @@ CS_Open_Big
 
 struct Console {
 	// The console area
-	SDL_Rect rect;
+	SDL_Rect bkg_Rect;
+	SDL_Rect ipt_Rect;
+	float ipt_Max_Height;
 	Console_State state;
 	float max_Openness;
 	// How open is the console right now
