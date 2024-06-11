@@ -19,7 +19,7 @@ Console create_Console(float max_Openness, float rate_Of_Openness_DT) {
 	result.target_Openness = 0.0f;
 	result.rate_Of_Openness_DT = rate_Of_Openness_DT;
 	result.input_Background_Color = { 0, 139, 0, SDL_ALPHA_OPAQUE };
-	result.report_Background_Color = { 139, 0, 0, 125 };
+	result.report_Background_Color = { 139, 0, 0, SDL_ALPHA_OPAQUE };
 	return result;
 }
 
@@ -55,13 +55,16 @@ void draw_Console(Console& console, float delta_Time) {
 	open_Close_Console(console);
 	update_Openness(console, delta_Time);
 	
-	set_Render_Draw_Color(console.report_Background_Color);
-	SDL_RenderDrawRect(Globals::renderer, &console.bkg_Rect);
-	SDL_RenderFillRect(Globals::renderer, &console.bkg_Rect);
-
-	set_Render_Draw_Color(console.input_Background_Color);
-	SDL_RenderDrawRect(Globals::renderer, &console.ipt_Rect);
-	SDL_RenderFillRect(Globals::renderer, &console.ipt_Rect);
+	if (console.bkg_Rect.h > 0) {
+		set_Render_Draw_Color(console.report_Background_Color);
+		SDL_RenderDrawRect(Globals::renderer, &console.bkg_Rect);
+		SDL_RenderFillRect(Globals::renderer, &console.bkg_Rect);
+	}
+	if (console.ipt_Rect.h > 0) {
+		set_Render_Draw_Color(console.input_Background_Color);
+		SDL_RenderDrawRect(Globals::renderer, &console.ipt_Rect);
+		SDL_RenderFillRect(Globals::renderer, &console.ipt_Rect);
+	}
 }
 
 void open_Close_Console(Console& console) {
