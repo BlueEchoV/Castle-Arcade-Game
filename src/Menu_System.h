@@ -57,8 +57,8 @@ void reset_Pressed_This_Frame();
 
 Font load_Font_Bitmap(const char* font_File_Path);
 
-void draw_Character(char character, int position_X, int position_Y, int size);
-void draw_String(const char* string, int position_X, int position_Y, int size, bool center);
+void draw_Character(Font* selected_Font, char character, int position_X, int position_Y, int size);
+void draw_String(Font* selected_Font, const char* string, int position_X, int position_Y, int size, bool center);
 void draw_String_With_Background(const char* string, int position_X, int position_Y, int size, bool center, Color_Index color, int outline_Padding);
 void draw_Arrow_Ammo_Tracker(int ammo, V2 pos, int size);
 void draw_Time_Scalar(float time_Scalar, int pos_X, int pos_Y, int size);

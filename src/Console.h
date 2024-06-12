@@ -7,12 +7,12 @@ CS_Open_Small,
 CS_Open_Big
 };
 
+const int max_History_String = 100;
 struct Console {
-	// The console area
-	SDL_Rect bkg_Rect;
-	SDL_Rect ipt_Rect;
-	float ipt_Max_Height;
 	Console_State state;
+	int text_Size;
+	Font* font;
+	
 	float max_Openness;
 	// How open is the console right now
 	float current_Openness;
@@ -20,11 +20,21 @@ struct Console {
 	float target_Openness;
 	// The rate at which it's opening
 	float rate_Of_Openness_DT;
-	Color input_Background_Color;
+	int ipt_Max_Height;
+
+	int history_Size;
+	std::string history[max_History_String];
+	
+	// The console 
+	SDL_Rect bkg_Rect;
 	Color report_Background_Color;
+
+	SDL_Rect ipt_Rect;
+	Color input_Background_Color;
 };
 
-Console create_Console(float max_Openness, float rate_Of_Openness_DT);
+Console create_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT);
+void add_History(Console& console, std::string str);
 void draw_Console(Console& console, float delta_Time);
 void update_Openness(Console& console, float delta_Time);
 // void get_Console_Bottom();

@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
 
 	start_Game(game_Data);
 
-    Console console = create_Console((RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
+    Console console = create_Console(&font_1, 2, (RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
 
     while (running) {
         mouse_Down_This_Frame = false;
@@ -239,12 +239,18 @@ int main(int argc, char** argv) {
 
         if (current_Game_State == GS_GAMELOOP || current_Game_State == GS_PAUSED) {
             if (key_States[SDLK_UP].held_Down == true) {
-                time_Scalar += 0.05f;
+                time_Scalar += 0.03f;
             }
             if (key_States[SDLK_DOWN].held_Down == true) {
                 if (time_Scalar > 0) {
-                    time_Scalar -= 0.05f;
+                    time_Scalar -= 0.03f;
                 }
+            } 
+            if (key_States[SDLK_RIGHT].pressed_This_Frame) {
+                time_Scalar = 0.05f;
+            }
+            if (key_States[SDLK_LEFT].pressed_This_Frame) {
+                time_Scalar = 1.0f;
             }
            
             // Updating the game logic

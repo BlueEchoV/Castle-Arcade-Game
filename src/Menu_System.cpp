@@ -76,40 +76,40 @@ Font load_Font_Bitmap(const char* font_File_Path) {
 	return result;
 }
 
-void draw_Character(char character, int position_X, int position_Y, int size) {
+void draw_Character(Font* selected_Font, char character, int position_X, int position_Y, int size) {
     int ascii_Dec = (int)character - (int)' ';
-    int chars_Per_Row = (font_1.width / font_1.char_Width);
+    int chars_Per_Row = (selected_Font->width / selected_Font->char_Width);
 
     SDL_Rect src_Rect = {};
     // Position in the row
-    src_Rect.x = (ascii_Dec % chars_Per_Row) * font_1.char_Width;
+    src_Rect.x = (ascii_Dec % chars_Per_Row) * selected_Font->char_Width;
     // Which row the char is in
-    src_Rect.y = (ascii_Dec / chars_Per_Row) * font_1.char_Height;
-    src_Rect.w = font_1.char_Width;
-    src_Rect.h = font_1.char_Height;
+    src_Rect.y = (ascii_Dec / chars_Per_Row) * selected_Font->char_Height;
+    src_Rect.w = selected_Font->char_Width;
+    src_Rect.h = selected_Font->char_Height;
 
     SDL_Rect dest_Rect = {};
     // Position of the character on the screen
     dest_Rect.x = position_X;
     dest_Rect.y = position_Y;
-    dest_Rect.w = (int)(font_1.char_Width * size);
-    dest_Rect.h = (int)(font_1.char_Height * size);
+    dest_Rect.w = (int)(selected_Font->char_Width * size);
+    dest_Rect.h = (int)(selected_Font->char_Height * size);
 
-    SDL_RenderCopyEx(Globals::renderer, font_1.texture, &src_Rect, &dest_Rect, 0, NULL, SDL_FLIP_NONE);
+    SDL_RenderCopyEx(Globals::renderer, selected_Font->texture, &src_Rect, &dest_Rect, 0, NULL, SDL_FLIP_NONE);
 }
 
-void draw_String(const char* string, int position_X, int position_Y, int size, bool center) {
+void draw_String(Font* selected_Font, const char* string, int position_X, int position_Y, int size, bool center) {
     int offset_X = 0;
     int index = 0;
     char iterator = string[index];
     size_t length_Pixels = strlen(string);
-    length_Pixels *= font_1.char_Width * size;
+    length_Pixels *= selected_Font->char_Width * size;
 
     int char_Position_X = 0;
     int char_Position_Y = 0;
     if (center) {
         char_Position_X = (position_X - (int)(length_Pixels / 2));
-        char_Position_Y = (position_Y - ((font_1.char_Height * size) / 2));
+        char_Position_Y = (position_Y - ((selected_Font->char_Height * size) / 2));
     }
     else {
         char_Position_X = position_X;
@@ -118,8 +118,8 @@ void draw_String(const char* string, int position_X, int position_Y, int size, b
 
     while (iterator != '\0') {
         char_Position_X += offset_X;
-        draw_Character(iterator, char_Position_X, char_Position_Y, size);
-        offset_X = font_1.char_Width * size;
+        draw_Character(selected_Font, iterator, char_Position_X, char_Position_Y, size);
+        offset_X = selected_Font->char_Width * size;
         index++;
         iterator = string[index];
     }
@@ -157,7 +157,7 @@ void draw_String_With_Background(const char* string, int position_X, int positio
     }
     SDL_RenderFillRect(Globals::renderer, &canvas_Area);
 
-    draw_String(string, position_X, position_Y, size, center);
+    draw_String(&font_1, string, position_X, position_Y, size, center);
 }
 
 bool button_Text(const char* string, V2 pos, int w, int h, int string_Size) {
@@ -174,7 +174,7 @@ bool button_Text(const char* string, V2 pos, int w, int h, int string_Size) {
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(Globals::renderer, &button_Area);
 
-	draw_String(string, (int)pos.x, (int)pos.y, string_Size, true);
+	draw_String(&font_1, string, (int)pos.x, (int)pos.y, string_Size, true);
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
@@ -251,9 +251,9 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, V2 po
 	int y_Offset = button_Area.y + 5;
 	int string_Size = 2;
 
-	draw_String(title_ptr, x_Offset, y_Offset, string_Size, false);
+	draw_String(&font_1, title_ptr, x_Offset, y_Offset, string_Size, false);
 	y_Offset += font_1.char_Height * string_Size;
-	draw_String(total_Arrows_Ptr, x_Offset, y_Offset, string_Size, false);
+	draw_String(&font_1, total_Arrows_Ptr, x_Offset, y_Offset, string_Size, false);
 	y_Offset += font_1.char_Height * string_Size;
 	//draw_String(font, total_units_Ptr, x_Offset, y_Offset, string_Size, false);
 	//y_Offset += font_1.char_Height * string_Size;
@@ -284,7 +284,7 @@ bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, c
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(Globals::renderer, &button_Area);
 
-	draw_String(string, (int)pos.x, (int)pos.y, string_Size, true);
+	draw_String(&font_1, string, (int)pos.x, (int)pos.y, string_Size, true);
 	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
@@ -430,7 +430,7 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, V2 pos, int
 		std::string game_Time = std::to_string((int)timer);
 		std::string final_Str = "Game time: " + game_Time;
 		const char* str = final_Str.c_str();
-		draw_String(str, (int)pos.x, (int)pos.y + 27, 2, true);
+		draw_String(&font_1, str, (int)pos.x, (int)pos.y + 27, 2, true);
 
 		V2 delete_Button_Pos = pos;
 		delete_Button_Pos.x += (w / 2) + (h / 2);
@@ -472,13 +472,13 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, V2 pos, int 
 	if (timer < 0) {
 		std::string final_Str = "Empty";
 		const char* str = final_Str.c_str();
-		draw_String(str, (int)pos.x, (int)pos.y + 27, 2, true);
+		draw_String(&font_1, str, (int)pos.x, (int)pos.y + 27, 2, true);
 	}
 	else {
 		std::string game_Time = std::to_string((int)timer);
 		std::string final_Str = "Game time: " + game_Time;
 		const char* str = final_Str.c_str();
-		draw_String(str, (int)pos.x, (int)pos.y + 27, 2, true);
+		draw_String(&font_1, str, (int)pos.x, (int)pos.y + 27, 2, true);
 	}
 
 	return result;
@@ -495,7 +495,7 @@ void draw_Unit_Data(Unit& unit, V2 pos) {
 	// Set the color mod for the font
 	SDL_SetTextureColorMod(font_1.texture, 0, 0, 0);
 	std::string hp_String = std::to_string((int)unit.health_Bar.current_Resource);
-	draw_String(hp_String.c_str(), (int)pos.x, ((int)pos.y - unit.health_Bar.y_Offset) + (unit.health_Bar.height / 2), 1, true);
+	draw_String(&font_1, hp_String.c_str(), (int)pos.x, ((int)pos.y - unit.health_Bar.y_Offset) + (unit.health_Bar.height / 2), 1, true);
 	// Reset the color mod for the font
 	SDL_SetTextureColorMod(font_1.texture, 255, 255, 255);
 	
@@ -534,6 +534,7 @@ void draw_Summonable_Player_Units_Buttons() {
 
 		std::string unit_Cost = "Cost " + std::to_string((int)summonable_Unit.food_Cost);
 		draw_String(
+			&font_1, 
 			unit_Cost.c_str(), 
 			(int)button_Pos.x, 
 			((int)button_Pos.y - (spawn_Unit_Button_W / 2)) + 12, 
@@ -552,7 +553,7 @@ void draw_Summonable_Player_Units_Buttons() {
 		level_Up_Button_Pos.x += spawn_Unit_Button_W;
 
 		std::string debug_String = std::to_string(summonable_Unit.level);
-		draw_String(debug_String.c_str(), (int)level_Text_Pos.x, (int)level_Text_Pos.y, 2, true);
+		draw_String(&font_1, debug_String.c_str(), (int)level_Text_Pos.x, (int)level_Text_Pos.y, 2, true);
 		level_Text_Pos.x += spawn_Unit_Button_W;
 		// *************************
 	}
