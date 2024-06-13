@@ -99,10 +99,11 @@ void draw_Console(Console& console, float delta_Time) {
 
 		// Draw history
 		int text_Y_Offset = console.bkg_Rect.h - console.text_Height;
-		for (int i = 0; i < console.history_Size; i++) {
+		// Draw them in reverse order
+		for (int i = console.history_Size; i > 0; i--) {
 			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
 			if (text_Y_Offset < console.bkg_Rect.h){
-				std::string current_Str = console.history[i];
+				std::string current_Str = console.history[i - 1];
 				draw_String(console.font, current_Str.c_str(), console.bkg_Rect.x, text_Y_Offset, console.text_Size_Multiplier, false);
 				text_Y_Offset -= console.text_Height;
 			} else {
