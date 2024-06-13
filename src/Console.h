@@ -35,7 +35,7 @@ struct Console {
 };
 
 Console create_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT);
-void add_History(Console& console, std::string str);
+void add_Input_To_History(Console& console);
 void draw_Console(Console& console, float delta_Time);
 void update_Openness(Console& console, float delta_Time);
 // void get_Console_Bottom();

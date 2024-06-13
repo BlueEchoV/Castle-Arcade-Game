@@ -135,12 +135,17 @@ int main(int argc, char** argv) {
             }
             }
         }
-
-        if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
-            size_t length = strlen(console.user_Input);
-            console.user_Input[length - 1] = 0;
-            printf(console.user_Input);
-            printf("\n");
+        
+        if (console.state == CS_Open_Small || console.state == CS_Open_Small) {
+            if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
+                size_t length = strlen(console.user_Input);
+                console.user_Input[length - 1] = 0;
+                printf(console.user_Input);
+                printf("\n");
+            }
+            if (key_States[SDLK_RETURN].pressed_This_Frame) {
+                add_Input_To_History(console);
+            }
         }
 
         if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {

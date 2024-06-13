@@ -27,19 +27,19 @@ Console create_Console(Font* font, int text_Size, float max_Openness, float rate
 	result.input_Background_Color = { 0, 139, 0, SDL_ALPHA_OPAQUE };
 	result.report_Background_Color = { 139, 0, 0, SDL_ALPHA_OPAQUE };
 	result.history_Size = {};
-
-	// Add some demo values to the array
-	add_History(result, "Title: Test");
-	add_History(result, "Hello!");
-	add_History(result, "Blah! Blah! Blah!");
 	
 	return result;
 }
 
-void add_History(Console& console, std::string str) {
+void add_Input_To_History(Console& console) {
+	// Guard against array size
 	if (console.history_Size < ARRAY_SIZE(console.history)) {
+		std::string str = console.user_Input;
 		console.history[console.history_Size] = str;
 		console.history_Size++;
+		for (int i = 0; i < strlen(console.user_Input); i++) {
+			console.user_Input[i] = 0;
+		}
 	} else {
 		// Should never get here
 		assert(false);
