@@ -103,13 +103,13 @@ void draw_Console(Console& console, float delta_Time) {
 			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
 			if (text_Y_Offset < console.bkg_Rect.h){
 				std::string current_Str = console.history[i];
-				draw_String(console.font, current_Str.c_str(), console.ipt_Rect.x, text_Y_Offset, console.text_Size_Multiplier, false);
+				draw_String(console.font, current_Str.c_str(), console.bkg_Rect.x, text_Y_Offset, console.text_Size_Multiplier, false);
 				text_Y_Offset -= console.text_Height;
 			} else {
 				break;
 			}
 		}
-
+		draw_String(console.font, console.user_Input, console.ipt_Rect.x, console.ipt_Rect.y, console.text_Size_Multiplier, false);
 	}
 }
 
