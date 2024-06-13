@@ -24,6 +24,7 @@ struct Console {
 
 	int history_Size;
 	std::string history[max_History_String];
+	char user_Input[100] = {};
 	
 	// The console 
 	SDL_Rect bkg_Rect;

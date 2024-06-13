@@ -89,8 +89,6 @@ int main(int argc, char** argv) {
 	start_Game(game_Data);
 
     Console console = create_Console(&font_1, 2, (RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
-    // 100 characters can be input 
-    char console_Input[100] = {};
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -110,14 +108,14 @@ int main(int argc, char** argv) {
             case SDL_TEXTINPUT: {
                 if (console.state == CS_Open_Small || console.state == CS_Open_Small) {
                     for (int i = 0; i < strlen(event.text.text); i++) {
-                        if (strlen(console_Input) + 2 <= sizeof(console_Input)) {
-                            size_t length = strlen(console_Input);
-                            console_Input[length] = event.text.text[i];
+                        if (strlen(console.user_Input) + 2 <= sizeof(console.user_Input)) {
+                            size_t length = strlen(console.user_Input);
+                            console.user_Input[length] = event.text.text[i];
                             // Null terminated
-                            console_Input[length + 1] = 0;
+                            console.user_Input[length + 1] = 0;
                         }
                     }
-                    printf(console_Input);
+                    printf(console.user_Input);
                     printf("\n");
                 }
                 break;
@@ -139,9 +137,9 @@ int main(int argc, char** argv) {
         }
 
         if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
-            size_t length = strlen(console_Input);
-            console_Input[length - 1] = 0;
-            printf(console_Input);
+            size_t length = strlen(console.user_Input);
+            console.user_Input[length - 1] = 0;
+            printf(console.user_Input);
             printf("\n");
         }
 

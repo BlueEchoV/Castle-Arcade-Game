@@ -110,7 +110,6 @@ void draw_Console(Console& console, float delta_Time) {
 			}
 		}
 
-
 	}
 }
 
