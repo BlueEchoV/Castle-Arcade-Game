@@ -10,7 +10,8 @@ CS_Open_Big
 const int max_History_String = 100;
 struct Console {
 	Console_State state;
-	int text_Size;
+	int text_Size_Multiplier;
+	int text_Height;
 	Font* font;
 	
 	float max_Openness;
@@ -20,7 +21,6 @@ struct Console {
 	float target_Openness;
 	// The rate at which it's opening
 	float rate_Of_Openness_DT;
-	int ipt_Max_Height;
 
 	int history_Size;
 	std::string history[max_History_String];

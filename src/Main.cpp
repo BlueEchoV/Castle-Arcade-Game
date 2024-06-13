@@ -89,7 +89,8 @@ int main(int argc, char** argv) {
 	start_Game(game_Data);
 
     Console console = create_Console(&font_1, 2, (RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
-
+    // 100 characters can be input 
+    char console_Input[100] = {};
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -104,6 +105,21 @@ int main(int argc, char** argv) {
             }
             case SDL_KEYUP: {
                 key_States[event.key.keysym.sym].held_Down = false;
+                break;
+            }
+            case SDL_TEXTINPUT: {
+                if (console.state == CS_Open_Small || console.state == CS_Open_Small) {
+                    for (int i = 0; i < strlen(event.text.text); i++) {
+                        if (strlen(console_Input) + 2 <= sizeof(console_Input)) {
+                            size_t length = strlen(console_Input);
+                            console_Input[length] = event.text.text[i];
+                            // Null terminated
+                            console_Input[length + 1] = 0;
+                        }
+                    }
+                    printf(console_Input);
+                    printf("\n");
+                }
                 break;
             }
             case SDL_MOUSEBUTTONDOWN: {
@@ -122,15 +138,22 @@ int main(int argc, char** argv) {
             }
         }
 
+        if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
+            size_t length = strlen(console_Input);
+            console_Input[length - 1] = 0;
+            printf(console_Input);
+            printf("\n");
+        }
+
         if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
-            if (console.state == CS_Closed) {
+            if (console.state == CS_Closed || console.state == CS_Open_Small) {
                 console.state = CS_Open_Big;
             } else {
                 console.state = CS_Closed;
             }
         }
         else if (key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
-            if (console.state == CS_Closed) {
+            if (console.state == CS_Closed || console.state == CS_Open_Big) {
                 console.state = CS_Open_Small;
             } else {
                 console.state = CS_Closed;

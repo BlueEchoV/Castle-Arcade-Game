@@ -5,7 +5,7 @@
 Console create_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT) {
 	Console result;
 	
-	result.text_Size = text_Size;
+	result.text_Size_Multiplier = text_Size;
 	result.font = font;
 
 	result.bkg_Rect.x = 0;
@@ -16,7 +16,7 @@ Console create_Console(Font* font, int text_Size, float max_Openness, float rate
 	result.ipt_Rect.x = 0;
 	result.ipt_Rect.y = 0;
 	result.ipt_Rect.w = RESOLUTION_WIDTH;
-	result.ipt_Max_Height = font->char_Height * text_Size;
+	result.text_Height = font->char_Height * text_Size;
 	result.ipt_Rect.h = 0;
 
 	result.state = CS_Closed;
@@ -61,16 +61,16 @@ void update_Openness(Console& console, float delta_Time) {
 	}
 	
 	// Input rect
-	if (console.current_Openness <= console.ipt_Max_Height) {
+	if (console.current_Openness <= console.text_Height) {
 		console.ipt_Rect.h = (int)console.current_Openness;
 	}
 	else {
-		console.ipt_Rect.y = (int)console.current_Openness - (int)console.ipt_Max_Height;
-		console.ipt_Rect.h = (int)console.ipt_Max_Height;
+		console.ipt_Rect.y = (int)console.current_Openness - (int)console.text_Height;
+		console.ipt_Rect.h = (int)console.text_Height;
 	}
 	
 	// Background rect
-	int background_Openness = (int)(console.current_Openness - console.ipt_Max_Height);
+	int background_Openness = (int)(console.current_Openness - console.text_Height);
 	if (background_Openness >= 0) {
 		console.bkg_Rect.h = background_Openness;
 	} else {
@@ -98,17 +98,19 @@ void draw_Console(Console& console, float delta_Time) {
 		SDL_RenderFillRect(Globals::renderer, &console.ipt_Rect);
 
 		// Draw history
+		int text_Y_Offset = console.bkg_Rect.h - console.text_Height;
 		for (int i = 0; i < console.history_Size; i++) {
-			std::string current_Str = console.history[i];
-
-			int text_Y;
-			if (console.current_Openness < console.ipt_Max_Height) {
-				text_Y = (int)console.current_Openness - console.ipt_Max_Height;
+			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
+			if (text_Y_Offset < console.bkg_Rect.h){
+				std::string current_Str = console.history[i];
+				draw_String(console.font, current_Str.c_str(), console.ipt_Rect.x, text_Y_Offset, console.text_Size_Multiplier, false);
+				text_Y_Offset -= console.text_Height;
 			} else {
-				text_Y = console.ipt_Rect.y;
+				break;
 			}
-			draw_String(console.font, current_Str.c_str(), console.ipt_Rect.x, text_Y, console.text_Size, false);
 		}
+
+
 	}
 }
 
