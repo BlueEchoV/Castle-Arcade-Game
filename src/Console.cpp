@@ -28,8 +28,8 @@ Console create_Console(Font* font, int text_Size, float max_Openness, float rate
 	result.current_Openness = 0.0f;
 	result.target_Openness = 0.0f;
 	result.rate_Of_Openness_DT = rate_Of_Openness_DT;
-	result.input_Background_Color = { 0, 139, 0, SDL_ALPHA_OPAQUE };
-	result.report_Background_Color = { 139, 0, 0, SDL_ALPHA_OPAQUE };
+	result.input_Background_Color = { 34,34,34, SDL_ALPHA_OPAQUE };
+	result.report_Background_Color = { 0, 0, 0, SDL_ALPHA_OPAQUE };
 	result.history_Size = {};
 	
 	return result;
@@ -101,9 +101,9 @@ void draw_Console(Console& console, float delta_Time) {
 		set_Render_Draw_Color(console.input_Background_Color);
 		SDL_RenderDrawRect(Globals::renderer, &console.ipt_Rect);
 		SDL_RenderFillRect(Globals::renderer, &console.ipt_Rect);
-
+		SDL_SetTextureColorMod(console.font->texture, 0, 255, 0);
 		// Draw history
-		int text_Y_Offset = console.bkg_Rect.h - console.ipt_Rect.h;
+		int text_Y_Offset = console.bkg_Rect.h - (console.font->char_Height * console.text_Size_Multiplier);
 		// Draw them in reverse order
 		for (int i = console.history_Size; i > 0; i--) {
 			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
@@ -124,21 +124,31 @@ void draw_Console(Console& console, float delta_Time) {
 		}
 		draw_String(console.font, console.user_Input, console.ipt_Rect.x, ipt_Y_Offset, console.text_Size_Multiplier, false);
 		
-		progress_CD(console.cursor_Indicator, delta_Time);
 		SDL_Rect cursor;
 		cursor.w = console.font->char_Width * console.text_Size_Multiplier;
 		cursor.h = console.font->char_Height * console.text_Size_Multiplier;
 		size_t ipt_Length = strlen(console.user_Input);
 		if (ipt_Length > 0) {
-			cursor.x = (console.font->char_Width * 2) * (int)((ipt_Length) - 1);
+			cursor.x = (console.font->char_Width * 2) * (int)((ipt_Length));
 		} else {
 			cursor.x = 0;
 		}
 		cursor.y = ipt_Y_Offset;
-		if (console.cursor_Indicator.remaining > (console.cursor_Indicator.duration / 2)) {
-			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
-			SDL_RenderDrawRect(Globals::renderer, &cursor);
-		}
+		// NOTE: THIS IS IF I WANT THE CURSOR TO BLINK. STILL DECIDING.
+		//progress_CD(console.cursor_Indicator, delta_Time);
+		//if (console.cursor_Indicator.remaining > (console.cursor_Indicator.duration / 2)) {
+			// SDL_SetRenderDrawColor(Globals::renderer, 57, 255, 20, 100);
+			// SDL_RenderDrawRect(Globals::renderer, &cursor);
+			// SDL_RenderFillRect(Globals::renderer, &cursor);
+		//}
+		
+		SDL_SetRenderDrawColor(Globals::renderer, 57, 255, 20, 100);
+		SDL_RenderFillRect(Globals::renderer, &cursor);
+		SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, 0);
+		SDL_RenderDrawRect(Globals::renderer, &cursor);
+		
+		// Reset the color mod
+		SDL_SetTextureColorMod(console.font->texture, 0, 0, 0);
 	}
 }
 
