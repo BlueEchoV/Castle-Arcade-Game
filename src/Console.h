@@ -13,6 +13,8 @@ struct Console {
 	int text_Size_Multiplier;
 	int text_Height;
 	Font* font;
+	Cooldown cursor_Indicator;
+	int cursor_Offset;
 	
 	float max_Openness;
 	// How open is the console right now

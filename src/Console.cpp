@@ -9,6 +9,8 @@ Console create_Console(Font* font, int text_Size, float max_Openness, float rate
 	
 	result.text_Size_Multiplier = text_Size;
 	result.font = font;
+	result.cursor_Indicator.duration = 0.25;
+	result.cursor_Indicator.remaining = 0.0;
 
 	result.bkg_Rect.x = 0;
 	result.bkg_Rect.y = 0;
@@ -64,6 +66,7 @@ void update_Openness(Console& console, float delta_Time) {
 	
 	// Input rect
 	if (console.current_Openness <= console.text_Height) {
+		console.ipt_Rect.y = 0;
 		console.ipt_Rect.h = (int)console.current_Openness;
 	}
 	else {
@@ -100,7 +103,7 @@ void draw_Console(Console& console, float delta_Time) {
 		SDL_RenderFillRect(Globals::renderer, &console.ipt_Rect);
 
 		// Draw history
-		int text_Y_Offset = console.bkg_Rect.h - console.text_Height;
+		int text_Y_Offset = console.bkg_Rect.h - console.ipt_Rect.h;
 		// Draw them in reverse order
 		for (int i = console.history_Size; i > 0; i--) {
 			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
@@ -112,7 +115,30 @@ void draw_Console(Console& console, float delta_Time) {
 				break;
 			}
 		}
-		draw_String(console.font, console.user_Input, console.ipt_Rect.x, console.ipt_Rect.y, console.text_Size_Multiplier, false);
+
+		int ipt_Y_Offset = 0;
+		if (console.current_Openness < console.text_Height) {
+			ipt_Y_Offset = (int)console.current_Openness - console.text_Height;
+		} else {
+			ipt_Y_Offset = console.ipt_Rect.y;
+		}
+		draw_String(console.font, console.user_Input, console.ipt_Rect.x, ipt_Y_Offset, console.text_Size_Multiplier, false);
+		
+		progress_CD(console.cursor_Indicator, delta_Time);
+		SDL_Rect cursor;
+		cursor.w = console.font->char_Width * console.text_Size_Multiplier;
+		cursor.h = console.font->char_Height * console.text_Size_Multiplier;
+		size_t ipt_Length = strlen(console.user_Input);
+		if (ipt_Length > 0) {
+			cursor.x = (console.font->char_Width * 2) * (int)((ipt_Length) - 1);
+		} else {
+			cursor.x = 0;
+		}
+		cursor.y = ipt_Y_Offset;
+		if (console.cursor_Indicator.remaining > (console.cursor_Indicator.duration / 2)) {
+			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+			SDL_RenderDrawRect(Globals::renderer, &cursor);
+		}
 	}
 }
 

@@ -180,6 +180,13 @@ void add_Collider(Rigid_Body* rigid_Body, V2 position_LS, float radius) {
 	collider->radius = radius;
 }
 
+void progress_CD(Cooldown& cd, float delta_Time) {
+	cd.remaining -= delta_Time;
+	if (cd.remaining <= 0.0f) {
+		cd.remaining = cd.duration;
+	}
+}
+
 void draw_Castle(Castle* castle, bool flip) {
 	draw_Resource_Bar(castle->health_Bar, castle->rigid_Body.position_WS);
 	draw_Resource_Bar(castle->food_Bar, castle->rigid_Body.position_WS);

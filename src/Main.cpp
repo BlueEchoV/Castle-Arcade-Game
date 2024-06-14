@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
         // Reset pressed this frame to false every frame
         SDL_Event event = {};
         while (SDL_PollEvent(&event)) {
-            printf("Key Symbol pressed: %i\n", event.key.keysym.sym);
+            // printf("SDL_Keycode: %i\n", event.key.keysym.sym);
             if (is_Console_Open(console)) {
                 if (event.type != SDL_TEXTINPUT
                     && event.key.keysym.sym != SDLK_BACKSPACE

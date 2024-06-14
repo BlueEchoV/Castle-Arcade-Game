@@ -72,6 +72,8 @@ struct Cooldown {
 	float remaining;
 };
 
+void progress_CD(Cooldown& cd, float delta_Time);
+
 struct Castle_Data {
 	std::string type;
 	std::string sprite_Sheet_Name;
