@@ -88,6 +88,7 @@ int main(int argc, char** argv) {
 
 	start_Game(game_Data);
 
+    float console_DT = 0.0f;
     Console console = create_Console(&font_1, 2, (RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
     while (running) {
         mouse_Down_This_Frame = false;
@@ -158,7 +159,7 @@ int main(int argc, char** argv) {
                 // printf("\n");
             }
             if (key_States[SDLK_RETURN].pressed_This_Frame) {
-                add_Input_To_History(console);
+                process_Console_Input(console);
             }
         }
 
@@ -231,6 +232,12 @@ int main(int argc, char** argv) {
         delta_Time *= time_Scalar;
         delta_Time /= 1000;
 
+        console_DT = ticks - last_Ticks;
+        if (console_DT > 250) {
+            console_DT = 250;
+        }
+        console_DT /= 1000;
+ 
         // Hot loadinggame_Data.
         attempt_Reload_Particle_CSV_File(&particle_CSV_Data);
 
@@ -528,7 +535,7 @@ int main(int argc, char** argv) {
 
         draw_Menu();
 
-        draw_Console(console, delta_Time);
+        draw_Console(console, console_DT);
         
         SDL_RenderPresent(Globals::renderer);
     }

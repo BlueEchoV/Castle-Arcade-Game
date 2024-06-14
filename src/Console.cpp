@@ -35,15 +35,34 @@ Console create_Console(Font* font, int text_Size, float max_Openness, float rate
 	return result;
 }
 
+bool process_Console_Command(std::string command) {
+	if (command == "test") {
+		printf("Test command");
+		return true;
+	}
+	return false;
+}
+
+void process_Console_Input(Console& console) {
+	add_Input_To_History(console);
+	if (process_Console_Command(console.user_Input)) {
+		printf("Valid command: %s", console.user_Input);
+	} else {
+		printf("Invalid command: %s", console.user_Input);
+	}
+	// Reset the user input
+	for (int i = 0; i < strlen(console.user_Input); i++) {
+		console.user_Input[i] = 0;
+	}
+}
+
 void add_Input_To_History(Console& console) {
 	// Guard against array size
 	if (console.history_Size < ARRAY_SIZE(console.history)) {
 		std::string str = console.user_Input;
 		console.history[console.history_Size] = str;
 		console.history_Size++;
-		for (int i = 0; i < strlen(console.user_Input); i++) {
-			console.user_Input[i] = 0;
-		}
+		
 	} else {
 		// Should never get here
 		assert(false);
@@ -170,3 +189,4 @@ bool is_Console_Open(Console& console) {
 	}
 	return false;
 }
+
