@@ -361,6 +361,7 @@ V2 get_Collider_WS_Position(Rigid_Body* rigid_Body, const Collider* collider);
 float get_Height_Map_Pos_Y(Game_Data& game_Data, int x_Pos);
 
 const Unit_Data& get_Unit_Data(std::string key);
+std::vector<std::string> get_Unit_Types();
 const Projectile_Data& get_Projectile_Data(std::string key);
 const Castle_Data& get_Castle_Data(std::string key);
 int get_Castle_Data_Size();

@@ -20,6 +20,14 @@ const Unit_Data& get_Unit_Data(std::string key) {
 	return bad_Unit_Data;
 }
 
+std::vector<std::string> get_Unit_Types() {
+	std::vector<std::string> result = {};
+	for (const auto& iterator : unit_Data_Map) {
+		result.push_back(iterator.first);
+	}
+	return result;
+}
+
 static std::unordered_map<std::string, Projectile_Data> projectile_Data_Map = {};
 
 const Projectile_Data bad_Projectile_Data = {

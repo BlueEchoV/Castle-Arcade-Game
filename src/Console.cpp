@@ -35,27 +35,6 @@ Console create_Console(Font* font, int text_Size, float max_Openness, float rate
 	return result;
 }
 
-bool process_Console_Command(std::string command) {
-	if (command == "test") {
-		printf("Test command");
-		return true;
-	}
-	return false;
-}
-
-void process_Console_Input(Console& console) {
-	add_Input_To_History(console);
-	if (process_Console_Command(console.user_Input)) {
-		printf("Valid command: %s", console.user_Input);
-	} else {
-		printf("Invalid command: %s", console.user_Input);
-	}
-	// Reset the user input
-	for (int i = 0; i < strlen(console.user_Input); i++) {
-		console.user_Input[i] = 0;
-	}
-}
-
 void add_Input_To_History(Console& console) {
 	// Guard against array size
 	if (console.history_Size < ARRAY_SIZE(console.history)) {
@@ -189,4 +168,91 @@ bool is_Console_Open(Console& console) {
 	}
 	return false;
 }
+
+// I could have this return a string that says what's missing
+bool process_Command_Spawn(std::string command) {
+	std::istringstream stream(command);
+	std::string word;
+
+	// Skip the first word
+	if (!(stream >> word)) {
+		return false;
+	} 
+
+	// Nation
+	Nation nation = {};
+	if (stream >> word) {
+		if (word == "player") {
+			nation = N_PLAYER;
+		}
+		else if (word == "enemy") {
+			nation = N_ENEMY;
+		}
+	} else {
+		return false;
+	}
+
+	// Unit Type
+	std::string unit_Type = "";
+	if ((stream >> word)) {
+		std::vector<std::string> unit_Types = get_Unit_Types();
+		for (std::string type : unit_Types) {
+			if (type == word) {
+				unit_Type = word;
+				break;
+			}
+		}
+	} else {
+		return false;
+	}
+
+	// Level?
+//	if (stream >> word) {
+//
+//	}
+	
+	// If we have any more input, this is an error
+	if (stream >> word) {
+		return false;
+	}
+
+	if (nation == N_PLAYER) {
+		spawn_Unit(game_Data, nation, unit_Type, 1, game_Data.player_Castle.rigid_Body.position_WS, game_Data.enemy_Castle.rigid_Body.position_WS);
+	} else if (nation == N_PLAYER) {
+		spawn_Unit(game_Data, nation, unit_Type, 1, game_Data.enemy_Castle.rigid_Body.position_WS, game_Data.player_Castle.rigid_Body.position_WS);
+	}
+	return true;
+}
+
+bool process_Console_Command(std::string command) {
+	// Get the first word to see what the command type is
+	std::istringstream stream(command);
+	std::string first_Word;
+	stream >> first_Word;
+	if (first_Word == "test") {
+		printf("Test command\n");
+		return true;
+	} else if (first_Word == "spawn") {
+		if (process_Command_Spawn(command)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void process_Console_Input(Console& console) {
+	add_Input_To_History(console);
+	if (process_Console_Command(console.user_Input)) {
+		printf("Valid command: %s", console.user_Input);
+		// Reset the user input
+		for (int i = 0; i < strlen(console.user_Input); i++) {
+			console.user_Input[i] = 0;
+		}
+	} else {
+		printf("Invalid command: %s", console.user_Input);
+		// Don't reset user input if the command doesn't work
+	}
+	
+}
+
 
