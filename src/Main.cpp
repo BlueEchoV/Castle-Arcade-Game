@@ -95,96 +95,81 @@ int main(int argc, char** argv) {
         // Reset pressed this frame to false every frame
         SDL_Event event = {};
         while (SDL_PollEvent(&event)) {
-            if (!is_Console_Open(console)) {
-                switch (event.type) {
-                case SDL_KEYDOWN: {
-                    key_States[event.key.keysym.sym].pressed_This_Frame = true;
-                    key_States[event.key.keysym.sym].held_Down = true;
-                    break;
-                }
-                case SDL_KEYUP: {
-                    key_States[event.key.keysym.sym].held_Down = false;
-                    break;
-                }
-                case SDL_MOUSEBUTTONDOWN: {
-                    if (event.button.button == SDL_BUTTON_LEFT) {
-                        mouse_Down_This_Frame = true;
-                    }
-                    break;
-                }
-                case SDL_QUIT: {
-                    running = false;
-                    break;
-                }
-                default: {
-                    break;
-                }
+            printf("Key Symbol pressed: %i\n", event.key.keysym.sym);
+            if (is_Console_Open(console)) {
+                if (event.type != SDL_TEXTINPUT
+                    && event.key.keysym.sym != SDLK_BACKSPACE
+                    && event.key.keysym.sym != SDLK_RETURN
+                    && event.key.keysym.sym != SDLK_LSHIFT
+                    && event.key.keysym.sym != SDLK_BACKQUOTE) {
+                    continue;
                 }
             }
-		    else {
-                switch (event.type) {
-                case SDL_KEYDOWN: {
-                    console_Key_States[event.key.keysym.sym].pressed_This_Frame = true;
-                    console_Key_States[event.key.keysym.sym].held_Down = true;
-                    break;
+            switch (event.type) {
+            case SDL_KEYDOWN: {
+                key_States[event.key.keysym.sym].pressed_This_Frame = true;
+                key_States[event.key.keysym.sym].held_Down = true;
+                break;
+            }
+            case SDL_KEYUP: {
+                key_States[event.key.keysym.sym].held_Down = false;
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN: {
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    mouse_Down_This_Frame = true;
                 }
-                case SDL_KEYUP: {
-                    console_Key_States[event.key.keysym.sym].held_Down = false;
-                    break;
-                }
-                case SDL_QUIT: {
-                    running = false;
-                    break;
-                }
-                default: {
-                    break;
-                }
-                }
-                switch (event.type) {
-					case SDL_TEXTINPUT: {
-						if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
-							for (int i = 0; i < strlen(event.text.text); i++) {
-								if (strlen(console.user_Input) + 2 <= sizeof(console.user_Input)) {
-									size_t length = strlen(console.user_Input);
-									console.user_Input[length] = event.text.text[i];
-									// Null terminated
-									console.user_Input[length + 1] = 0;
-								}
-							}
-							// printf(console.user_Input);
-							// printf("\n");
-						}
-						break;
-					}
-                    default: {
-                        break;
+                break;
+            }
+            case SDL_QUIT: {
+                running = false;
+                break;
+            }
+            case SDL_TEXTINPUT: {
+                if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
+                    for (int i = 0; i < strlen(event.text.text); i++) {
+                        if (strlen(console.user_Input) + 2 <= sizeof(console.user_Input)) {
+                            if (event.text.text[i] == '`'
+                                || event.text.text[i] == '~') {
+                                continue;
+                            }
+                            size_t length = strlen(console.user_Input);
+                            console.user_Input[length] = event.text.text[i];
+                            // Null terminated
+                            console.user_Input[length + 1] = 0;
+                        }
                     }
+                    // printf(console.user_Input);
+                    // printf("\n");
                 }
-			}
+                break;
+            }
+            default: {
+                break;
+            }
+            }
         }
         
-        if (console.state == CS_Open_Small || console.state == CS_Open_Small) {
-            if (console_Key_States[SDLK_BACKSPACE].pressed_This_Frame) {
+        if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
+            if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
                 size_t length = strlen(console.user_Input);
                 console.user_Input[length - 1] = 0;
                 // printf(console.user_Input);
                 // printf("\n");
             }
-            if (console_Key_States[SDLK_RETURN].pressed_This_Frame) {
+            if (key_States[SDLK_RETURN].pressed_This_Frame) {
                 add_Input_To_History(console);
             }
         }
 
-        if (console_Key_States[SDLK_LSHIFT].held_Down && console_Key_States[SDLK_BACKQUOTE].pressed_This_Frame
-            || key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+        if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
             if (console.state == CS_Closed || console.state == CS_Open_Small) {
                 console.state = CS_Open_Big;
             } else {
                 console.state = CS_Closed;
             }
         }
-        else if (console_Key_States[SDLK_BACKQUOTE].pressed_This_Frame
-                || key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+        else if (key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
             if (console.state == CS_Closed || console.state == CS_Open_Big) {
                 console.state = CS_Open_Small;
             } else {
