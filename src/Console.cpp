@@ -1,5 +1,7 @@
 #include "Console.h"
 
+std::unordered_map<SDL_Keycode, Key_State> console_Key_States = {};
+
 // NOTE: Need a font
 
 Console create_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT) {
@@ -126,6 +128,9 @@ void open_Close_Console(Console& console) {
 	}
 }
 
-//float get_Console_Bottom(Console console) {
-//
-//}
+bool is_Console_Open(Console& console) {
+	if (console.state != CS_Closed) {
+		return true;
+	}
+	return false;
+}

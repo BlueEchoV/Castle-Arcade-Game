@@ -95,67 +95,96 @@ int main(int argc, char** argv) {
         // Reset pressed this frame to false every frame
         SDL_Event event = {};
         while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-            case SDL_KEYDOWN: {
-                key_States[event.key.keysym.sym].pressed_This_Frame = true;
-                key_States[event.key.keysym.sym].held_Down = true;
-                break;
-            }
-            case SDL_KEYUP: {
-                key_States[event.key.keysym.sym].held_Down = false;
-                break;
-            }
-            case SDL_TEXTINPUT: {
-                if (console.state == CS_Open_Small || console.state == CS_Open_Small) {
-                    for (int i = 0; i < strlen(event.text.text); i++) {
-                        if (strlen(console.user_Input) + 2 <= sizeof(console.user_Input)) {
-                            size_t length = strlen(console.user_Input);
-                            console.user_Input[length] = event.text.text[i];
-                            // Null terminated
-                            console.user_Input[length + 1] = 0;
-                        }
+            if (!is_Console_Open(console)) {
+                switch (event.type) {
+                case SDL_KEYDOWN: {
+                    key_States[event.key.keysym.sym].pressed_This_Frame = true;
+                    key_States[event.key.keysym.sym].held_Down = true;
+                    break;
+                }
+                case SDL_KEYUP: {
+                    key_States[event.key.keysym.sym].held_Down = false;
+                    break;
+                }
+                case SDL_MOUSEBUTTONDOWN: {
+                    if (event.button.button == SDL_BUTTON_LEFT) {
+                        mouse_Down_This_Frame = true;
                     }
-                    printf(console.user_Input);
-                    printf("\n");
+                    break;
                 }
-                break;
-            }
-            case SDL_MOUSEBUTTONDOWN: {
-                if (event.button.button == SDL_BUTTON_LEFT) {
-                    mouse_Down_This_Frame = true;
+                case SDL_QUIT: {
+                    running = false;
+                    break;
                 }
-                break;
+                default: {
+                    break;
+                }
+                }
             }
-            case SDL_QUIT: {
-                running = false;
-                break;
-            }
-            default: {
-                break;
-            }
-            }
+		    else {
+                switch (event.type) {
+                case SDL_KEYDOWN: {
+                    console_Key_States[event.key.keysym.sym].pressed_This_Frame = true;
+                    console_Key_States[event.key.keysym.sym].held_Down = true;
+                    break;
+                }
+                case SDL_KEYUP: {
+                    console_Key_States[event.key.keysym.sym].held_Down = false;
+                    break;
+                }
+                case SDL_QUIT: {
+                    running = false;
+                    break;
+                }
+                default: {
+                    break;
+                }
+                }
+                switch (event.type) {
+					case SDL_TEXTINPUT: {
+						if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
+							for (int i = 0; i < strlen(event.text.text); i++) {
+								if (strlen(console.user_Input) + 2 <= sizeof(console.user_Input)) {
+									size_t length = strlen(console.user_Input);
+									console.user_Input[length] = event.text.text[i];
+									// Null terminated
+									console.user_Input[length + 1] = 0;
+								}
+							}
+							// printf(console.user_Input);
+							// printf("\n");
+						}
+						break;
+					}
+                    default: {
+                        break;
+                    }
+                }
+			}
         }
         
         if (console.state == CS_Open_Small || console.state == CS_Open_Small) {
-            if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
+            if (console_Key_States[SDLK_BACKSPACE].pressed_This_Frame) {
                 size_t length = strlen(console.user_Input);
                 console.user_Input[length - 1] = 0;
-                printf(console.user_Input);
-                printf("\n");
+                // printf(console.user_Input);
+                // printf("\n");
             }
-            if (key_States[SDLK_RETURN].pressed_This_Frame) {
+            if (console_Key_States[SDLK_RETURN].pressed_This_Frame) {
                 add_Input_To_History(console);
             }
         }
 
-        if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+        if (console_Key_States[SDLK_LSHIFT].held_Down && console_Key_States[SDLK_BACKQUOTE].pressed_This_Frame
+            || key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
             if (console.state == CS_Closed || console.state == CS_Open_Small) {
                 console.state = CS_Open_Big;
             } else {
                 console.state = CS_Closed;
             }
         }
-        else if (key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+        else if (console_Key_States[SDLK_BACKQUOTE].pressed_This_Frame
+                || key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
             if (console.state == CS_Closed || console.state == CS_Open_Big) {
                 console.state = CS_Open_Small;
             } else {

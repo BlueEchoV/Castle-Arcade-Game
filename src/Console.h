@@ -1,10 +1,10 @@
 #pragma once
 #include "Menu_System.h"
-
-enum Console_State {
-CS_Closed,
-CS_Open_Small,
-CS_Open_Big
+extern std::unordered_map<SDL_Keycode, Key_State> console_Key_States;
+enum Console_State { 
+	CS_Closed, 
+	CS_Open_Small,
+	CS_Open_Big
 };
 
 const int max_History_String = 100;
@@ -40,3 +40,4 @@ void draw_Console(Console& console, float delta_Time);
 void update_Openness(Console& console, float delta_Time);
 // void get_Console_Bottom();
 void open_Close_Console(Console& console);
+bool is_Console_Open(Console& console);
