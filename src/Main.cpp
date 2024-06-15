@@ -102,7 +102,8 @@ int main(int argc, char** argv) {
                     && event.key.keysym.sym != SDLK_BACKSPACE
                     && event.key.keysym.sym != SDLK_RETURN
                     && event.key.keysym.sym != SDLK_LSHIFT
-                    && event.key.keysym.sym != SDLK_BACKQUOTE) {
+                    && event.key.keysym.sym != SDLK_BACKQUOTE
+                    && event.key.keysym.sym != SDLK_ESCAPE) {
                     continue;
                 }
             }
@@ -150,34 +151,9 @@ int main(int argc, char** argv) {
             }
             }
         }
-        
-        if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
-            if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
-                size_t length = strlen(console.user_Input);
-                console.user_Input[length - 1] = 0;
-                // printf(console.user_Input);
-                // printf("\n");
-            }
-            if (key_States[SDLK_RETURN].pressed_This_Frame) {
-                process_Console_Input(console);
-            }
-        }
 
-        if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
-            if (console.state == CS_Closed || console.state == CS_Open_Small) {
-                console.state = CS_Open_Big;
-            } else {
-                console.state = CS_Closed;
-            }
-        }
-        else if (key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
-            if (console.state == CS_Closed || console.state == CS_Open_Big) {
-                console.state = CS_Open_Small;
-            } else {
-                console.state = CS_Closed;
-            }
-        } 
-
+        get_Console_Input(console);
+       
         // Chose to handle every game state for now
 		if (key_States[SDLK_ESCAPE].pressed_This_Frame) 
         {

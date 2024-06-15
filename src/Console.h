@@ -53,3 +53,4 @@ void update_Openness(Console& console, float delta_Time);
 // void get_Console_Bottom();
 void open_Close_Console(Console& console);
 bool is_Console_Open(Console& console);
+void get_Console_Input(Console& console);

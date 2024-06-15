@@ -5,7 +5,7 @@ Console init_Console(Font* font, int text_Size, float max_Openness, float rate_O
 	
 	result.text_Size_Multiplier = text_Size;
 	result.font = font;
-	result.text_Padding = 10;
+	result.text_Padding = 3;
 	result.cursor_Indicator.duration = 0.25;
 	result.cursor_Indicator.remaining = 0.0;
 
@@ -276,4 +276,37 @@ void process_Console_Input(Console& console) {
 		printf("Invalid command: %s", console.user_Input);
 		// Don't reset user input if the command doesn't work
 	}
+}
+
+void get_Console_Input(Console& console) {
+	if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
+		if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
+			size_t length = strlen(console.user_Input);
+			console.user_Input[length - 1] = 0;
+			// printf(console.user_Input);
+			// printf("\n");
+		}
+		if (key_States[SDLK_RETURN].pressed_This_Frame) {
+			process_Console_Input(console);
+		}
+		if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
+			console.state = CS_Closed;
+		}
+	}
+
+	if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+		if (console.state == CS_Closed || console.state == CS_Open_Small) {
+			console.state = CS_Open_Big;
+		} else {
+			console.state = CS_Closed;
+		}
+	}
+	else if (key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
+		if (console.state == CS_Closed || console.state == CS_Open_Big) {
+			console.state = CS_Open_Small;
+		} else {
+			console.state = CS_Closed;
+		}
+	} 
+	reset_Pressed_This_Frame();
 }
