@@ -308,5 +308,8 @@ void get_Console_Input(Console& console) {
 			console.state = CS_Closed;
 		}
 	} 
-	reset_Pressed_This_Frame();
+	if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
+		reset_Pressed_This_Frame();
+		reset_Held_This_Frame();
+	}
 }

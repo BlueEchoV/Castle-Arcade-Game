@@ -18,6 +18,12 @@ void reset_Pressed_This_Frame() {
 	}
 }
 
+void reset_Held_This_Frame() {
+	for (auto& key_State : key_States) {
+		key_States[key_State.first].held_Down = false;
+	}
+}
+
 Font load_Font_Bitmap(const char* font_File_Path) {
 	Font result = {};
 

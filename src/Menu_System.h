@@ -54,6 +54,7 @@ struct Button {
 };
 
 void reset_Pressed_This_Frame();
+void reset_Held_This_Frame();
 
 Font load_Font_Bitmap(const char* font_File_Path);
 
