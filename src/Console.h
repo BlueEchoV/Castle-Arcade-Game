@@ -14,6 +14,7 @@ struct Command {
 };
 
 const int max_History_String = 100;
+const int max_User_Input_Size = 100;
 struct Console {
 	Console_State state;
 	int text_Size_Multiplier;
@@ -33,9 +34,10 @@ struct Console {
 
 	int history_Size;
 	Command history[max_History_String];
-	char user_Input[100] = {};
+	char user_Input[max_User_Input_Size] = {};
 	bool is_Valid_Input;
 	std::string error_Output;
+	int history_Selector_Index;
 	
 	// The console 
 	SDL_Rect bkg_Rect;

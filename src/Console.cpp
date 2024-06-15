@@ -28,6 +28,8 @@ Console init_Console(Font* font, int text_Size, float max_Openness, float rate_O
 	result.input_Background_Color = { 34,34,34, SDL_ALPHA_OPAQUE };
 	result.report_Background_Color = { 0, 0, 0, SDL_ALPHA_OPAQUE };
 	result.history_Size = {};
+	// Start the index at -1 for when we increment
+	result.history_Selector_Index = -1;
 	
 	return result;
 }
@@ -268,32 +270,17 @@ void process_Console_Input(Console& console) {
 	add_Input_To_History(console);
 	if (process_Console_Command(console)) {
 		printf("Valid command: %s", console.user_Input);
-		// Reset the user input
-		for (int i = 0; i < strlen(console.user_Input); i++) {
-			console.user_Input[i] = 0;
-		}
+
 	} else {
 		printf("Invalid command: %s", console.user_Input);
-		// Don't reset user input if the command doesn't work
+	}
+	// Reset the user input
+	for (int i = 0; i < strlen(console.user_Input); i++) {
+		console.user_Input[i] = 0;
 	}
 }
 
 void get_Console_Input(Console& console) {
-	if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
-		if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
-			size_t length = strlen(console.user_Input);
-			console.user_Input[length - 1] = 0;
-			// printf(console.user_Input);
-			// printf("\n");
-		}
-		if (key_States[SDLK_RETURN].pressed_This_Frame) {
-			process_Console_Input(console);
-		}
-		if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
-			console.state = CS_Closed;
-		}
-	}
-
 	if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
 		if (console.state == CS_Closed || console.state == CS_Open_Small) {
 			console.state = CS_Open_Big;
@@ -308,7 +295,47 @@ void get_Console_Input(Console& console) {
 			console.state = CS_Closed;
 		}
 	} 
+
 	if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
+		if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
+			size_t length = strlen(console.user_Input);
+			console.user_Input[length - 1] = 0;
+			// printf(console.user_Input);
+			// printf("\n");
+		}
+		if (key_States[SDLK_UP].pressed_This_Frame || key_States[SDLK_DOWN].pressed_This_Frame) {
+			if (key_States[SDLK_UP].pressed_This_Frame) {
+				if (console.history_Selector_Index < (console.history_Size)) {
+					console.history_Selector_Index++;
+				} 
+			}
+			if (key_States[SDLK_DOWN].pressed_This_Frame) {
+				if (console.history_Selector_Index > 0) {
+					console.history_Selector_Index--;
+				}
+			
+			}
+			int array_Index_Reverse = console.history_Size - console.history_Selector_Index;
+			std::string command = console.history[array_Index_Reverse].command;
+			// Guard against the array size
+			if (command.size() < 100) {
+				strcpy_s(console.user_Input, sizeof(console.user_Input), command.c_str());
+			}
+			else {
+				strncpy_s(console.user_Input, sizeof(console.user_Input), command.c_str(), 99);
+				// Null termination 
+				console.user_Input[99] = '\0'; 
+			}
+		}
+		
+		if (key_States[SDLK_RETURN].pressed_This_Frame) {
+			process_Console_Input(console);
+		}
+		if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
+			console.state = CS_Closed;
+		}
+
+		// NOTE: Reset ALL input so that only the console input is processed.
 		reset_Pressed_This_Frame();
 		reset_Held_This_Frame();
 	}
