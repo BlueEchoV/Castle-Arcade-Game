@@ -7,14 +7,13 @@ enum Console_State {
 	CS_Open_Big
 };
 
+const int max_Console_Array_Size = 50;
 struct Command {
-	std::string command;
+	char command[max_Console_Array_Size];
 	std::string error_Message;
 	bool is_Valid;
 };
 
-const int max_History_String = 100;
-const int max_User_Input_Size = 100;
 struct Console {
 	Console_State state;
 	int text_Size_Multiplier;
@@ -32,9 +31,9 @@ struct Console {
 	// The rate at which it's opening
 	float rate_Of_Openness_DT;
 
-	int history_Size;
-	Command history[max_History_String];
-	char user_Input[max_User_Input_Size] = {};
+	int current_History_Size;
+	Command history[max_Console_Array_Size] = {};
+	char user_Input[max_Console_Array_Size] = {};
 	bool is_Valid_Input;
 	std::string error_Output;
 	int history_Selector_Index;

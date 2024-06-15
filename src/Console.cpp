@@ -1,4 +1,5 @@
 #include "Console.h"
+#include "string.h"
  // NOTE: Need a font
 Console init_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT) {
 	Console result;
@@ -27,20 +28,28 @@ Console init_Console(Font* font, int text_Size, float max_Openness, float rate_O
 	result.rate_Of_Openness_DT = rate_Of_Openness_DT;
 	result.input_Background_Color = { 34,34,34, SDL_ALPHA_OPAQUE };
 	result.report_Background_Color = { 0, 0, 0, SDL_ALPHA_OPAQUE };
-	result.history_Size = {};
 	// Start the index at -1 for when we increment
 	result.history_Selector_Index = -1;
+	result.current_History_Size = 0;
 	
 	return result;
 }
 
+void add_To_Char_Array(char* arr, char* adding_Elements, int total_Elements) {
+	size_t active_Elements = std::strlen(arr);
+	if (active_Elements >= total_Elements) {
+		printf("ERROR: arr is full (active elements: %i) (total elements: %i)", (int)active_Elements, total_Elements);
+		return;
+	}
+	strcpy_s(arr + (active_Elements * sizeof(char)), (total_Elements * sizeof(char)), adding_Elements);
+}
+
 void add_Input_To_History(Console& console) {
 	// Guard against array size
-	if (console.history_Size < ARRAY_SIZE(console.history)) {
-		std::string str = console.user_Input;
-		console.history[console.history_Size].command = str;
-		// console.history[console.history_Size].is_Valid = is_Valid;
-		console.history_Size++;
+	if (console.current_History_Size < ARRAY_SIZE(console.history)) {
+		add_To_Char_Array(console.history[console.current_History_Size].command, console.user_Input, max_Console_Array_Size);
+		// console.history[console.current_History_Size].is_Valid = is_Valid;
+		console.current_History_Size++;
 	} else {
 		// Should never get here
 		assert(false);
@@ -49,10 +58,9 @@ void add_Input_To_History(Console& console) {
 
 void add_String_To_History(Console& console, std::string str) {
 	// Guard against array size
-	if (console.history_Size < ARRAY_SIZE(console.history)) {
-		console.history[console.history_Size].command = str;
-		console.history_Size++;
-		
+	if (console.current_History_Size < ARRAY_SIZE(console.history)) {
+		add_To_Char_Array(console.history[console.current_History_Size].command, console.user_Input, max_Console_Array_Size);
+		console.current_History_Size++;
 	} else {
 		// Should never get here
 		assert(false);
@@ -116,7 +124,7 @@ void draw_Console(Console& console, float delta_Time) {
 		// Draw history
 		int text_Y_Offset = console.bkg_Rect.h - (console.font->char_Height * console.text_Size_Multiplier);
 		// Draw them in reverse order
-		for (int i = console.history_Size; i > 0; i--) {
+		for (int i = console.current_History_Size; i > 0; i--) {
 			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
 			if (text_Y_Offset < console.bkg_Rect.h){
 				Command command = console.history[i - 1];
@@ -262,6 +270,9 @@ bool process_Console_Command(Console& console) {
 		if (process_Command_Spawn(console)) {
 			return true;
 		}
+	} else {
+		std::string error = "Invalid command";
+		add_String_To_History(console, error);
 	}
 	return false;
 }
@@ -305,7 +316,7 @@ void get_Console_Input(Console& console) {
 		}
 		if (key_States[SDLK_UP].pressed_This_Frame || key_States[SDLK_DOWN].pressed_This_Frame) {
 			if (key_States[SDLK_UP].pressed_This_Frame) {
-				if (console.history_Selector_Index < (console.history_Size)) {
+				if (console.history_Selector_Index < (console.current_History_Size)) {
 					console.history_Selector_Index++;
 				} 
 			}
@@ -315,7 +326,7 @@ void get_Console_Input(Console& console) {
 				}
 			
 			}
-			int array_Index_Reverse = console.history_Size - console.history_Selector_Index;
+			int array_Index_Reverse = console.current_History_Size - console.history_Selector_Index;
 			std::string command = console.history[array_Index_Reverse].command;
 			// Guard against the array size
 			if (command.size() < 100) {
