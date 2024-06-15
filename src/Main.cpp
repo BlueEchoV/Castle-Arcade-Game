@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
 	start_Game(game_Data);
 
     float console_DT = 0.0f;
-    Console console = create_Console(&font_1, 2, (RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
+    Console console = init_Console(&font_1, 2, (RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();

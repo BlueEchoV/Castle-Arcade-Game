@@ -1,10 +1,16 @@
 #pragma once
 #include "Menu_System.h"
-extern std::unordered_map<SDL_Keycode, Key_State> console_Key_States;
+
 enum Console_State { 
 	CS_Closed, 
 	CS_Open_Small,
 	CS_Open_Big
+};
+
+struct Command {
+	std::string command;
+	std::string error_Message;
+	bool is_Valid;
 };
 
 const int max_History_String = 100;
@@ -13,6 +19,7 @@ struct Console {
 	int text_Size_Multiplier;
 	int text_Height;
 	Font* font;
+	int text_Padding;
 	Cooldown cursor_Indicator;
 	int cursor_Offset;
 	
@@ -25,8 +32,10 @@ struct Console {
 	float rate_Of_Openness_DT;
 
 	int history_Size;
-	std::string history[max_History_String];
+	Command history[max_History_String];
 	char user_Input[100] = {};
+	bool is_Valid_Input;
+	std::string error_Output;
 	
 	// The console 
 	SDL_Rect bkg_Rect;
@@ -36,7 +45,7 @@ struct Console {
 	Color input_Background_Color;
 };
 
-Console create_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT);
+Console init_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT);
 void add_Input_To_History(Console& console);
 void process_Console_Input(Console& console);
 void draw_Console(Console& console, float delta_Time);

@@ -1,14 +1,11 @@
 #include "Console.h"
-
-std::unordered_map<SDL_Keycode, Key_State> console_Key_States = {};
-
-// NOTE: Need a font
-
-Console create_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT) {
+ // NOTE: Need a font
+Console init_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT) {
 	Console result;
 	
 	result.text_Size_Multiplier = text_Size;
 	result.font = font;
+	result.text_Padding = 10;
 	result.cursor_Indicator.duration = 0.25;
 	result.cursor_Indicator.remaining = 0.0;
 
@@ -39,7 +36,19 @@ void add_Input_To_History(Console& console) {
 	// Guard against array size
 	if (console.history_Size < ARRAY_SIZE(console.history)) {
 		std::string str = console.user_Input;
-		console.history[console.history_Size] = str;
+		console.history[console.history_Size].command = str;
+		// console.history[console.history_Size].is_Valid = is_Valid;
+		console.history_Size++;
+	} else {
+		// Should never get here
+		assert(false);
+	}
+}
+
+void add_String_To_History(Console& console, std::string str) {
+	// Guard against array size
+	if (console.history_Size < ARRAY_SIZE(console.history)) {
+		console.history[console.history_Size].command = str;
 		console.history_Size++;
 		
 	} else {
@@ -95,6 +104,8 @@ void draw_Console(Console& console, float delta_Time) {
 		SDL_RenderDrawRect(Globals::renderer, &console.bkg_Rect);
 		SDL_RenderFillRect(Globals::renderer, &console.bkg_Rect);
 
+		// Add the padding to the text input area
+		console.ipt_Rect.h += (console.text_Padding * 2);
 		// Input Text Area
 		set_Render_Draw_Color(console.input_Background_Color);
 		SDL_RenderDrawRect(Globals::renderer, &console.ipt_Rect);
@@ -106,9 +117,18 @@ void draw_Console(Console& console, float delta_Time) {
 		for (int i = console.history_Size; i > 0; i--) {
 			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
 			if (text_Y_Offset < console.bkg_Rect.h){
-				std::string current_Str = console.history[i - 1];
-				draw_String(console.font, current_Str.c_str(), console.bkg_Rect.x, text_Y_Offset, console.text_Size_Multiplier, false);
-				text_Y_Offset -= console.text_Height;
+				Command command = console.history[i - 1];
+				std::string str = {};
+				if (command.is_Valid) {
+					str = command.command;
+					draw_String(console.font, str.c_str(), console.bkg_Rect.x + console.text_Padding, text_Y_Offset - console.text_Padding, console.text_Size_Multiplier, false);
+				} else {
+					SDL_SetTextureColorMod(console.font->texture, 255, 0, 0);
+					str = command.command + command.error_Message;
+					draw_String(console.font, str.c_str(), console.bkg_Rect.x + console.text_Padding, text_Y_Offset - console.text_Padding, console.text_Size_Multiplier, false);
+					SDL_SetTextureColorMod(console.font->texture, 0, 255, 0);
+				}
+				text_Y_Offset -= (console.text_Height + console.text_Padding);
 			} else {
 				break;
 			}
@@ -120,7 +140,7 @@ void draw_Console(Console& console, float delta_Time) {
 		} else {
 			ipt_Y_Offset = console.ipt_Rect.y;
 		}
-		draw_String(console.font, console.user_Input, console.ipt_Rect.x, ipt_Y_Offset, console.text_Size_Multiplier, false);
+		draw_String(console.font, console.user_Input, console.ipt_Rect.x + console.text_Padding, ipt_Y_Offset + console.text_Padding, console.text_Size_Multiplier, false);
 		
 		SDL_Rect cursor;
 		cursor.w = console.font->char_Width * console.text_Size_Multiplier;
@@ -131,7 +151,8 @@ void draw_Console(Console& console, float delta_Time) {
 		} else {
 			cursor.x = 0;
 		}
-		cursor.y = ipt_Y_Offset;
+		cursor.x += console.text_Padding;
+		cursor.y = ipt_Y_Offset + console.text_Padding;
 		// NOTE: THIS IS IF I WANT THE CURSOR TO BLINK. STILL DECIDING.
 		//progress_CD(console.cursor_Indicator, delta_Time);
 		//if (console.cursor_Indicator.remaining > (console.cursor_Indicator.duration / 2)) {
@@ -170,15 +191,16 @@ bool is_Console_Open(Console& console) {
 }
 
 // I could have this return a string that says what's missing
-bool process_Command_Spawn(std::string command) {
-	std::istringstream stream(command);
+bool process_Command_Spawn(Console& console) {
+	std::istringstream stream(console.user_Input);
 	std::string word;
+	std::string error;
 
 	// Skip the first word
 	if (!(stream >> word)) {
 		return false;
 	} 
-
+	
 	// Nation
 	Nation nation = {};
 	if (stream >> word) {
@@ -189,6 +211,8 @@ bool process_Command_Spawn(std::string command) {
 			nation = N_ENEMY;
 		}
 	} else {
+		error = "Invalid command: (spawn nation unit_Type)";
+		add_String_To_History(console, error);
 		return false;
 	}
 
@@ -207,9 +231,9 @@ bool process_Command_Spawn(std::string command) {
 	}
 
 	// Level?
-//	if (stream >> word) {
-//
-//	}
+	//	if (stream >> word) {
+	//
+	//	}
 	
 	// If we have any more input, this is an error
 	if (stream >> word) {
@@ -224,16 +248,16 @@ bool process_Command_Spawn(std::string command) {
 	return true;
 }
 
-bool process_Console_Command(std::string command) {
+bool process_Console_Command(Console& console) {
 	// Get the first word to see what the command type is
-	std::istringstream stream(command);
+	std::istringstream stream(console.user_Input);
 	std::string first_Word;
 	stream >> first_Word;
 	if (first_Word == "test") {
 		printf("Test command\n");
 		return true;
 	} else if (first_Word == "spawn") {
-		if (process_Command_Spawn(command)) {
+		if (process_Command_Spawn(console)) {
 			return true;
 		}
 	}
@@ -242,7 +266,7 @@ bool process_Console_Command(std::string command) {
 
 void process_Console_Input(Console& console) {
 	add_Input_To_History(console);
-	if (process_Console_Command(console.user_Input)) {
+	if (process_Console_Command(console)) {
 		printf("Valid command: %s", console.user_Input);
 		// Reset the user input
 		for (int i = 0; i < strlen(console.user_Input); i++) {
@@ -252,7 +276,4 @@ void process_Console_Input(Console& console) {
 		printf("Invalid command: %s", console.user_Input);
 		// Don't reset user input if the command doesn't work
 	}
-	
 }
-
-
