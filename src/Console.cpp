@@ -29,7 +29,7 @@ Console init_Console(Font* font, int text_Size, float max_Openness, float rate_O
 	result.input_Background_Color = { 34,34,34, SDL_ALPHA_OPAQUE };
 	result.report_Background_Color = { 0, 0, 0, SDL_ALPHA_OPAQUE };
 	// Start the index at -1 for when we increment
-	result.history_Selector_Index = -1;
+	result.history_Selector_Counter = 0;
 	result.current_History_Size = 0;
 	
 	return result;
@@ -47,8 +47,7 @@ void add_To_Char_Array(char* arr, char* adding_Elements, int total_Elements) {
 void add_Input_To_History(Console& console) {
 	// Guard against array size
 	if (console.current_History_Size < ARRAY_SIZE(console.history)) {
-		add_To_Char_Array(console.history[console.current_History_Size].command, console.user_Input, max_Console_Array_Size);
-		// console.history[console.current_History_Size].is_Valid = is_Valid;
+		console.history[console.current_History_Size] = console.user_Input;
 		console.current_History_Size++;
 	} else {
 		// Should never get here
@@ -56,10 +55,10 @@ void add_Input_To_History(Console& console) {
 	}
 }
 
-void add_String_To_History(Console& console, std::string str) {
+void add_String_To_History(Console& console, std::string_view& string) {
 	// Guard against array size
 	if (console.current_History_Size < ARRAY_SIZE(console.history)) {
-		add_To_Char_Array(console.history[console.current_History_Size].command, console.user_Input, max_Console_Array_Size);
+		console.history[console.current_History_Size] = string;
 		console.current_History_Size++;
 	} else {
 		// Should never get here
@@ -127,14 +126,12 @@ void draw_Console(Console& console, float delta_Time) {
 		for (int i = console.current_History_Size; i > 0; i--) {
 			// Draw +1 off the top so there is a nice transition and ONLY draw what is necessary for the given rect
 			if (text_Y_Offset < console.bkg_Rect.h){
-				Command command = console.history[i - 1];
-				std::string str = {};
-				if (command.is_Valid) {
-					str = command.command;
+				std::string str = console.history[i - 1];
+				// NOTE: Will come back to this check. 
+				if (true) {
 					draw_String(console.font, str.c_str(), console.bkg_Rect.x + console.text_Padding, text_Y_Offset - console.text_Padding, console.text_Size_Multiplier, false);
 				} else {
 					SDL_SetTextureColorMod(console.font->texture, 255, 0, 0);
-					str = command.command + command.error_Message;
 					draw_String(console.font, str.c_str(), console.bkg_Rect.x + console.text_Padding, text_Y_Offset - console.text_Padding, console.text_Size_Multiplier, false);
 					SDL_SetTextureColorMod(console.font->texture, 0, 255, 0);
 				}
@@ -150,12 +147,12 @@ void draw_Console(Console& console, float delta_Time) {
 		} else {
 			ipt_Y_Offset = console.ipt_Rect.y;
 		}
-		draw_String(console.font, console.user_Input, console.ipt_Rect.x + console.text_Padding, ipt_Y_Offset + console.text_Padding, console.text_Size_Multiplier, false);
+		draw_String(console.font, console.user_Input.c_str(), console.ipt_Rect.x + console.text_Padding, ipt_Y_Offset + console.text_Padding, console.text_Size_Multiplier, false);
 		
 		SDL_Rect cursor;
 		cursor.w = console.font->char_Width * console.text_Size_Multiplier;
 		cursor.h = console.font->char_Height * console.text_Size_Multiplier;
-		size_t ipt_Length = strlen(console.user_Input);
+		size_t ipt_Length = strlen(console.user_Input.c_str());
 		if (ipt_Length > 0) {
 			cursor.x = (console.font->char_Width * 2) * (int)((ipt_Length));
 		} else {
@@ -204,7 +201,6 @@ bool is_Console_Open(Console& console) {
 bool process_Command_Spawn(Console& console) {
 	std::istringstream stream(console.user_Input);
 	std::string word;
-	std::string error;
 
 	// Skip the first word
 	if (!(stream >> word)) {
@@ -221,8 +217,6 @@ bool process_Command_Spawn(Console& console) {
 			nation = N_ENEMY;
 		}
 	} else {
-		error = "Invalid command: (spawn nation unit_Type)";
-		add_String_To_History(console, error);
 		return false;
 	}
 
@@ -271,8 +265,7 @@ bool process_Console_Command(Console& console) {
 			return true;
 		}
 	} else {
-		std::string error = "Invalid command";
-		add_String_To_History(console, error);
+		printf("ERROR:");
 	}
 	return false;
 }
@@ -280,72 +273,70 @@ bool process_Console_Command(Console& console) {
 void process_Console_Input(Console& console) {
 	add_Input_To_History(console);
 	if (process_Console_Command(console)) {
-		printf("Valid command: %s", console.user_Input);
-
+		printf("Valid command");
 	} else {
-		printf("Invalid command: %s", console.user_Input);
+		printf("Invalid command");
 	}
 	// Reset the user input
-	for (int i = 0; i < strlen(console.user_Input); i++) {
-		console.user_Input[i] = 0;
-	}
+	console.user_Input = {};
 }
 
 void get_Console_Input(Console& console) {
 	if (key_States[SDLK_LSHIFT].held_Down && key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
 		if (console.state == CS_Closed || console.state == CS_Open_Small) {
 			console.state = CS_Open_Big;
-		} else {
+		}
+		else {
 			console.state = CS_Closed;
 		}
 	}
 	else if (key_States[SDLK_BACKQUOTE].pressed_This_Frame) {
 		if (console.state == CS_Closed || console.state == CS_Open_Big) {
 			console.state = CS_Open_Small;
-		} else {
+		}
+		else {
 			console.state = CS_Closed;
 		}
-	} 
-
+	}
 	if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
 		if (key_States[SDLK_BACKSPACE].pressed_This_Frame) {
-			size_t length = strlen(console.user_Input);
-			console.user_Input[length - 1] = 0;
-			// printf(console.user_Input);
-			// printf("\n");
-		}
-		if (key_States[SDLK_UP].pressed_This_Frame || key_States[SDLK_DOWN].pressed_This_Frame) {
-			if (key_States[SDLK_UP].pressed_This_Frame) {
-				if (console.history_Selector_Index < (console.current_History_Size)) {
-					console.history_Selector_Index++;
-				} 
-			}
-			if (key_States[SDLK_DOWN].pressed_This_Frame) {
-				if (console.history_Selector_Index > 0) {
-					console.history_Selector_Index--;
-				}
-			
-			}
-			int array_Index_Reverse = console.current_History_Size - console.history_Selector_Index;
-			std::string command = console.history[array_Index_Reverse].command;
-			// Guard against the array size
-			if (command.size() < 100) {
-				strcpy_s(console.user_Input, sizeof(console.user_Input), command.c_str());
-			}
-			else {
-				strncpy_s(console.user_Input, sizeof(console.user_Input), command.c_str(), 99);
-				// Null termination 
-				console.user_Input[99] = '\0'; 
+			if (!console.user_Input.empty()) {
+				console.user_Input.pop_back();
 			}
 		}
-		
 		if (key_States[SDLK_RETURN].pressed_This_Frame) {
 			process_Console_Input(console);
 		}
 		if (key_States[SDLK_ESCAPE].pressed_This_Frame) {
 			console.state = CS_Closed;
 		}
-
+		if (key_States[SDLK_UP].pressed_This_Frame || key_States[SDLK_DOWN].pressed_This_Frame) {
+			if (key_States[SDLK_UP].pressed_This_Frame) {
+				if (console.history_Selector_Counter < (console.current_History_Size)) {
+					console.history_Selector_Counter++;
+				}
+			}
+			if (key_States[SDLK_DOWN].pressed_This_Frame) {
+				if (console.history_Selector_Counter > 0) {
+					console.history_Selector_Counter--;
+				}
+			}
+			// Clamp the value
+			if (console.history_Selector_Counter < 0) {
+				console.history_Selector_Counter = 0;
+			}
+			if (console.history_Selector_Counter > ARRAY_SIZE(console.history)) {
+				console.history_Selector_Counter = ARRAY_SIZE(console.history);
+			}
+			int array_Index_Reverse = console.current_History_Size - console.history_Selector_Counter;
+			if (array_Index_Reverse < 0 || array_Index_Reverse > ARRAY_SIZE(console.history)) {
+				printf("ERROR: Array index out of bounds: %i", array_Index_Reverse);
+			}
+			else {
+				std::string command = console.history[array_Index_Reverse];
+				console.user_Input = command;
+			}
+		}
 		// NOTE: Reset ALL input so that only the console input is processed.
 		reset_Pressed_This_Frame();
 		reset_Held_This_Frame();

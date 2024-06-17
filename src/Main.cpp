@@ -119,19 +119,12 @@ int main(int argc, char** argv) {
             case SDL_TEXTINPUT: {
                 if (console.state == CS_Open_Small || console.state == CS_Open_Big) {
                     for (int i = 0; i < strlen(event.text.text); i++) {
-                        if (strlen(console.user_Input) + 2 <= sizeof(console.user_Input)) {
-                            if (event.text.text[i] == '`'
-                                || event.text.text[i] == '~') {
-                                continue;
-                            }
-                            size_t length = strlen(console.user_Input);
-                            console.user_Input[length] = event.text.text[i];
-                            // Null terminated
-                            console.user_Input[length + 1] = 0;
-                        }
+						if (event.text.text[i] == '`'
+							|| event.text.text[i] == '~') {
+							continue;
+						}
+                        console.user_Input.push_back(event.text.text[i]);
                     }
-                    // printf(console.user_Input);
-                    // printf("\n");
                 }
                 break;
             }

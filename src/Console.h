@@ -7,9 +7,9 @@ enum Console_State {
 	CS_Open_Big
 };
 
-const int max_Console_Array_Size = 50;
+const int max_History_Arr_Size = 50;
 struct Command {
-	char command[max_Console_Array_Size];
+	char command[max_History_Arr_Size ];
 	std::string error_Message;
 	bool is_Valid;
 };
@@ -32,11 +32,13 @@ struct Console {
 	float rate_Of_Openness_DT;
 
 	int current_History_Size;
-	Command history[max_Console_Array_Size] = {};
-	char user_Input[max_Console_Array_Size] = {};
+	std::string history[max_History_Arr_Size];
+
+	std::string user_Input;
 	bool is_Valid_Input;
+
 	std::string error_Output;
-	int history_Selector_Index;
+	int history_Selector_Counter;
 	
 	// The console 
 	SDL_Rect bkg_Rect;
