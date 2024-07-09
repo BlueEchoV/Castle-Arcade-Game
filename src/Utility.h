@@ -8,6 +8,8 @@
 #include <span>
 #include <stdint.h>
 
+void log(const char* format, ...);
+
 enum Storage_Type : uint8_t {
 	ST_Units = 1,
 	ST_Projectile,

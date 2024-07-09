@@ -55,29 +55,37 @@ Font load_Font_Bitmap(const char* font_File_Path) {
 	result.char_Width = result.width / 18;
 	result.char_Height = result.height / 7;
 
-	SDL_Texture* temp = SDL_CreateTexture(Globals::renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, width, height);
+	SDL_Texture* temp = MP_CreateTexture(Globals::renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, width, height);
 
 	if (temp == NULL) {
-		SDL_Log("ERROR: SDL_CreateTexture returned NULL: %s", SDL_GetError());
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: SDL_CreateTexture returned NULL");
+		#else 
+			SDL_Log("ERROR: SDL_CreateTexture returned NULL: %s", SDL_GetError());
+		#endif
 		return result;
 	}
 
-	if (SDL_SetTextureBlendMode(temp, SDL_BLENDMODE_BLEND) != 0) {
-		SDL_Log("ERROR: SDL_SsetTextureBlendMode did not succeed: %s", SDL_GetError());
+	if (MP_SetTextureBlendMode(temp, SDL_BLENDMODE_BLEND) != 0) {
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: SDL_SsetTextureBlendMode did not succeed");
+		#else 
+			SDL_Log("ERROR: SDL_SsetTextureBlendMode did not succeed: %s", SDL_GetError());
+		#endif
 	}
 
 	result.texture = temp;
 
 	void* pixels;
 	int pitch;
-	SDL_LockTexture(temp, NULL, &pixels, &pitch);
+	MP_LockTexture(temp, NULL, &pixels, &pitch);
 
 	// Copy what's in my data into the pixels
 	// my_Memory_Copy();
 	// memcpy(pixels, data, (width * height) * 4);
 	my_Memory_Copy(pixels, data, (width * height) * 4);
 
-	SDL_UnlockTexture(temp);
+	MP_UnlockTexture(temp);
 
 	return result;
 }
@@ -101,7 +109,7 @@ void draw_Character(Font* selected_Font, char character, int position_X, int pos
     dest_Rect.w = (int)(selected_Font->char_Width * size);
     dest_Rect.h = (int)(selected_Font->char_Height * size);
 
-    SDL_RenderCopyEx(Globals::renderer, selected_Font->texture, &src_Rect, &dest_Rect, 0, NULL, SDL_FLIP_NONE);
+    MP_RenderCopy(Globals::renderer, selected_Font->texture, &src_Rect, &dest_Rect);
 }
 
 void draw_String(Font* selected_Font, const char* string, int position_X, int position_Y, int size, bool center) {
@@ -147,21 +155,21 @@ void draw_String_With_Background(const char* string, int position_X, int positio
 
     // Set background as black
     if (color == CI_BLACK) {
-        SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     }
     else if (color == CI_RED) {
-        SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
     }
     else if (color == CI_GREEN) {
-        SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+        MP_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
     }
     else if (color == CI_BLUE) {
-        SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+        MP_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
     }
     else {
-        SDL_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+        MP_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
     }
-    SDL_RenderFillRect(Globals::renderer, &canvas_Area);
+    MP_RenderFillRect(Globals::renderer, &canvas_Area);
 
     draw_String(&font_1, string, position_X, position_Y, size, center);
 }
@@ -177,11 +185,11 @@ bool button_Text(const char* string, V2 pos, int w, int h, int string_Size) {
 	button_Area.h = h;
 
 	// Set background as black
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &button_Area);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	MP_RenderFillRect(Globals::renderer, &button_Area);
 
 	draw_String(&font_1, string, (int)pos.x, (int)pos.y, string_Size, true);
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
 	Uint32 mouse = SDL_GetMouseState(&x, &y);
@@ -195,7 +203,7 @@ bool button_Text(const char* string, V2 pos, int w, int h, int string_Size) {
 
 	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
-		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		if (mouse_Down_This_Frame) {
 			next_Frame_Hot_Name = string;
 		}
@@ -204,12 +212,12 @@ bool button_Text(const char* string, V2 pos, int w, int h, int string_Size) {
 		}
 		else
 		{
-			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+			MP_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
 		}
 	}
 	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
 		next_Frame_Hot_Name = string;
-		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	}
 
 	outline_Rect(&button_Area, outline_Thickness);
@@ -234,8 +242,8 @@ void display_Save_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, V2 po
 	button_Area.w = w;
 	button_Area.h = h * 2;
 
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &button_Area);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	MP_RenderFillRect(Globals::renderer, &button_Area);
 	
 	// Stats
 	std::string title_String = "Info";
@@ -287,11 +295,11 @@ bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, c
 	button_Area.h = h;
 
 	// Set background as black
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &button_Area);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	MP_RenderFillRect(Globals::renderer, &button_Area);
 
 	draw_String(&font_1, string, (int)pos.x, (int)pos.y, string_Size, true);
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
 	Uint32 mouse = SDL_GetMouseState(&x, &y);
@@ -301,7 +309,7 @@ bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, c
 
 	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
-		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		// Call the window that displays the info
 		display_Save_Game_Info(save_Game, cache_Data, pos, w, h);
 		if (mouse_Down_This_Frame) {
@@ -312,12 +320,12 @@ bool button_Text_Load_Game_Info(Saved_Games save_Game, Cache_Data& cache_Data, c
 		}
 		else
 		{
-			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+			MP_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
 		}
 	}
 	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
 		next_Frame_Hot_Name = string;
-		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	}
 
 	outline_Rect(&button_Area, outline_Thickness);
@@ -343,11 +351,11 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 	image_Area.y += outline_Thickness * (image_Size_Based_On_Outline / 2);
 
 	// Set background as black
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &button_Area);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	MP_RenderFillRect(Globals::renderer, &button_Area);
 
-	SDL_RenderCopyEx(Globals::renderer, texture, NULL, &image_Area, 0, NULL, SDL_FLIP_NONE);
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	MP_RenderCopy(Globals::renderer, texture, NULL, &image_Area);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
 	int x, y;
 	Uint32 mouse = SDL_GetMouseState(&x, &y);
@@ -357,7 +365,7 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 
 	if (x >= button_Area.x && x <= (button_Area.x + button_Area.w)
 		&& y >= button_Area.y && y <= (button_Area.y + button_Area.h)) {
-		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		if (mouse_Down_This_Frame) {
 			next_Frame_Hot_Name = string;
 		}
@@ -366,12 +374,12 @@ bool button_Image(SDL_Texture* texture, const char* string, V2 pos, int h) {
 		}
 		else
 		{
-			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+			MP_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
 		}
 	}
 	if (was_Hot && (mouse & SDL_BUTTON_LMASK)) {
 		next_Frame_Hot_Name = string;
-		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 	}
 
 	outline_Rect(&button_Area, outline_Thickness);
@@ -418,7 +426,7 @@ bool load_Game_Button(Saved_Games save_Game, Cache_Data& cache_Data, V2 pos, int
 		}
 		else {
 			file_String_Trimmed = file_String;
-			SDL_Log("ERROR: File_Name doesn't end in .dat");
+			log("ERROR: File_Name doesn't end in .dat");
 		}
 		const char* file_Name_Trimmed = file_String_Trimmed.c_str();
 
@@ -461,7 +469,11 @@ bool save_Game_Button(Saved_Games save_Game, Cache_Data cache_Data, V2 pos, int 
 	}
 	else {
 		file_String_Trimmed = file_String;
-		SDL_Log("ERROR: File_Name doesn't end in .dat");
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: File_Name doesn't end in .dat");
+		#else 
+			SDL_Log("ERROR: File_Name doesn't end in .dat");
+		#endif
 	}
 	const char* file_Name_Trimmed = file_String_Trimmed.c_str();
 
@@ -499,11 +511,11 @@ void draw_Unit_Data(Unit& unit, V2 pos) {
 
 	// HP Text
 	// Set the color mod for the font
-	SDL_SetTextureColorMod(font_1.texture, 0, 0, 0);
+	MP_SetTextureColorMod(font_1.texture, 0, 0, 0);
 	std::string hp_String = std::to_string((int)unit.health_Bar.current_Resource);
 	draw_String(&font_1, hp_String.c_str(), (int)pos.x, ((int)pos.y - unit.health_Bar.y_Offset) + (unit.health_Bar.height / 2), 1, true);
 	// Reset the color mod for the font
-	SDL_SetTextureColorMod(font_1.texture, 255, 255, 255);
+	MP_SetTextureColorMod(font_1.texture, 255, 255, 255);
 	
 	// Damage text
 	std::string damage_String = std::to_string((int)unit.damage);
@@ -617,7 +629,7 @@ bool running = true;
 
 void draw_Main_Menu() {
 	// No game logic
-	SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
+	MP_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
 
 	draw_String_With_Background(
 		"Castle Defense",
@@ -699,8 +711,8 @@ void draw_Sub_Menu_Debug_Map() {
 	background.h = (RESOLUTION_HEIGHT / 4) * 3;
 	background.x = (RESOLUTION_WIDTH / 2) - background.w / 2;
 	background.y = (RESOLUTION_HEIGHT / 2) - background.h / 2;
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &background);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	MP_RenderFillRect(Globals::renderer, &background);
 
 	std::string title = "Map Level: " + std::to_string(game_Data.game_Level_Map.power_Level);
 	draw_String_With_Background(title.c_str(), background.x + (background.w / 2), background.y + 50, 5, true, CI_BLACK, 2);
@@ -719,7 +731,7 @@ void draw_Sub_Menu_Debug_Map() {
 	int column_Separation = background.w / (max_Columns + 1);
 	int row_Separation = background.h / (max_Rows + 1);
 
-	SDL_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+	MP_SetRenderDrawColor(Globals::renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 	for (Game_Level& game_Level : game_Data.game_Level_Map.game_Levels) {
 		current_Row++;
 
@@ -776,7 +788,7 @@ void draw_Sub_Menu_Save_Game() {
 }
 
 void draw_Sub_Menu_Load_Game() {
-	SDL_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
+	MP_RenderCopy(Globals::renderer, get_Sprite_Sheet_Texture("bkg_Menu"), NULL, NULL);
 
 	int button_Width = 325;
 	int button_Height = 90;

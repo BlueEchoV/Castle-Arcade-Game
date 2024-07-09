@@ -196,6 +196,7 @@ void progress_CD(Cooldown& cd, float delta_Time) {
 }
 
 void draw_Castle(Castle* castle, bool flip) {
+	REF(flip);
 	draw_Resource_Bar(castle->health_Bar, castle->rigid_Body.position_WS);
 	draw_Resource_Bar(castle->food_Bar, castle->rigid_Body.position_WS);
 	SDL_Rect temp = {};
@@ -210,10 +211,11 @@ void draw_Castle(Castle* castle, bool flip) {
 		sprite->source_Rect.w,
 		sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, 0, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	MP_RenderCopy(Globals::renderer, sprite->image.texture, NULL, &temp);
 }
 
 void draw_Projectile(Projectile* projectile, bool flip) {
+	REF(flip);
 	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(projectile->sprite_Sheet_Tracker.sprite_Sheet_Name);
 	Sprite* sprite = &sprite_Sheet->sprites[0];
 	SDL_Rect* src_Rect = &sprite->source_Rect;
@@ -225,7 +227,7 @@ void draw_Projectile(Projectile* projectile, bool flip) {
 		sprite->source_Rect.w,
 		sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, projectile->rigid_Body.angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	MP_RenderCopy(Globals::renderer, sprite->image.texture, NULL, &temp);
 }
 
 Attached_Entity return_Attached_Entity(std::string sprite_Sheet_Name, float angle, V2 offset) {
@@ -257,6 +259,7 @@ void add_Summonable_Unit_To_Castle(Game_Data& game_Data, Nation nation, std::str
 }
 
 void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool flip) {
+	REF(flip);
 	SDL_Rect temp = {};
 	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(attached_Entity->sprite_Sheet_Tracker.sprite_Sheet_Name);
 	Sprite* sprite = &sprite_Sheet->sprites[0];
@@ -270,7 +273,7 @@ void draw_Attached_Entity(Attached_Entity* attached_Entity, V2 position_WS, bool
 		sprite->source_Rect.w,
 		sprite->source_Rect.h
 	};
-	SDL_RenderCopyEx(Globals::renderer, sprite->image.texture, NULL, &temp, attached_Entity->angle, NULL, (flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE));
+	MP_RenderCopy(Globals::renderer, sprite->image.texture, NULL, &temp);
 }
 
 void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float delta_Time) {
@@ -305,6 +308,7 @@ void update_Animation(Sprite_Sheet_Tracker* tracker, float unit_Speed, float del
 // Last frame update time
 // is playing
 void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, bool flip) {
+	REF(flip);
 	Uint32 sprite_Frame = tracker->current_Frame;
 
 	Sprite_Sheet* sprite_Sheet = &get_Sprite_Sheet(tracker->sprite_Sheet_Name);
@@ -333,14 +337,11 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 	};
 
 	// Render the current frame of the animation
-	SDL_RenderCopyEx(
+	MP_RenderCopy(
 		Globals::renderer,
 		sprite_Sheet->sprites[sprite_Frame].image.texture,
 		&current_Frame_Rect,
-		&destination_Rect,
-		rigid_Body->angle,
-		&pivot_Point,
-		(flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE)
+		&destination_Rect
 	);
 }
 
@@ -1004,19 +1005,19 @@ void draw_Circle(float center_X, float center_Y, float radius, Color_Index color
 		x2 = (int)(center_X + (radius * cos(angle)));
 		y2 = (int)(center_Y + (radius * sin(angle)));
 		if (color == CI_RED) {
-			SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+			MP_SetRenderDrawColor(Globals::renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
 		}
 		else if (color == CI_GREEN) {
-			SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+			MP_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 		}
 		else if (color == CI_BLUE) {
-			SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+			MP_SetRenderDrawColor(Globals::renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
 		}
 		else {
 			// Yellow is default
-			SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
+			MP_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
 		}
-		SDL_RenderDrawLine(Globals::renderer, x1, y1, x2, y2);
+		MP_RenderDrawLine(Globals::renderer, x1, y1, x2, y2);
 	}
 }
 
@@ -1035,31 +1036,31 @@ void outline_Rect(SDL_Rect* rect, int outline_Thickness) {
 	top_Rect.y = rect->y;
 	top_Rect.w = rect->w;
 	top_Rect.h = outline_Thickness;
-	SDL_RenderFillRect(Globals::renderer, &top_Rect);
+	MP_RenderFillRect(Globals::renderer, &top_Rect);
 
 	SDL_Rect bottom_Rect = {};
 	bottom_Rect.x = rect->x;
 	bottom_Rect.y = ((rect->y + rect->h) - outline_Thickness);
 	bottom_Rect.w = rect->w;
 	bottom_Rect.h = outline_Thickness;
-	SDL_RenderFillRect(Globals::renderer, &bottom_Rect);
+	MP_RenderFillRect(Globals::renderer, &bottom_Rect);
 
 	SDL_Rect left_Rect = {};
 	left_Rect.x = rect->x;
 	left_Rect.y = rect->y;
 	left_Rect.w = outline_Thickness;
 	left_Rect.h = rect->h;
-	SDL_RenderFillRect(Globals::renderer, &left_Rect);
+	MP_RenderFillRect(Globals::renderer, &left_Rect);
 
 	SDL_Rect right_Rect = {};
 	right_Rect.x = ((rect->x + rect->w) - outline_Thickness);
 	right_Rect.y = rect->y;
 	right_Rect.w = outline_Thickness;
 	right_Rect.h = rect->h;
-	SDL_RenderFillRect(Globals::renderer, &right_Rect);
+	MP_RenderFillRect(Globals::renderer, &right_Rect);
 
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderDrawRect(Globals::renderer, rect);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	MP_RenderDrawRect(Globals::renderer, rect);
 }
 
 void draw_Resource_Bar(Resource_Bar& resource_Bar, V2 pos) {
@@ -1081,14 +1082,14 @@ void draw_Resource_Bar(Resource_Bar& resource_Bar, V2 pos) {
 	left_Rect.h = (int)resource_Bar.height;
 	left_Rect.x = (int)((pos.x) - resource_Bar.width / 2);
 	left_Rect.y = (int)((pos.y) - resource_Bar.y_Offset);
-	SDL_SetRenderDrawColor(Globals::renderer, left_Side.r, left_Side.g, left_Side.b, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &left_Rect);
+	MP_SetRenderDrawColor(Globals::renderer, left_Side.r, left_Side.g, left_Side.b, SDL_ALPHA_OPAQUE);
+	MP_RenderFillRect(Globals::renderer, &left_Rect);
 
 	SDL_Rect right_Rect = left_Rect;
 	right_Rect.w = resource_Bar.width - left_Rect.w;
 	right_Rect.x = (int)(left_Rect.x + left_Rect.w);
-	SDL_SetRenderDrawColor(Globals::renderer, right_Side.r, right_Side.g, right_Side.b, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(Globals::renderer, &right_Rect);
+	MP_SetRenderDrawColor(Globals::renderer, right_Side.r, right_Side.g, right_Side.b, SDL_ALPHA_OPAQUE);
+	MP_RenderFillRect(Globals::renderer, &right_Rect);
 
 	// Outline HP bars
 	SDL_Rect outline = {};
@@ -1096,7 +1097,7 @@ void draw_Resource_Bar(Resource_Bar& resource_Bar, V2 pos) {
 	outline.h = (int)resource_Bar.height;
 	outline.x = (int)((pos.x) - resource_Bar.width / 2);
 	outline.y = (int)((pos.y) - resource_Bar.y_Offset);
-	SDL_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	MP_SetRenderDrawColor(Globals::renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	outline_Rect(&outline, resource_Bar.thickness);
 }
 
@@ -1109,7 +1110,11 @@ std::vector<int> create_Height_Map(std::string map_Name) {
 	unsigned char* data = stbi_load(file_Path.c_str(), &terrain_Width, &terrain_Height, &channels, 4);
 
 	if (data == NULL) {
-		SDL_Log("ERROR: stbi_load returned NULL");
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: stbi_load returned NULL");
+		#else 
+			SDL_Log("ERROR: stbi_load returned NULL");
+		#endif
 		return std::vector<int>();
 	}
 

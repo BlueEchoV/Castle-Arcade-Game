@@ -1,5 +1,4 @@
 #include "Console.h"
-#include "string.h"
  // NOTE: Need a font
 Console init_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT) {
 	Console result;
@@ -44,7 +43,7 @@ void add_To_Char_Array(char* arr, char* adding_Elements, int total_Elements) {
 	strcpy_s(arr + (active_Elements * sizeof(char)), (total_Elements * sizeof(char)), adding_Elements);
 }
 
-void add_Input_To_History(Console& console) {
+void add_User_Input_To_History(Console& console) {
 	// Guard against array size
 	if (console.current_History_Size < ARRAY_SIZE(console.history)) {
 		console.history[console.current_History_Size] = console.user_Input;
@@ -271,7 +270,7 @@ bool process_Console_Command(Console& console) {
 }
 
 void process_Console_Input(Console& console) {
-	add_Input_To_History(console);
+	add_User_Input_To_History(console);
 	if (process_Console_Command(console)) {
 		printf("Valid command");
 	} else {
@@ -340,5 +339,19 @@ void get_Console_Input(Console& console) {
 		// NOTE: Reset ALL input so that only the console input is processed.
 		reset_Pressed_This_Frame();
 		reset_Held_This_Frame();
+	}
+}
+
+void run_Command(std::string_view string) {
+	printf("String_view size: %i", (int)string.size());
+	std::string command_Name = {};
+	std::string non_Command_Arguments = {};
+	for (int i = 0; i < string.size(); i++) {
+		if (string[0] != ' ') {
+			command_Name.push_back(string[0]);
+		} else {
+			non_Command_Arguments = string.substr(i + 2);
+			break;
+		}
 	}
 }

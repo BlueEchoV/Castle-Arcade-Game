@@ -1,6 +1,7 @@
 #pragma once
-#include <SDL.h>
+
 #include <stb_image.h>
+#include <Renderer.h>
 
 #include "Utility.h"
 #include "Globals.h"

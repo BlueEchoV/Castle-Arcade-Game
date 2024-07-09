@@ -1,5 +1,6 @@
 #pragma once
 #include "Menu_System.h"
+#include "string.h"
 
 enum Console_State { 
 	CS_Closed, 
@@ -9,7 +10,7 @@ enum Console_State {
 
 const int max_History_Arr_Size = 50;
 struct Command {
-	char command[max_History_Arr_Size ];
+	char command[max_History_Arr_Size];
 	std::string error_Message;
 	bool is_Valid;
 };
@@ -32,6 +33,8 @@ struct Console {
 	float rate_Of_Openness_DT;
 
 	int current_History_Size;
+	// NOTE: vector of string is way simpler
+	// The console should be used for logging. The history is JUST text.
 	std::string history[max_History_Arr_Size];
 
 	std::string user_Input;
@@ -43,13 +46,12 @@ struct Console {
 	// The console 
 	SDL_Rect bkg_Rect;
 	Color report_Background_Color;
-
 	SDL_Rect ipt_Rect;
 	Color input_Background_Color;
 };
 
 Console init_Console(Font* font, int text_Size, float max_Openness, float rate_Of_Openness_DT);
-void add_Input_To_History(Console& console);
+void add_User_Input_To_History(Console& console);
 void process_Console_Input(Console& console);
 void draw_Console(Console& console, float delta_Time);
 void update_Openness(Console& console, float delta_Time);
@@ -57,3 +59,4 @@ void update_Openness(Console& console, float delta_Time);
 void open_Close_Console(Console& console);
 bool is_Console_Open(Console& console);
 void get_Console_Input(Console& console);
+void run_Command(std::string_view string);

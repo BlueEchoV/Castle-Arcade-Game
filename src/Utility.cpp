@@ -2,6 +2,35 @@
 #include "SDL.h"
 #include <string>
 #include <assert.h>
+#include <windows.h>
+
+void log(const char* format, ...) {
+	va_list arguments;
+	const int size = 1000;
+
+	va_start(arguments, format);
+
+	char myArray[size] = {};
+
+	vsnprintf(myArray, size, format, arguments);
+
+	va_end(arguments);
+
+	#ifdef UNICODE
+    // Convert myArray (const char*) to a wide character string (LPCWSTR)
+    int len = MultiByteToWideChar(CP_ACP, 0, myArray, -1, NULL, 0);
+    wchar_t* wideArray = new wchar_t[len];
+    MultiByteToWideChar(CP_ACP, 0, myArray, -1, wideArray, len);
+
+    OutputDebugString(wideArray);
+    OutputDebugString(L"\n");
+
+    delete[] wideArray;
+	#else
+		OutputDebugString(myArray);
+		OutputDebugString("\n");
+	#endif
+}
 
 int count_Active_Handles(Generation generations[], int size) {
 	int result = 0;
@@ -133,12 +162,20 @@ CSV_Data create_Open_CSV_File(std::string file_Path) {
 	result.last_Modified_Time = file_Last_Modified(file_Path);
 	result.file.open(result.file_Path);
 	if (!result.file) {
-		SDL_Log("ERROR: Unable to open CSV file");
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: Unable to open CSV file");
+		#else 
+			SDL_Log("ERROR: Unable to open CSV file");
+		#endif
 		assert(false);
 	}
 	result.rows = (uint16_t)count_CSV_Rows(&result);
 	if (result.rows <= 0) {
-		SDL_Log("ERROR: CSV file has <= 0 rows");
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: CSV file has <= 0 rows");
+		#else 
+			SDL_Log("ERROR: CSV file has <= 0 rows");
+		#endif
 		assert(false);
 	}
 	
@@ -148,7 +185,11 @@ CSV_Data create_Open_CSV_File(std::string file_Path) {
 void open_CSV_File(CSV_Data* csv_Data) {
 	csv_Data->file.open(csv_Data->file_Path);
 	if (!csv_Data->file) {
-		SDL_Log("ERROR: Unable to open CSV file");
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: Unable to open CSV file");
+		#else 
+			SDL_Log("ERROR: Unable to open CSV file");
+		#endif
 		assert(false);
 	}
 }

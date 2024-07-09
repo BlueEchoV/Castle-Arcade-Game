@@ -10,7 +10,11 @@ Image create_Image(const char* file_Path) {
 	unsigned char* data = stbi_load(file_Path, &width, &height, &channels, 4);
 
 	if (data == NULL) {
-		SDL_Log("ERROR: stbi_load returned NULL");
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: stbi_load returned NULL");
+		#else 
+			SDL_Log("ERROR: stbi_load returned NULL");
+		#endif
 		return result;
 	}
 
@@ -24,26 +28,34 @@ Image create_Image(const char* file_Path) {
 		// stbi_image_free(data);
 	};
 
-	SDL_Texture* temp = SDL_CreateTexture(Globals::renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, result.width, result.height);
+	SDL_Texture* temp = MP_CreateTexture(Globals::renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, result.width, result.height);
 
 	if (temp == NULL) {
-		SDL_Log("ERROR: SDL_CreateTexture returned NULL: %s", SDL_GetError());
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: SDL_CreateTexture returned NULL");
+		#else 
+			SDL_Log("ERROR: SDL_CreateTexture returned NULL");
+		#endif
 		return result;
 	}
 
-	if (SDL_SetTextureBlendMode(temp, SDL_BLENDMODE_BLEND) != 0) {
-		SDL_Log("ERROR: SDL_SsetTextureBlendMode did not succeed: %s", SDL_GetError());
+	if (MP_SetTextureBlendMode(temp, SDL_BLENDMODE_BLEND) != 0) {
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: SDL_SetTextureBlendMode did not succeed");
+		#else 
+			SDL_Log("ERROR: SDL_SetTextureBlendMode did not succeed");
+		#endif
 	}
 
 	result.texture = temp;
 
 	void* pixels;
 	int pitch;
-	SDL_LockTexture(temp, NULL, &pixels, &pitch);
+	MP_LockTexture(temp, NULL, &pixels, &pitch);
 
 	my_Memory_Copy(pixels, data, (result.width * result.height) * 4);
 
-	SDL_UnlockTexture(temp);
+	MP_UnlockTexture(temp);
 
 	return result;
 }

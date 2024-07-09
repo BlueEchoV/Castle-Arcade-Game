@@ -254,7 +254,7 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 					color.a = 1.0f;
 				}
 
-				SDL_SetTextureAlphaMod(texture, (Uint8)(255 * (color.a)));
+				MP_SetTextureAlphaMod(texture, (Uint8)(255 * (color.a)));
 
 				float percent_Life_time = particle_System->particles[j].lifetime / particle->lifetime_Max;
 
@@ -271,13 +271,13 @@ void draw_Particle_Systems(Game_Data& game_Data) {
 					color.b = 1.0f;
 					color.g = 0.5f;
 				}
-				SDL_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
+				MP_SetTextureColorMod(texture, (Uint8)(255 * color.r), (Uint8)(255 * color.g), (Uint8)(255 * color.b));
 
 
-				SDL_RenderCopyEx(Globals::renderer, texture, NULL, &src_Rect, 0, NULL, SDL_FLIP_NONE);
+				MP_RenderCopy(Globals::renderer, texture, NULL, &src_Rect);
 			}
-			SDL_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
-			SDL_SetTextureColorMod(texture, 0, 0, 0);
+			MP_SetTextureAlphaMod(texture, SDL_ALPHA_OPAQUE);
+			MP_SetTextureColorMod(texture, 0, 0, 0);
 		}
 	}
 }
@@ -320,7 +320,11 @@ void attempt_Reload_Particle_CSV_File(CSV_Data* csv_Data) {
 			close_File = true;
 		}
 		if (csv_Data->file.is_open()) {
-			SDL_Log("About to call load_Particle");
+			#ifndef USE_CUSTOM_SDL
+				log("About to call load_Particle");
+			#else 
+				SDL_Log("About to call load_Particle");
+			#endif
 			load_Particle_Data_CSV(csv_Data);
 			// Only set the last_Modified_Time if we get to this point
 			if (close_File) {
@@ -328,7 +332,11 @@ void attempt_Reload_Particle_CSV_File(CSV_Data* csv_Data) {
 			}
 		}
 		else {
-			SDL_Log("ERROR: Unable to open file");
+			#ifndef USE_CUSTOM_SDL
+				log("ERROR: Unable to open file");
+			#else 
+				SDL_Log("ERROR: Unable to open file");
+			#endif
 		}
 	}
 }

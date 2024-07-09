@@ -102,7 +102,7 @@ Sprite_Sheet create_Sprite_Sheet(const char* file_Path, int rows, int columns) {
 }
 
 void draw_Layer(SDL_Texture* texture) {
-	SDL_RenderCopyEx(Globals::renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
+	MP_RenderCopy(Globals::renderer, texture, NULL, NULL);
 }
 
 Type_Descriptor sprite_Sheet_Type_Descriptor[] = {
@@ -114,7 +114,7 @@ Type_Descriptor sprite_Sheet_Type_Descriptor[] = {
 void load_Sprite_Sheet_Data_CSV(CSV_Data* csv_Data) {
 	csv_Data->file.open(csv_Data->file_Path);
 	if (!csv_Data->file.is_open()) {
-		SDL_Log("ERROR: Unable to open CSV file");
+		log("ERROR: Unable to open CSV file");
 		return;
 	}
 	DEFER{

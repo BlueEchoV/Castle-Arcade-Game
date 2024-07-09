@@ -1,43 +1,47 @@
 #include <vector>
 #include <unordered_map>
 #include <sys/stat.h>
+// #include <SDL_main.h>
 
 #include "Game.h"
 #include "Menu_System.h"
 #include "Particle_System.h"
 #include "Console.h"
 
-#include "soloud.h"
-#include "soloud_wav.h"
+//#include "soloud.h"
+//#include "soloud_wav.h"
 
 #define WITH_MINIAUDIO
 
 // Engine core
-SoLoud::Soloud soloud;
+//SoLoud::Soloud soloud;
 
 int main(int argc, char** argv) {
     REF(argc);
     REF(argv);
 
-    soloud.init(); // Initialize SoLoud
+    //soloud.init(); // Initialize SoLoud
 
     // One wave file per sound
-    SoLoud::Wav wav_Electronic_Song;
-    wav_Electronic_Song.load("audio/electronic_Song.wav");
+    //SoLoud::Wav wav_Electronic_Song;
+    //wav_Electronic_Song.load("audio/electronic_Song.wav");
 
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        return 1;
-    }
+    // if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+    //     return 1;
+    // }
 
     SDL_Window* window = SDL_CreateWindow("Castle Defense", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESOLUTION_WIDTH, RESOLUTION_HEIGHT, 0);
     if (window == NULL) {
-        SDL_Log("ERROR: SDL_RenderClear returned returned NULL: %s", SDL_GetError());
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: SDL_RenderClear returned returned NULL");
+		#else 
+            SDL_Log("ERROR: SDL_RenderClear returned returned NULL: %s", SDL_GetError());
+		#endif
         return 1;
     }
 
-    Globals::renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    Globals::renderer = MP_CreateRenderer(window);
     if (Globals::renderer == NULL) {
-        SDL_Log("ERROR: SDL_CreateRenderer returned NULL: %s", SDL_GetError());
         return 1;
     }
 
@@ -90,6 +94,8 @@ int main(int argc, char** argv) {
 
     float console_DT = 0.0f;
     Console console = init_Console(&font_1, 2, (RESOLUTION_HEIGHT / 4.0f * 3.0f), (RESOLUTION_HEIGHT / 4) * 4);
+    std::string_view test_Str = "My string";
+    run_Command(test_Str);
     while (running) {
         mouse_Down_This_Frame = false;
         reset_Pressed_This_Frame();
@@ -220,8 +226,8 @@ int main(int argc, char** argv) {
 			game_Data.timer += delta_Time;
 		}
 
-		SDL_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(Globals::renderer);
+		MP_SetRenderDrawColor(Globals::renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
+        MP_RenderClear(Globals::renderer);
 
         // Load the cache once when the game starts
 		// load_Game_Data_Cache(save_Game_Cache_Data);
@@ -386,7 +392,7 @@ int main(int argc, char** argv) {
             draw_Castle(&game_Data.player_Castle, false);
             draw_Castle(&game_Data.enemy_Castle, true);
 
-            SDL_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+            MP_SetRenderDrawColor(Globals::renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
 
             draw_RigidBody_Colliders(&game_Data.player_Castle.rigid_Body, CI_GREEN);
             draw_RigidBody_Colliders(&game_Data.enemy_Castle.rigid_Body, CI_GREEN);
@@ -495,10 +501,10 @@ int main(int argc, char** argv) {
 
         draw_Console(console, console_DT);
         
-        SDL_RenderPresent(Globals::renderer);
+        MP_RenderPresent(Globals::renderer);
     }
 
     free_Pixel_Data_In_Sprite_Sheet_Map();
-    soloud.deinit();
+    //soloud.deinit();
     return 0;
 }

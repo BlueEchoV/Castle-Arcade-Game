@@ -37,7 +37,10 @@
     <ClCompile Include="src\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Command.cpp">
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\My_Math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -69,7 +72,10 @@
     <ClInclude Include="src\Console.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Command.h">
+    <ClInclude Include="src\Renderer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\My_Math.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -11,7 +11,12 @@ bool check_If_File_Exists(const char* file_Name) {
 	struct stat stat_Temp = {};
 	int result = stat(file_Name, &stat_Temp);
 	if (result == -1) {
-		SDL_Log("ERROR: File does not exist");
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: File does not exist");
+		#else 
+			SDL_Log("ERROR: File does not exist");
+		#endif
+
 		// assert(errno == ENOENT);
 		return false;
 	}
@@ -34,7 +39,11 @@ Archive create_Archive(std::string file_Name, GAME_DATA_OPERATION operation) {
 		err = fopen_s(&result.file, file_Name_PTR, "rb");
 	}
 	if (err != 0 || !result.file) {
-		SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name_PTR);
+		#ifndef USE_CUSTOM_SDL
+			log("ERROR: Unable to open file %s in save_Game", file_Name_PTR);
+		#else 
+			SDL_Log("ERROR: Unable to open file %s in save_Game", file_Name_PTR);
+		#endif
 	}
 
 	return result;
