@@ -325,23 +325,26 @@ void draw_Unit_Animated(Rigid_Body* rigid_Body, Sprite_Sheet_Tracker* tracker, b
 		current_Frame_Rect.h
 	};
 
-	V2 pivot = calculate_Center(
-		(float)sprite_Sheet->sprites[sprite_Frame].source_Rect.w,
-		(float)sprite_Sheet->sprites[sprite_Frame].source_Rect.h
-	);
+	// V2 pivot = calculate_Center(
+	// 	(float)sprite_Sheet->sprites[sprite_Frame].source_Rect.w,
+	// 	(float)sprite_Sheet->sprites[sprite_Frame].source_Rect.h
+	// );
 
-	// Set the center of the rotation
-	SDL_Point pivot_Point = {
-		(int)pivot.x,
-		(int)pivot.y
-	};
+	// // Set the center of the rotation
+	// SDL_Point pivot_Point = {
+	// 	(int)pivot.x,
+	// 	(int)pivot.y
+	// };
 
 	// Render the current frame of the animation
-	MP_RenderCopy(
+	MP_RenderCopyEx(
 		Globals::renderer,
 		sprite_Sheet->sprites[sprite_Frame].image.texture,
 		&current_Frame_Rect,
-		&destination_Rect
+		&destination_Rect,
+		rigid_Body->angle,
+		NULL,
+		flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE
 	);
 }
 

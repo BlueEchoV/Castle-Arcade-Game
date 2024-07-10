@@ -36,6 +36,7 @@ SDL_Texture* MP_CreateTexture(SDL_Renderer* sdl_renderer, uint32_t format, int a
 int MP_UpdateTexture(SDL_Texture* texture, const SDL_Rect* rect, const void *pixels, int pitch);
 void MP_DestroyTexture(SDL_Texture* texture);
 int MP_RenderCopy(SDL_Renderer* sdl_renderer, SDL_Texture* texture, const SDL_Rect* srcrect, const SDL_Rect* dstrect);
+int MP_RenderCopyEx(SDL_Renderer* sdl_renderer, SDL_Texture* texture, const SDL_Rect* srcrect, const SDL_Rect* dstrect, const float angle, const SDL_Point* center, const SDL_RendererFlip flip);
 void MP_RenderPresent(SDL_Renderer* sdl_renderer);
 
 int MP_RenderSetClipRect(SDL_Renderer* sdl_renderer, const SDL_Rect* rect);
